@@ -1,0 +1,3957 @@
+//! 资源命名空间、公开类型与请求构建器。
+
+use std::collections::BTreeMap;
+use std::marker::PhantomData;
+use std::time::Duration;
+
+use bytes::Bytes;
+use http::Method;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use tokio_util::sync::CancellationToken;
+
+use crate::Client;
+use crate::config::RequestOptions;
+use crate::error::{Error, Result};
+use crate::files::{MultipartField, UploadSource};
+use crate::helpers::{
+    ParsedChatCompletion, ParsedResponse, ToolDefinition, ToolRegistry, parse_json_payload,
+};
+use crate::pagination::{CursorPage, ListEnvelope};
+use crate::resource::Resource;
+use crate::response_meta::ApiResponse;
+use crate::stream::{ChatCompletionStream, ResponseStream};
+use crate::transport::{RequestSpec, merge_json_body};
+use crate::webhooks::{HeaderLookup, WebhookVerifier};
+use crate::websocket::{RealtimeSocket, ResponsesSocket};
+
+macro_rules! handle {
+    ($(#[$meta:meta])* $name:ident) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone)]
+        pub struct $name {
+            client: Client,
+        }
+
+        impl $name {
+            pub(crate) fn new(client: Client) -> Self {
+                Self { client }
+            }
+        }
+
+        impl Resource for $name {
+            fn client(&self) -> &Client {
+                &self.client
+            }
+        }
+    };
+}
+
+/// 表示常见的删除结果。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct DeleteResponse {
+    /// 被删除对象的 ID。
+    pub id: Option<String>,
+    /// 是否删除成功。
+    #[serde(default)]
+    pub deleted: bool,
+    /// 对象类型。
+    pub object: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示模型对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Model {
+    /// 模型 ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 模型所有者。
+    pub owned_by: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示文件对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FileObject {
+    /// 文件 ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 文件名。
+    pub filename: Option<String>,
+    /// 文件用途。
+    pub purpose: Option<String>,
+    /// 文件大小。
+    pub bytes: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示上传对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct UploadObject {
+    /// 上传 ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 上传状态。
+    pub status: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 Embeddings 接口的返回值。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EmbeddingResponse {
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 向量数据。
+    #[serde(default)]
+    pub data: Vec<Value>,
+    /// 使用统计。
+    pub usage: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示模型计数结果。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct InputTokenCount {
+    /// 总 token 数量。
+    pub total_tokens: u64,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示一个工具函数调用。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionFunctionCall {
+    /// 工具名称。
+    pub name: String,
+    /// 参数 JSON 字符串。
+    #[serde(default)]
+    pub arguments: String,
+}
+
+/// 表示工具调用项。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionToolCall {
+    /// 工具调用 ID。
+    pub id: String,
+    /// 调用类型。
+    #[serde(rename = "type", default = "default_function_type")]
+    pub call_type: String,
+    /// 函数调用内容。
+    pub function: ChatCompletionFunctionCall,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示流式函数调用增量。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionFunctionCallDelta {
+    /// 函数名称增量。
+    pub name: Option<String>,
+    /// 参数增量。
+    pub arguments: Option<String>,
+}
+
+/// 表示流式工具调用增量。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionToolCallDelta {
+    /// 增量对应索引。
+    pub index: Option<u32>,
+    /// 工具调用 ID。
+    pub id: Option<String>,
+    /// 调用类型。
+    #[serde(rename = "type")]
+    pub call_type: Option<String>,
+    /// 函数调用增量。
+    pub function: Option<ChatCompletionFunctionCallDelta>,
+}
+
+/// 表示聊天消息。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionMessage {
+    /// 角色。
+    pub role: String,
+    /// 文本内容。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// 可选名称。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// 工具调用关联 ID。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_call_id: Option<String>,
+    /// 工具调用集合。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tool_calls: Vec<ChatCompletionToolCall>,
+    /// 推理内容。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reasoning_content: Option<String>,
+    /// 推理细节。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reasoning_details: Vec<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+impl ChatCompletionMessage {
+    /// 创建 system 消息。
+    pub fn system(content: impl Into<String>) -> Self {
+        Self {
+            role: "system".into(),
+            content: Some(content.into()),
+            ..Self::default()
+        }
+    }
+
+    /// 创建 user 消息。
+    pub fn user(content: impl Into<String>) -> Self {
+        Self {
+            role: "user".into(),
+            content: Some(content.into()),
+            ..Self::default()
+        }
+    }
+
+    /// 创建 assistant 消息。
+    pub fn assistant(content: impl Into<String>) -> Self {
+        Self {
+            role: "assistant".into(),
+            content: Some(content.into()),
+            ..Self::default()
+        }
+    }
+
+    /// 创建 tool 消息。
+    pub fn tool(tool_call_id: impl Into<String>, content: impl Into<String>) -> Self {
+        Self {
+            role: "tool".into(),
+            content: Some(content.into()),
+            tool_call_id: Some(tool_call_id.into()),
+            ..Self::default()
+        }
+    }
+}
+
+/// 表示聊天补全中的单个候选项。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionChoice {
+    /// 候选项索引。
+    pub index: u32,
+    /// 结束原因。
+    pub finish_reason: Option<String>,
+    /// 返回消息。
+    pub message: ChatCompletionMessage,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示聊天补全结果。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletion {
+    /// 补全 ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 创建时间。
+    pub created: Option<i64>,
+    /// 模型 ID。
+    #[serde(default)]
+    pub model: String,
+    /// 候选项集合。
+    #[serde(default)]
+    pub choices: Vec<ChatCompletionChoice>,
+    /// 使用统计。
+    pub usage: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示流式增量。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionChunkDelta {
+    /// 角色增量。
+    pub role: Option<String>,
+    /// 文本内容增量。
+    pub content: Option<String>,
+    /// 推理内容增量。
+    pub reasoning_content: Option<String>,
+    /// 推理细节增量。
+    #[serde(default)]
+    pub reasoning_details: Vec<Value>,
+    /// 工具调用增量。
+    #[serde(default)]
+    pub tool_calls: Vec<ChatCompletionToolCallDelta>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示流式候选项。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionChunkChoice {
+    /// 候选索引。
+    pub index: u32,
+    /// 增量载荷。
+    pub delta: ChatCompletionChunkDelta,
+    /// 结束原因。
+    pub finish_reason: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示聊天补全 SSE 分片。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionChunk {
+    /// 分片所属补全 ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 创建时间。
+    pub created: Option<i64>,
+    /// 模型 ID。
+    #[serde(default)]
+    pub model: String,
+    /// 候选项集合。
+    #[serde(default)]
+    pub choices: Vec<ChatCompletionChunkChoice>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示聊天工具定义。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatToolDefinition {
+    /// 工具类型，当前固定为 `function`。
+    #[serde(rename = "type")]
+    pub tool_type: String,
+    /// 函数定义。
+    pub function: ChatToolFunction,
+}
+
+impl ChatToolDefinition {
+    fn from_tool(tool: &ToolDefinition) -> Self {
+        Self {
+            tool_type: "function".into(),
+            function: ChatToolFunction {
+                name: tool.name.clone(),
+                description: tool.description.clone(),
+                parameters: tool.parameters.clone(),
+            },
+        }
+    }
+}
+
+/// 表示聊天工具函数定义。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatToolFunction {
+    /// 函数名。
+    pub name: String,
+    /// 函数描述。
+    pub description: Option<String>,
+    /// 参数 Schema。
+    pub parameters: Value,
+}
+
+/// 表示聊天补全请求参数。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatCompletionCreateParams {
+    /// 模型 ID。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// 历史消息。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub messages: Vec<ChatCompletionMessage>,
+    /// 温度。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+    /// 候选数量。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub n: Option<u32>,
+    /// 最大 token 数。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_tokens: Option<u32>,
+    /// 工具定义。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tools: Vec<ChatToolDefinition>,
+    /// 工具选择策略。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tool_choice: Option<Value>,
+    /// 流式开关。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
+}
+
+/// 表示 Responses 对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Response {
+    /// 响应 ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 模型 ID。
+    pub model: Option<String>,
+    /// 状态。
+    pub status: Option<String>,
+    /// 输出项。
+    #[serde(default)]
+    pub output: Vec<Value>,
+    /// 用量统计。
+    pub usage: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+impl Response {
+    /// 尝试提取最终文本输出。
+    pub fn output_text(&self) -> Option<String> {
+        for item in &self.output {
+            if let Some(text) = item.get("text").and_then(Value::as_str) {
+                return Some(text.to_owned());
+            }
+            if let Some(content) = item.get("content").and_then(Value::as_array) {
+                for content_item in content {
+                    if let Some(text) = content_item.get("text").and_then(Value::as_str) {
+                        return Some(text.to_owned());
+                    }
+                }
+            }
+        }
+
+        self.extra
+            .get("output_text")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+    }
+}
+
+/// 表示 Responses 创建参数。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseCreateParams {
+    /// 模型 ID。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    /// 输入载荷。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input: Option<Value>,
+    /// 温度。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f32>,
+    /// 工具定义。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tools: Vec<ChatToolDefinition>,
+    /// 是否启用流式。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stream: Option<bool>,
+}
+
+fn default_function_type() -> String {
+    "function".into()
+}
+
+fn value_from<T>(value: &T) -> Result<Value>
+where
+    T: Serialize,
+{
+    serde_json::to_value(value)
+        .map_err(|error| Error::Serialization(crate::SerializationError::new(error.to_string())))
+}
+
+/// 表示通用 JSON 请求构建器。
+#[derive(Debug, Clone)]
+pub struct JsonRequestBuilder<T> {
+    client: Client,
+    spec: RequestSpec,
+    extra_body: BTreeMap<String, Value>,
+    provider_options: BTreeMap<String, Value>,
+    _marker: PhantomData<T>,
+}
+
+impl<T> JsonRequestBuilder<T> {
+    fn new(
+        client: Client,
+        endpoint_id: &'static str,
+        method: Method,
+        path: impl Into<String>,
+    ) -> Self {
+        Self {
+            client,
+            spec: RequestSpec::new(endpoint_id, method, path),
+            extra_body: BTreeMap::new(),
+            provider_options: BTreeMap::new(),
+            _marker: PhantomData,
+        }
+    }
+
+    /// 设置整个请求体为一个 `serde_json::Value`。
+    pub fn body_value(mut self, body: Value) -> Self {
+        self.spec.body = Some(body);
+        self
+    }
+
+    /// 使用任意可序列化对象设置请求体。
+    ///
+    /// # Errors
+    ///
+    /// 当序列化失败时返回错误。
+    pub fn json_body<U>(mut self, body: &U) -> Result<Self>
+    where
+        U: Serialize,
+    {
+        self.spec.body = Some(value_from(body)?);
+        Ok(self)
+    }
+
+    /// 添加一个额外请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.spec.options.insert_header(key, value);
+        self
+    }
+
+    /// 删除一个默认请求头。
+    pub fn remove_header(mut self, key: impl Into<String>) -> Self {
+        self.spec.options.remove_header(key);
+        self
+    }
+
+    /// 添加一个额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.spec.options.insert_query(key, value);
+        self
+    }
+
+    /// 在 JSON 根对象中追加字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.extra_body.insert(key.into(), value);
+        self
+    }
+
+    /// 在 provider 对应的 `provider_options` 下追加字段。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.provider_options.insert(key.into(), value);
+        self
+    }
+
+    /// 覆盖请求超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.spec.options.timeout = Some(timeout);
+        self
+    }
+
+    /// 覆盖最大重试次数。
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.spec.options.max_retries = Some(max_retries);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.spec.options.cancellation_token = Some(token);
+        self
+    }
+
+    /// 添加 Multipart 文本字段。
+    pub fn multipart_text(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
+        let multipart = self.spec.multipart.get_or_insert_default();
+        multipart.fields.push(MultipartField {
+            name: name.into(),
+            value: value.into(),
+        });
+        self
+    }
+
+    /// 添加 Multipart 文件字段。
+    pub fn multipart_file(mut self, name: impl Into<String>, file: UploadSource) -> Self {
+        let multipart = self.spec.multipart.get_or_insert_default();
+        multipart.files.push((name.into(), file));
+        self
+    }
+
+    fn into_spec(mut self) -> RequestSpec {
+        let provider_key = self.client.provider().kind().as_key();
+        self.spec.body = Some(merge_json_body(
+            self.spec.body.take(),
+            &self.extra_body,
+            provider_key,
+            &self.provider_options,
+        ));
+        self.spec
+    }
+}
+
+impl<T> JsonRequestBuilder<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    /// 发送请求并返回业务对象。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或反序列化失败时返回错误。
+    pub async fn send(self) -> Result<T> {
+        Ok(self.send_with_meta().await?.data)
+    }
+
+    /// 发送请求并保留响应元信息。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或反序列化失败时返回错误。
+    pub async fn send_with_meta(self) -> Result<ApiResponse<T>> {
+        let client = self.client.clone();
+        client.execute_json(self.into_spec()).await
+    }
+
+    /// 发送请求并返回原始 `http::Response<Bytes>`。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_raw(self) -> Result<http::Response<Bytes>> {
+        let client = self.client.clone();
+        client.execute_raw_http(self.into_spec()).await
+    }
+}
+
+/// 表示二进制响应请求构建器。
+#[derive(Debug, Clone)]
+pub struct BytesRequestBuilder {
+    inner: JsonRequestBuilder<Bytes>,
+}
+
+impl BytesRequestBuilder {
+    fn new(
+        client: Client,
+        endpoint_id: &'static str,
+        method: Method,
+        path: impl Into<String>,
+    ) -> Self {
+        Self {
+            inner: JsonRequestBuilder::new(client, endpoint_id, method, path),
+        }
+    }
+
+    /// 设置 JSON 请求体。
+    pub fn body_value(mut self, body: Value) -> Self {
+        self.inner = self.inner.body_value(body);
+        self
+    }
+
+    /// 设置可序列化请求体。
+    ///
+    /// # Errors
+    ///
+    /// 当序列化失败时返回错误。
+    pub fn json_body<U>(mut self, body: &U) -> Result<Self>
+    where
+        U: Serialize,
+    {
+        self.inner = self.inner.json_body(body)?;
+        Ok(self)
+    }
+
+    /// 追加请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_header(key, value);
+        self
+    }
+
+    /// 追加查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_query(key, value);
+        self
+    }
+
+    /// 添加 Multipart 文本字段。
+    pub fn multipart_text(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.multipart_text(name, value);
+        self
+    }
+
+    /// 添加 Multipart 文件字段。
+    pub fn multipart_file(mut self, name: impl Into<String>, file: UploadSource) -> Self {
+        self.inner = self.inner.multipart_file(name, file);
+        self
+    }
+
+    /// 在 JSON 根对象中追加字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+
+    /// 发送请求并返回原始字节。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send(self) -> Result<Bytes> {
+        Ok(self.send_with_meta().await?.data)
+    }
+
+    /// 发送请求并保留响应元信息。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_with_meta(self) -> Result<ApiResponse<Bytes>> {
+        let client = self.inner.client.clone();
+        client.execute_bytes(self.inner.into_spec()).await
+    }
+
+    /// 发送请求并返回原始 HTTP 响应。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_raw(self) -> Result<http::Response<Bytes>> {
+        let client = self.inner.client.clone();
+        client.execute_raw_http(self.inner.into_spec()).await
+    }
+}
+
+/// 表示列表请求构建器。
+#[derive(Debug, Clone)]
+pub struct ListRequestBuilder<T> {
+    inner: JsonRequestBuilder<ListEnvelope<T>>,
+}
+
+impl<T> ListRequestBuilder<T> {
+    fn new(client: Client, endpoint_id: &'static str, path: impl Into<String>) -> Self {
+        Self {
+            inner: JsonRequestBuilder::new(client, endpoint_id, Method::GET, path),
+        }
+    }
+
+    /// 设置 `after` 游标。
+    pub fn after(mut self, cursor: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_query("after", cursor);
+        self
+    }
+
+    /// 设置 `before` 游标。
+    pub fn before(mut self, cursor: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_query("before", cursor);
+        self
+    }
+
+    /// 设置分页大小。
+    pub fn limit(mut self, limit: u32) -> Self {
+        self.inner = self.inner.extra_query("limit", limit.to_string());
+        self
+    }
+
+    /// 追加请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_header(key, value);
+        self
+    }
+
+    /// 在根对象追加额外字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+}
+
+impl<T> ListRequestBuilder<T>
+where
+    T: Clone + Send + Sync + serde::de::DeserializeOwned + 'static,
+{
+    /// 发送列表请求并返回游标分页对象。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或反序列化失败时返回错误。
+    pub async fn send(self) -> Result<CursorPage<T>> {
+        let client = self.inner.client.clone();
+        let path = self.inner.spec.path.clone();
+        let endpoint_id = self.inner.spec.endpoint_id;
+        let response = client
+            .execute_json::<ListEnvelope<T>>(self.inner.into_spec())
+            .await?;
+        let ListEnvelope {
+            object,
+            data,
+            first_id,
+            last_id,
+            has_more,
+            extra,
+        } = response.data;
+        let mut next_query = BTreeMap::new();
+        if let Some(last_id) = &last_id {
+            next_query.insert("after".into(), Some(last_id.clone()));
+        }
+        Ok(CursorPage::from(ListEnvelope {
+            object,
+            data,
+            first_id,
+            last_id,
+            has_more,
+            extra,
+        })
+        .with_next_request(if has_more {
+            Some(crate::client::PageRequestSpec {
+                client,
+                endpoint_id,
+                method: Method::GET,
+                path,
+                query: next_query,
+            })
+        } else {
+            None
+        }))
+    }
+}
+
+/// 表示聊天补全创建构建器。
+#[derive(Debug, Clone, Default)]
+pub struct ChatCompletionCreateRequestBuilder {
+    client: Option<Client>,
+    params: ChatCompletionCreateParams,
+    options: RequestOptions,
+    extra_body: BTreeMap<String, Value>,
+    provider_options: BTreeMap<String, Value>,
+}
+
+impl ChatCompletionCreateRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            client: Some(client),
+            ..Self::default()
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.params.model = Some(model.into());
+        self
+    }
+
+    /// 直接设置消息列表。
+    pub fn messages(mut self, messages: Vec<ChatCompletionMessage>) -> Self {
+        self.params.messages = messages;
+        self
+    }
+
+    /// 追加一条 system 消息。
+    pub fn message_system(mut self, content: impl Into<String>) -> Self {
+        self.params
+            .messages
+            .push(ChatCompletionMessage::system(content));
+        self
+    }
+
+    /// 追加一条 user 消息。
+    pub fn message_user(mut self, content: impl Into<String>) -> Self {
+        self.params
+            .messages
+            .push(ChatCompletionMessage::user(content));
+        self
+    }
+
+    /// 追加一条 assistant 消息。
+    pub fn message_assistant(mut self, content: impl Into<String>) -> Self {
+        self.params
+            .messages
+            .push(ChatCompletionMessage::assistant(content));
+        self
+    }
+
+    /// 设置温度。
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.params.temperature = Some(temperature);
+        self
+    }
+
+    /// 设置候选数量。
+    pub fn n(mut self, n: u32) -> Self {
+        self.params.n = Some(n);
+        self
+    }
+
+    /// 设置最大 token 数。
+    pub fn max_tokens(mut self, max_tokens: u32) -> Self {
+        self.params.max_tokens = Some(max_tokens);
+        self
+    }
+
+    /// 追加工具定义。
+    pub fn tool(mut self, tool: ChatToolDefinition) -> Self {
+        self.params.tools.push(tool);
+        self
+    }
+
+    /// 设置工具选择策略。
+    pub fn tool_choice(mut self, tool_choice: Value) -> Self {
+        self.params.tool_choice = Some(tool_choice);
+        self
+    }
+
+    /// 设置附加请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_header(key, value);
+        self
+    }
+
+    /// 设置附加查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_query(key, value);
+        self
+    }
+
+    /// 在请求体根对象中追加字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.extra_body.insert(key.into(), value);
+        self
+    }
+
+    /// 在 provider 对应的 `provider_options` 节点下追加字段。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.provider_options.insert(key.into(), value);
+        self
+    }
+
+    /// 覆盖超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.options.timeout = Some(timeout);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.options.cancellation_token = Some(token);
+        self
+    }
+
+    fn build_spec(mut self, stream: bool) -> Result<(Client, RequestSpec)> {
+        let client = self
+            .client
+            .take()
+            .ok_or_else(|| Error::InvalidConfig("聊天补全构建器缺少客户端".into()))?;
+        if self.params.model.as_deref().unwrap_or_default().is_empty() {
+            return Err(Error::InvalidConfig("聊天补全请求缺少 model".into()));
+        }
+        if self.params.messages.is_empty() {
+            return Err(Error::InvalidConfig("聊天补全请求缺少 messages".into()));
+        }
+        self.params.stream = Some(stream);
+        let provider_key = client.provider().kind().as_key();
+        let body = merge_json_body(
+            Some(value_from(&self.params)?),
+            &self.extra_body,
+            provider_key,
+            &self.provider_options,
+        );
+        let mut spec = RequestSpec::new(
+            if stream {
+                "chat.completions.stream"
+            } else {
+                "chat.completions.create"
+            },
+            Method::POST,
+            "/chat/completions",
+        );
+        spec.body = Some(body);
+        spec.options = self.options;
+        Ok((client, spec))
+    }
+
+    /// 发送普通聊天补全请求。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或反序列化失败时返回错误。
+    pub async fn send(self) -> Result<ChatCompletion> {
+        Ok(self.send_with_meta().await?.data)
+    }
+
+    /// 发送普通聊天补全请求并保留元信息。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或反序列化失败时返回错误。
+    pub async fn send_with_meta(self) -> Result<ApiResponse<ChatCompletion>> {
+        let (client, spec) = self.build_spec(false)?;
+        client.execute_json(spec).await
+    }
+
+    /// 发送普通聊天补全请求并返回原始 HTTP 响应。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败或请求失败时返回错误。
+    pub async fn send_raw(self) -> Result<http::Response<Bytes>> {
+        let (client, spec) = self.build_spec(false)?;
+        client.execute_raw_http(spec).await
+    }
+}
+
+/// 表示聊天补全流式请求构建器。
+#[derive(Debug, Clone)]
+pub struct ChatCompletionStreamRequestBuilder {
+    inner: ChatCompletionCreateRequestBuilder,
+}
+
+impl ChatCompletionStreamRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            inner: ChatCompletionCreateRequestBuilder::new(client),
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.inner = self.inner.model(model);
+        self
+    }
+
+    /// 设置消息列表。
+    pub fn messages(mut self, messages: Vec<ChatCompletionMessage>) -> Self {
+        self.inner = self.inner.messages(messages);
+        self
+    }
+
+    /// 追加一条 system 消息。
+    pub fn message_system(mut self, content: impl Into<String>) -> Self {
+        self.inner = self.inner.message_system(content);
+        self
+    }
+
+    /// 追加一条 user 消息。
+    pub fn message_user(mut self, content: impl Into<String>) -> Self {
+        self.inner = self.inner.message_user(content);
+        self
+    }
+
+    /// 追加一条 assistant 消息。
+    pub fn message_assistant(mut self, content: impl Into<String>) -> Self {
+        self.inner = self.inner.message_assistant(content);
+        self
+    }
+
+    /// 设置温度。
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.inner = self.inner.temperature(temperature);
+        self
+    }
+
+    /// 设置候选数量。
+    pub fn n(mut self, n: u32) -> Self {
+        self.inner = self.inner.n(n);
+        self
+    }
+
+    /// 设置最大 token 数。
+    pub fn max_tokens(mut self, max_tokens: u32) -> Self {
+        self.inner = self.inner.max_tokens(max_tokens);
+        self
+    }
+
+    /// 添加额外字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+
+    /// 添加 provider 选项。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.provider_option(key, value);
+        self
+    }
+
+    /// 发送流式聊天补全请求。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或流初始化失败时返回错误。
+    pub async fn send(self) -> Result<ChatCompletionStream> {
+        let (client, spec) = self.inner.build_spec(true)?;
+        Ok(ChatCompletionStream::new(client.execute_sse(spec).await?))
+    }
+}
+
+/// 表示聊天补全结构化解析构建器。
+#[derive(Debug, Clone)]
+pub struct ChatCompletionParseRequestBuilder<T> {
+    inner: ChatCompletionCreateRequestBuilder,
+    _marker: PhantomData<T>,
+}
+
+impl<T> ChatCompletionParseRequestBuilder<T> {
+    fn new(client: Client) -> Self {
+        Self {
+            inner: ChatCompletionCreateRequestBuilder::new(client),
+            _marker: PhantomData,
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.inner = self.inner.model(model);
+        self
+    }
+
+    /// 设置消息列表。
+    pub fn messages(mut self, messages: Vec<ChatCompletionMessage>) -> Self {
+        self.inner = self.inner.messages(messages);
+        self
+    }
+
+    /// 追加一条 user 消息。
+    pub fn message_user(mut self, content: impl Into<String>) -> Self {
+        self.inner = self.inner.message_user(content);
+        self
+    }
+
+    /// 追加一个额外请求体字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+}
+
+impl<T> ChatCompletionParseRequestBuilder<T>
+where
+    T: JsonSchema + serde::de::DeserializeOwned,
+{
+    /// 发送请求并把首条 assistant 文本解析成结构化对象。
+    ///
+    /// # Errors
+    ///
+    /// 当模型返回内容为空或 JSON 解析失败时返回错误。
+    pub async fn send(self) -> Result<ParsedChatCompletion<T>> {
+        let response = self.inner.send().await?;
+        let content = response
+            .choices
+            .first()
+            .and_then(|choice| choice.message.content.as_deref())
+            .ok_or_else(|| Error::InvalidConfig("聊天补全返回中缺少 assistant 文本内容".into()))?;
+        let parsed = parse_json_payload(content)?;
+        Ok(ParsedChatCompletion { response, parsed })
+    }
+}
+
+/// 表示工具运行构建器。
+#[derive(Debug, Clone)]
+pub struct ChatCompletionRunToolsRequestBuilder {
+    inner: ChatCompletionCreateRequestBuilder,
+    registry: ToolRegistry,
+    max_rounds: usize,
+}
+
+impl ChatCompletionRunToolsRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            inner: ChatCompletionCreateRequestBuilder::new(client),
+            registry: ToolRegistry::new(),
+            max_rounds: 8,
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.inner = self.inner.model(model);
+        self
+    }
+
+    /// 设置消息列表。
+    pub fn messages(mut self, messages: Vec<ChatCompletionMessage>) -> Self {
+        self.inner = self.inner.messages(messages);
+        self
+    }
+
+    /// 追加一条 user 消息。
+    pub fn message_user(mut self, content: impl Into<String>) -> Self {
+        self.inner = self.inner.message_user(content);
+        self
+    }
+
+    /// 注册一个工具。
+    pub fn register_tool(mut self, tool: ToolDefinition) -> Self {
+        self.registry.register(tool);
+        self
+    }
+
+    /// 设置最大工具轮次。
+    pub fn max_rounds(mut self, max_rounds: usize) -> Self {
+        self.max_rounds = max_rounds;
+        self
+    }
+
+    /// 发送请求并自动处理工具调用。
+    ///
+    /// # Errors
+    ///
+    /// 当工具不存在、工具执行失败或请求失败时返回错误。
+    pub async fn send(self) -> Result<ChatCompletion> {
+        let mut inner = self.inner;
+        if inner.params.tools.is_empty() {
+            inner.params.tools = self
+                .registry
+                .all()
+                .map(ChatToolDefinition::from_tool)
+                .collect();
+        }
+
+        let mut messages = inner.params.messages.clone();
+        for _ in 0..self.max_rounds {
+            let response = ChatCompletionCreateRequestBuilder {
+                params: ChatCompletionCreateParams {
+                    messages: messages.clone(),
+                    ..inner.params.clone()
+                },
+                ..inner.clone()
+            }
+            .send()
+            .await?;
+            let Some(choice) = response.choices.first() else {
+                return Ok(response);
+            };
+            if choice.message.tool_calls.is_empty() {
+                return Ok(response);
+            }
+
+            messages.push(choice.message.clone());
+
+            for tool_call in &choice.message.tool_calls {
+                let tool = self.registry.get(&tool_call.function.name).ok_or_else(|| {
+                    Error::InvalidConfig(format!("未注册工具: {}", tool_call.function.name))
+                })?;
+                let arguments = if tool_call.function.arguments.trim().is_empty() {
+                    Value::Object(Default::default())
+                } else {
+                    serde_json::from_str(&tool_call.function.arguments)
+                        .unwrap_or_else(|_| Value::String(tool_call.function.arguments.clone()))
+                };
+                let output = tool.invoke(arguments).await?;
+                let content = if output.is_string() {
+                    output.as_str().unwrap_or_default().to_owned()
+                } else {
+                    output.to_string()
+                };
+                messages.push(ChatCompletionMessage::tool(tool_call.id.clone(), content));
+            }
+        }
+
+        Err(Error::InvalidConfig("工具调用轮次已超过上限".into()))
+    }
+}
+
+/// 表示 Responses 创建构建器。
+#[derive(Debug, Clone, Default)]
+pub struct ResponseCreateRequestBuilder {
+    client: Option<Client>,
+    params: ResponseCreateParams,
+    options: RequestOptions,
+    extra_body: BTreeMap<String, Value>,
+    provider_options: BTreeMap<String, Value>,
+}
+
+/// 表示 Responses 流式构建器。
+#[derive(Debug, Clone)]
+pub struct ResponseStreamRequestBuilder {
+    inner: ResponseCreateRequestBuilder,
+}
+
+/// 表示 Realtime WebSocket 连接构建器。
+#[derive(Debug, Clone)]
+pub struct RealtimeSocketRequestBuilder {
+    client: Client,
+    model: Option<String>,
+    options: RequestOptions,
+}
+
+/// 表示 Responses WebSocket 连接构建器。
+#[derive(Debug, Clone)]
+pub struct ResponsesSocketRequestBuilder {
+    client: Client,
+    options: RequestOptions,
+}
+
+impl ResponseStreamRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            inner: ResponseCreateRequestBuilder::new(client),
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.inner = self.inner.model(model);
+        self
+    }
+
+    /// 设置输入文本。
+    pub fn input_text(mut self, input: impl Into<String>) -> Self {
+        self.inner = self.inner.input_text(input);
+        self
+    }
+
+    /// 设置输入项数组。
+    pub fn input_items(mut self, items: Vec<Value>) -> Self {
+        self.inner = self.inner.input_items(items);
+        self
+    }
+
+    /// 添加请求体字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+
+    /// 发送流式 Responses 请求。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或流初始化失败时返回错误。
+    pub async fn send(self) -> Result<ResponseStream> {
+        let (client, spec) = self.inner.build_spec(true)?;
+        Ok(ResponseStream::new(client.execute_sse(spec).await?))
+    }
+}
+
+impl RealtimeSocketRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            client,
+            model: None,
+            options: RequestOptions::default(),
+        }
+    }
+
+    /// 设置 Realtime 连接所使用的模型或 deployment。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.model = Some(model.into());
+        self
+    }
+
+    /// 添加额外请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_header(key, value);
+        self
+    }
+
+    /// 添加额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_query(key, value);
+        self
+    }
+
+    /// 建立 Realtime WebSocket 连接。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败或握手失败时返回错误。
+    pub async fn connect(self) -> Result<RealtimeSocket> {
+        RealtimeSocket::connect(&self.client, self.model, self.options).await
+    }
+}
+
+impl ResponsesSocketRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            client,
+            options: RequestOptions::default(),
+        }
+    }
+
+    /// 添加额外请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_header(key, value);
+        self
+    }
+
+    /// 添加额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_query(key, value);
+        self
+    }
+
+    /// 建立 Responses WebSocket 连接。
+    ///
+    /// # Errors
+    ///
+    /// 当握手失败时返回错误。
+    pub async fn connect(self) -> Result<ResponsesSocket> {
+        ResponsesSocket::connect(&self.client, self.options).await
+    }
+}
+
+impl ResponseCreateRequestBuilder {
+    fn new(client: Client) -> Self {
+        Self {
+            client: Some(client),
+            ..Self::default()
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.params.model = Some(model.into());
+        self
+    }
+
+    /// 直接设置输入文本。
+    pub fn input_text(mut self, input: impl Into<String>) -> Self {
+        self.params.input = Some(Value::String(input.into()));
+        self
+    }
+
+    /// 设置输入项数组。
+    pub fn input_items(mut self, items: Vec<Value>) -> Self {
+        self.params.input = Some(Value::Array(items));
+        self
+    }
+
+    /// 直接设置输入载荷。
+    pub fn input(mut self, input: Value) -> Self {
+        self.params.input = Some(input);
+        self
+    }
+
+    /// 设置温度。
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.params.temperature = Some(temperature);
+        self
+    }
+
+    /// 追加工具定义。
+    pub fn tool(mut self, tool: ChatToolDefinition) -> Self {
+        self.params.tools.push(tool);
+        self
+    }
+
+    /// 追加请求体字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.extra_body.insert(key.into(), value);
+        self
+    }
+
+    /// 追加 provider 选项。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.provider_options.insert(key.into(), value);
+        self
+    }
+
+    fn build_spec(mut self, stream: bool) -> Result<(Client, RequestSpec)> {
+        let client = self
+            .client
+            .take()
+            .ok_or_else(|| Error::InvalidConfig("Responses 构建器缺少客户端".into()))?;
+        if self.params.model.as_deref().unwrap_or_default().is_empty() {
+            return Err(Error::InvalidConfig("Responses 请求缺少 model".into()));
+        }
+        if self.params.input.is_none() {
+            return Err(Error::InvalidConfig("Responses 请求缺少 input".into()));
+        }
+
+        self.params.stream = Some(stream);
+        let provider_key = client.provider().kind().as_key();
+        let body = merge_json_body(
+            Some(value_from(&self.params)?),
+            &self.extra_body,
+            provider_key,
+            &self.provider_options,
+        );
+        let mut spec = RequestSpec::new(
+            if stream {
+                "responses.stream"
+            } else {
+                "responses.create"
+            },
+            Method::POST,
+            "/responses",
+        );
+        spec.body = Some(body);
+        spec.options = self.options;
+        Ok((client, spec))
+    }
+
+    /// 发送普通 Responses 请求。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或反序列化失败时返回错误。
+    pub async fn send(self) -> Result<Response> {
+        Ok(self.send_with_meta().await?.data)
+    }
+
+    /// 发送普通 Responses 请求并保留元信息。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或反序列化失败时返回错误。
+    pub async fn send_with_meta(self) -> Result<ApiResponse<Response>> {
+        let (client, spec) = self.build_spec(false)?;
+        client.execute_json(spec).await
+    }
+}
+
+/// 表示 Responses 结构化解析构建器。
+#[derive(Debug, Clone)]
+pub struct ResponseParseRequestBuilder<T> {
+    inner: ResponseCreateRequestBuilder,
+    _marker: PhantomData<T>,
+}
+
+impl<T> ResponseParseRequestBuilder<T> {
+    fn new(client: Client) -> Self {
+        Self {
+            inner: ResponseCreateRequestBuilder::new(client),
+            _marker: PhantomData,
+        }
+    }
+
+    /// 设置模型。
+    pub fn model(mut self, model: impl Into<String>) -> Self {
+        self.inner = self.inner.model(model);
+        self
+    }
+
+    /// 设置输入文本。
+    pub fn input_text(mut self, input: impl Into<String>) -> Self {
+        self.inner = self.inner.input_text(input);
+        self
+    }
+
+    /// 设置输入数组。
+    pub fn input_items(mut self, items: Vec<Value>) -> Self {
+        self.inner = self.inner.input_items(items);
+        self
+    }
+}
+
+impl<T> ResponseParseRequestBuilder<T>
+where
+    T: JsonSchema + serde::de::DeserializeOwned,
+{
+    /// 发送请求并解析结构化输出。
+    ///
+    /// # Errors
+    ///
+    /// 当响应缺少可解析文本或 JSON 解析失败时返回错误。
+    pub async fn send(self) -> Result<ParsedResponse<T>> {
+        let response = self.inner.send().await?;
+        let output_text = response
+            .output_text()
+            .ok_or_else(|| Error::InvalidConfig("Responses 返回中缺少可解析文本".into()))?;
+        let parsed = parse_json_payload(&output_text)?;
+        Ok(ParsedResponse { response, parsed })
+    }
+}
+
+handle!(
+    /// 顶层 completions 资源。
+    CompletionsResource
+);
+handle!(
+    /// 聊天资源命名空间。
+    ChatResource
+);
+handle!(
+    /// 聊天补全资源。
+    ChatCompletionsResource
+);
+handle!(
+    /// 聊天补全消息子资源。
+    ChatCompletionMessagesResource
+);
+handle!(
+    /// Embeddings 资源。
+    EmbeddingsResource
+);
+handle!(
+    /// Files 资源。
+    FilesResource
+);
+handle!(
+    /// Images 资源。
+    ImagesResource
+);
+handle!(
+    /// Audio 资源命名空间。
+    AudioResource
+);
+handle!(
+    /// Audio Speech 资源。
+    AudioSpeechResource
+);
+handle!(
+    /// Audio Transcriptions 资源。
+    AudioTranscriptionsResource
+);
+handle!(
+    /// Audio Translations 资源。
+    AudioTranslationsResource
+);
+handle!(
+    /// Moderations 资源。
+    ModerationsResource
+);
+handle!(
+    /// Models 资源。
+    ModelsResource
+);
+handle!(
+    /// Fine-tuning 资源命名空间。
+    FineTuningResource
+);
+handle!(
+    /// Fine-tuning Jobs 资源。
+    FineTuningJobsResource
+);
+handle!(
+    /// Fine-tuning Checkpoints 资源。
+    FineTuningJobCheckpointsResource
+);
+handle!(
+    /// Fine-tuning 权限资源。
+    FineTuningCheckpointPermissionsResource
+);
+handle!(
+    /// Fine-tuning Alpha 命名空间。
+    FineTuningAlphaResource
+);
+handle!(
+    /// Fine-tuning Alpha Graders 资源。
+    FineTuningAlphaGradersResource
+);
+handle!(
+    /// Graders 资源命名空间。
+    GradersResource
+);
+handle!(
+    /// Vector Stores 资源。
+    VectorStoresResource
+);
+handle!(
+    /// Vector Store Files 资源。
+    VectorStoreFilesResource
+);
+handle!(
+    /// Vector Store File Batches 资源。
+    VectorStoreFileBatchesResource
+);
+handle!(
+    /// Batches 资源。
+    BatchesResource
+);
+handle!(
+    /// Uploads 资源。
+    UploadsResource
+);
+handle!(
+    /// Uploads Parts 资源。
+    UploadPartsResource
+);
+handle!(
+    /// Responses 资源。
+    ResponsesResource
+);
+handle!(
+    /// Responses Input Items 资源。
+    ResponseInputItemsResource
+);
+handle!(
+    /// Responses Input Tokens 资源。
+    ResponseInputTokensResource
+);
+handle!(
+    /// Realtime 资源命名空间。
+    RealtimeResource
+);
+handle!(
+    /// Realtime Client Secrets 资源。
+    RealtimeClientSecretsResource
+);
+handle!(
+    /// Realtime Calls 资源。
+    RealtimeCallsResource
+);
+handle!(
+    /// Conversations 资源。
+    ConversationsResource
+);
+handle!(
+    /// Conversation Items 资源。
+    ConversationItemsResource
+);
+handle!(
+    /// Evals 资源。
+    EvalsResource
+);
+handle!(
+    /// Eval Runs 资源。
+    EvalRunsResource
+);
+handle!(
+    /// Eval Run Output Items 资源。
+    EvalRunOutputItemsResource
+);
+handle!(
+    /// Containers 资源。
+    ContainersResource
+);
+handle!(
+    /// Container Files 资源。
+    ContainerFilesResource
+);
+handle!(
+    /// Container File Content 资源。
+    ContainerFilesContentResource
+);
+handle!(
+    /// Skills 资源。
+    SkillsResource
+);
+handle!(
+    /// Skills Content 资源。
+    SkillsContentResource
+);
+handle!(
+    /// Skills Versions 资源。
+    SkillVersionsResource
+);
+handle!(
+    /// Skills Versions Content 资源。
+    SkillVersionsContentResource
+);
+handle!(
+    /// Videos 资源。
+    VideosResource
+);
+handle!(
+    /// Webhooks 资源。
+    WebhooksResource
+);
+handle!(
+    /// Beta 资源命名空间。
+    BetaResource
+);
+handle!(
+    /// Beta Assistants 资源。
+    BetaAssistantsResource
+);
+handle!(
+    /// Beta Threads 资源。
+    BetaThreadsResource
+);
+handle!(
+    /// Beta Thread Messages 资源。
+    BetaThreadMessagesResource
+);
+handle!(
+    /// Beta Thread Runs 资源。
+    BetaThreadRunsResource
+);
+handle!(
+    /// Beta Thread Run Steps 资源。
+    BetaThreadRunStepsResource
+);
+handle!(
+    /// Beta ChatKit 命名空间。
+    BetaChatkitResource
+);
+handle!(
+    /// Beta ChatKit Sessions 资源。
+    BetaChatkitSessionsResource
+);
+handle!(
+    /// Beta ChatKit Threads 资源。
+    BetaChatkitThreadsResource
+);
+handle!(
+    /// Beta Realtime 命名空间。
+    BetaRealtimeResource
+);
+handle!(
+    /// Beta Realtime Sessions 资源。
+    BetaRealtimeSessionsResource
+);
+handle!(
+    /// Beta Realtime Transcription Sessions 资源。
+    BetaRealtimeTranscriptionSessionsResource
+);
+
+impl CompletionsResource {
+    /// 创建 completions 请求构建器。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "completions.create",
+            Method::POST,
+            "/completions",
+        )
+    }
+}
+
+impl ChatResource {
+    /// 返回聊天补全资源。
+    pub fn completions(&self) -> ChatCompletionsResource {
+        ChatCompletionsResource::new(self.client.clone())
+    }
+}
+
+impl ChatCompletionsResource {
+    /// 创建聊天补全请求构建器。
+    pub fn create(&self) -> ChatCompletionCreateRequestBuilder {
+        ChatCompletionCreateRequestBuilder::new(self.client.clone())
+    }
+
+    /// 创建聊天补全流式请求构建器。
+    pub fn stream(&self) -> ChatCompletionStreamRequestBuilder {
+        ChatCompletionStreamRequestBuilder::new(self.client.clone())
+    }
+
+    /// 创建结构化解析请求构建器。
+    pub fn parse<T>(&self) -> ChatCompletionParseRequestBuilder<T> {
+        ChatCompletionParseRequestBuilder::new(self.client.clone())
+    }
+
+    /// 创建工具运行构建器。
+    pub fn run_tools(&self) -> ChatCompletionRunToolsRequestBuilder {
+        ChatCompletionRunToolsRequestBuilder::new(self.client.clone())
+    }
+
+    /// 根据 ID 获取聊天补全对象。
+    pub fn retrieve(&self, id: impl Into<String>) -> JsonRequestBuilder<ChatCompletion> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "chat.completions.retrieve",
+            Method::GET,
+            format!("/chat/completions/{}", id.into()),
+        )
+    }
+
+    /// 更新聊天补全对象。
+    pub fn update(&self, id: impl Into<String>) -> JsonRequestBuilder<ChatCompletion> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "chat.completions.update",
+            Method::POST,
+            format!("/chat/completions/{}", id.into()),
+        )
+    }
+
+    /// 列出聊天补全对象。
+    pub fn list(&self) -> ListRequestBuilder<ChatCompletion> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "chat.completions.list",
+            "/chat/completions",
+        )
+    }
+
+    /// 删除聊天补全对象。
+    pub fn delete(&self, id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "chat.completions.delete",
+            Method::DELETE,
+            format!("/chat/completions/{}", id.into()),
+        )
+    }
+
+    /// 返回聊天补全消息子资源。
+    pub fn messages(&self) -> ChatCompletionMessagesResource {
+        ChatCompletionMessagesResource::new(self.client.clone())
+    }
+}
+
+impl ChatCompletionMessagesResource {
+    /// 列出某个聊天补全下的消息。
+    pub fn list(&self, completion_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "chat.completions.messages.list",
+            format!("/chat/completions/{}/messages", completion_id.into()),
+        )
+    }
+}
+
+impl EmbeddingsResource {
+    /// 创建 embeddings 请求构建器。
+    pub fn create(&self) -> JsonRequestBuilder<EmbeddingResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "embeddings.create",
+            Method::POST,
+            "/embeddings",
+        )
+    }
+}
+
+impl FilesResource {
+    /// 创建文件上传请求。
+    pub fn create(&self) -> JsonRequestBuilder<FileObject> {
+        JsonRequestBuilder::new(self.client.clone(), "files.create", Method::POST, "/files")
+    }
+
+    /// 获取文件对象。
+    pub fn retrieve(&self, file_id: impl Into<String>) -> JsonRequestBuilder<FileObject> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "files.retrieve",
+            Method::GET,
+            format!("/files/{}", file_id.into()),
+        )
+    }
+
+    /// 列出文件。
+    pub fn list(&self) -> ListRequestBuilder<FileObject> {
+        ListRequestBuilder::new(self.client.clone(), "files.list", "/files")
+    }
+
+    /// 删除文件。
+    pub fn delete(&self, file_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "files.delete",
+            Method::DELETE,
+            format!("/files/{}", file_id.into()),
+        )
+    }
+
+    /// 获取文件内容。
+    pub fn content(&self, file_id: impl Into<String>) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "files.content",
+            Method::GET,
+            format!("/files/{}/content", file_id.into()),
+        )
+    }
+}
+
+impl ImagesResource {
+    /// 创建图像生成请求。
+    pub fn generate(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "images.generate",
+            Method::POST,
+            "/images/generations",
+        )
+    }
+
+    /// 创建图像编辑请求。
+    pub fn edit(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "images.edit",
+            Method::POST,
+            "/images/edits",
+        )
+    }
+
+    /// 创建图像变体请求。
+    pub fn create_variation(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "images.create_variation",
+            Method::POST,
+            "/images/variations",
+        )
+    }
+}
+
+impl AudioResource {
+    /// 返回 speech 子资源。
+    pub fn speech(&self) -> AudioSpeechResource {
+        AudioSpeechResource::new(self.client.clone())
+    }
+
+    /// 返回 transcriptions 子资源。
+    pub fn transcriptions(&self) -> AudioTranscriptionsResource {
+        AudioTranscriptionsResource::new(self.client.clone())
+    }
+
+    /// 返回 translations 子资源。
+    pub fn translations(&self) -> AudioTranslationsResource {
+        AudioTranslationsResource::new(self.client.clone())
+    }
+}
+
+impl AudioSpeechResource {
+    /// 创建语音合成请求。
+    pub fn create(&self) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "audio.speech.create",
+            Method::POST,
+            "/audio/speech",
+        )
+    }
+}
+
+impl AudioTranscriptionsResource {
+    /// 创建转写请求。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "audio.transcriptions.create",
+            Method::POST,
+            "/audio/transcriptions",
+        )
+    }
+}
+
+impl AudioTranslationsResource {
+    /// 创建翻译请求。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "audio.translations.create",
+            Method::POST,
+            "/audio/translations",
+        )
+    }
+}
+
+impl ModerationsResource {
+    /// 创建 moderation 请求。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "moderations.create",
+            Method::POST,
+            "/moderations",
+        )
+    }
+}
+
+impl ModelsResource {
+    /// 列出模型。
+    pub fn list(&self) -> ListRequestBuilder<Model> {
+        ListRequestBuilder::new(self.client.clone(), "models.list", "/models")
+    }
+
+    /// 获取单个模型。
+    pub fn retrieve(&self, model_id: impl Into<String>) -> JsonRequestBuilder<Model> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "models.retrieve",
+            Method::GET,
+            format!("/models/{}", model_id.into()),
+        )
+    }
+
+    /// 删除模型。
+    pub fn delete(&self, model_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "models.delete",
+            Method::DELETE,
+            format!("/models/{}", model_id.into()),
+        )
+    }
+}
+
+impl FineTuningResource {
+    /// 返回 jobs 子资源。
+    pub fn jobs(&self) -> FineTuningJobsResource {
+        FineTuningJobsResource::new(self.client.clone())
+    }
+
+    /// 返回 checkpoints permissions 子资源。
+    pub fn checkpoints(&self) -> FineTuningCheckpointPermissionsResource {
+        FineTuningCheckpointPermissionsResource::new(self.client.clone())
+    }
+
+    /// 返回 alpha 子资源。
+    pub fn alpha(&self) -> FineTuningAlphaResource {
+        FineTuningAlphaResource::new(self.client.clone())
+    }
+}
+
+impl FineTuningJobsResource {
+    /// 创建 fine-tuning job。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.create",
+            Method::POST,
+            "/fine_tuning/jobs",
+        )
+    }
+
+    /// 获取 fine-tuning job。
+    pub fn retrieve(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.retrieve",
+            Method::GET,
+            format!("/fine_tuning/jobs/{}", job_id.into()),
+        )
+    }
+
+    /// 列出 fine-tuning jobs。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.list",
+            "/fine_tuning/jobs",
+        )
+    }
+
+    /// 取消 fine-tuning job。
+    pub fn cancel(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.cancel",
+            Method::POST,
+            format!("/fine_tuning/jobs/{}/cancel", job_id.into()),
+        )
+    }
+
+    /// 暂停 fine-tuning job。
+    pub fn pause(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.pause",
+            Method::POST,
+            format!("/fine_tuning/jobs/{}/pause", job_id.into()),
+        )
+    }
+
+    /// 恢复 fine-tuning job。
+    pub fn resume(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.resume",
+            Method::POST,
+            format!("/fine_tuning/jobs/{}/resume", job_id.into()),
+        )
+    }
+
+    /// 列出事件。
+    pub fn list_events(&self, job_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.list_events",
+            format!("/fine_tuning/jobs/{}/events", job_id.into()),
+        )
+    }
+
+    /// 返回 checkpoints 子资源。
+    pub fn checkpoints(&self) -> FineTuningJobCheckpointsResource {
+        FineTuningJobCheckpointsResource::new(self.client.clone())
+    }
+}
+
+impl FineTuningJobCheckpointsResource {
+    /// 列出某个 job 的 checkpoints。
+    pub fn list(&self, job_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.jobs.checkpoints.list",
+            format!("/fine_tuning/jobs/{}/checkpoints", job_id.into()),
+        )
+    }
+}
+
+impl FineTuningCheckpointPermissionsResource {
+    /// 创建 checkpoint permission。
+    pub fn create(&self, checkpoint_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.checkpoints.permissions.create",
+            Method::POST,
+            format!(
+                "/fine_tuning/checkpoints/{}/permissions",
+                checkpoint_id.into()
+            ),
+        )
+    }
+
+    /// 获取 checkpoint permission。
+    pub fn retrieve(
+        &self,
+        checkpoint_id: impl Into<String>,
+        permission_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.checkpoints.permissions.retrieve",
+            Method::GET,
+            format!(
+                "/fine_tuning/checkpoints/{}/permissions/{}",
+                checkpoint_id.into(),
+                permission_id.into()
+            ),
+        )
+    }
+
+    /// 列出 checkpoint permission。
+    pub fn list(&self, checkpoint_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.checkpoints.permissions.list",
+            format!(
+                "/fine_tuning/checkpoints/{}/permissions",
+                checkpoint_id.into()
+            ),
+        )
+    }
+
+    /// 删除 checkpoint permission。
+    pub fn delete(
+        &self,
+        checkpoint_id: impl Into<String>,
+        permission_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.checkpoints.permissions.delete",
+            Method::DELETE,
+            format!(
+                "/fine_tuning/checkpoints/{}/permissions/{}",
+                checkpoint_id.into(),
+                permission_id.into()
+            ),
+        )
+    }
+}
+
+impl FineTuningAlphaResource {
+    /// 返回 graders 子资源。
+    pub fn graders(&self) -> FineTuningAlphaGradersResource {
+        FineTuningAlphaGradersResource::new(self.client.clone())
+    }
+}
+
+impl FineTuningAlphaGradersResource {
+    /// 执行 grader。
+    pub fn run(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.alpha.graders.run",
+            Method::POST,
+            "/fine_tuning/alpha/graders/run",
+        )
+    }
+
+    /// 校验 grader。
+    pub fn validate(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "fine_tuning.alpha.graders.validate",
+            Method::POST,
+            "/fine_tuning/alpha/graders/validate",
+        )
+    }
+}
+
+impl GradersResource {
+    /// 当前资源主要导出类型，暂不提供额外 HTTP 方法。
+    pub fn grader_models(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "graders.grader_models",
+            Method::GET,
+            "/graders/grader_models",
+        )
+    }
+}
+
+impl VectorStoresResource {
+    /// 创建 vector store。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.create",
+            Method::POST,
+            "/vector_stores",
+        )
+    }
+
+    /// 获取 vector store。
+    pub fn retrieve(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.retrieve",
+            Method::GET,
+            format!("/vector_stores/{}", vector_store_id.into()),
+        )
+    }
+
+    /// 更新 vector store。
+    pub fn update(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.update",
+            Method::POST,
+            format!("/vector_stores/{}", vector_store_id.into()),
+        )
+    }
+
+    /// 列出 vector store。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(self.client.clone(), "vector_stores.list", "/vector_stores")
+    }
+
+    /// 删除 vector store。
+    pub fn delete(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.delete",
+            Method::DELETE,
+            format!("/vector_stores/{}", vector_store_id.into()),
+        )
+    }
+
+    /// 搜索 vector store。
+    pub fn search(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.search",
+            Method::POST,
+            format!("/vector_stores/{}/search", vector_store_id.into()),
+        )
+    }
+
+    /// 返回 files 子资源。
+    pub fn files(&self) -> VectorStoreFilesResource {
+        VectorStoreFilesResource::new(self.client.clone())
+    }
+
+    /// 返回 file_batches 子资源。
+    pub fn file_batches(&self) -> VectorStoreFileBatchesResource {
+        VectorStoreFileBatchesResource::new(self.client.clone())
+    }
+}
+
+impl VectorStoreFilesResource {
+    /// 创建 vector store 文件。
+    pub fn create(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.files.create",
+            Method::POST,
+            format!("/vector_stores/{}/files", vector_store_id.into()),
+        )
+    }
+
+    /// 获取 vector store 文件。
+    pub fn retrieve(
+        &self,
+        vector_store_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.files.retrieve",
+            Method::GET,
+            format!(
+                "/vector_stores/{}/files/{}",
+                vector_store_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+
+    /// 更新 vector store 文件。
+    pub fn update(
+        &self,
+        vector_store_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.files.update",
+            Method::POST,
+            format!(
+                "/vector_stores/{}/files/{}",
+                vector_store_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+
+    /// 列出 vector store 文件。
+    pub fn list(&self, vector_store_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.files.list",
+            format!("/vector_stores/{}/files", vector_store_id.into()),
+        )
+    }
+
+    /// 删除 vector store 文件。
+    pub fn delete(
+        &self,
+        vector_store_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.files.delete",
+            Method::DELETE,
+            format!(
+                "/vector_stores/{}/files/{}",
+                vector_store_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+
+    /// 获取 vector store 文件内容。
+    pub fn content(
+        &self,
+        vector_store_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.files.content",
+            Method::GET,
+            format!(
+                "/vector_stores/{}/files/{}/content",
+                vector_store_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+}
+
+impl VectorStoreFileBatchesResource {
+    /// 创建 file batch。
+    pub fn create(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.file_batches.create",
+            Method::POST,
+            format!("/vector_stores/{}/file_batches", vector_store_id.into()),
+        )
+    }
+
+    /// 获取 file batch。
+    pub fn retrieve(
+        &self,
+        vector_store_id: impl Into<String>,
+        batch_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.file_batches.retrieve",
+            Method::GET,
+            format!(
+                "/vector_stores/{}/file_batches/{}",
+                vector_store_id.into(),
+                batch_id.into()
+            ),
+        )
+    }
+
+    /// 取消 file batch。
+    pub fn cancel(
+        &self,
+        vector_store_id: impl Into<String>,
+        batch_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.file_batches.cancel",
+            Method::POST,
+            format!(
+                "/vector_stores/{}/file_batches/{}/cancel",
+                vector_store_id.into(),
+                batch_id.into()
+            ),
+        )
+    }
+
+    /// 列出 file batch 文件。
+    pub fn list_files(
+        &self,
+        vector_store_id: impl Into<String>,
+        batch_id: impl Into<String>,
+    ) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "vector_stores.file_batches.list_files",
+            format!(
+                "/vector_stores/{}/file_batches/{}/files",
+                vector_store_id.into(),
+                batch_id.into()
+            ),
+        )
+    }
+}
+
+impl BatchesResource {
+    /// 创建 batch。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "batches.create",
+            Method::POST,
+            "/batches",
+        )
+    }
+
+    /// 获取 batch。
+    pub fn retrieve(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "batches.retrieve",
+            Method::GET,
+            format!("/batches/{}", batch_id.into()),
+        )
+    }
+
+    /// 列出 batches。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(self.client.clone(), "batches.list", "/batches")
+    }
+
+    /// 取消 batch。
+    pub fn cancel(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "batches.cancel",
+            Method::POST,
+            format!("/batches/{}/cancel", batch_id.into()),
+        )
+    }
+}
+
+impl UploadsResource {
+    /// 创建 upload。
+    pub fn create(&self) -> JsonRequestBuilder<UploadObject> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "uploads.create",
+            Method::POST,
+            "/uploads",
+        )
+    }
+
+    /// 取消 upload。
+    pub fn cancel(&self, upload_id: impl Into<String>) -> JsonRequestBuilder<UploadObject> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "uploads.cancel",
+            Method::POST,
+            format!("/uploads/{}/cancel", upload_id.into()),
+        )
+    }
+
+    /// 完成 upload。
+    pub fn complete(&self, upload_id: impl Into<String>) -> JsonRequestBuilder<UploadObject> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "uploads.complete",
+            Method::POST,
+            format!("/uploads/{}/complete", upload_id.into()),
+        )
+    }
+
+    /// 返回 parts 子资源。
+    pub fn parts(&self) -> UploadPartsResource {
+        UploadPartsResource::new(self.client.clone())
+    }
+}
+
+impl UploadPartsResource {
+    /// 创建 upload part。
+    pub fn create(&self, upload_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "uploads.parts.create",
+            Method::POST,
+            format!("/uploads/{}/parts", upload_id.into()),
+        )
+    }
+}
+
+impl ResponsesResource {
+    /// 创建 responses 请求构建器。
+    pub fn create(&self) -> ResponseCreateRequestBuilder {
+        ResponseCreateRequestBuilder::new(self.client.clone())
+    }
+
+    /// 创建 responses 结构化解析构建器。
+    pub fn parse<T>(&self) -> ResponseParseRequestBuilder<T> {
+        ResponseParseRequestBuilder::new(self.client.clone())
+    }
+
+    /// 创建 responses 流式构建器。
+    pub fn stream(&self) -> ResponseStreamRequestBuilder {
+        ResponseStreamRequestBuilder::new(self.client.clone())
+    }
+
+    /// 创建 Responses WebSocket 连接构建器。
+    pub fn ws(&self) -> ResponsesSocketRequestBuilder {
+        ResponsesSocketRequestBuilder::new(self.client.clone())
+    }
+
+    /// 获取 response。
+    pub fn retrieve(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "responses.retrieve",
+            Method::GET,
+            format!("/responses/{}", response_id.into()),
+        )
+    }
+
+    /// 删除 response。
+    pub fn delete(&self, response_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "responses.delete",
+            Method::DELETE,
+            format!("/responses/{}", response_id.into()),
+        )
+    }
+
+    /// 取消后台 response。
+    pub fn cancel(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "responses.cancel",
+            Method::POST,
+            format!("/responses/{}/cancel", response_id.into()),
+        )
+    }
+
+    /// 压缩 response。
+    pub fn compact(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "responses.compact",
+            Method::POST,
+            format!("/responses/{}/compact", response_id.into()),
+        )
+    }
+
+    /// 返回 input_items 子资源。
+    pub fn input_items(&self) -> ResponseInputItemsResource {
+        ResponseInputItemsResource::new(self.client.clone())
+    }
+
+    /// 返回 input_tokens 子资源。
+    pub fn input_tokens(&self) -> ResponseInputTokensResource {
+        ResponseInputTokensResource::new(self.client.clone())
+    }
+}
+
+impl ResponseInputItemsResource {
+    /// 列出 response 输入项。
+    pub fn list(&self, response_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "responses.input_items.list",
+            format!("/responses/{}/input_items", response_id.into()),
+        )
+    }
+}
+
+impl ResponseInputTokensResource {
+    /// 统计输入 token。
+    pub fn count(&self) -> JsonRequestBuilder<InputTokenCount> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "responses.input_tokens.count",
+            Method::POST,
+            "/responses/input_tokens",
+        )
+    }
+}
+
+impl RealtimeResource {
+    /// 创建 Realtime WebSocket 连接构建器。
+    pub fn ws(&self) -> RealtimeSocketRequestBuilder {
+        RealtimeSocketRequestBuilder::new(self.client.clone())
+    }
+
+    /// 返回 client_secrets 子资源。
+    pub fn client_secrets(&self) -> RealtimeClientSecretsResource {
+        RealtimeClientSecretsResource::new(self.client.clone())
+    }
+
+    /// 返回 calls 子资源。
+    pub fn calls(&self) -> RealtimeCallsResource {
+        RealtimeCallsResource::new(self.client.clone())
+    }
+}
+
+impl RealtimeClientSecretsResource {
+    /// 创建 client secret。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "realtime.client_secrets.create",
+            Method::POST,
+            "/realtime/client_secrets",
+        )
+    }
+}
+
+impl RealtimeCallsResource {
+    /// 接听通话。
+    pub fn accept(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        realtime_call_action(
+            self.client.clone(),
+            "realtime.calls.accept",
+            call_id,
+            "accept",
+        )
+    }
+
+    /// 挂断通话。
+    pub fn hangup(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        realtime_call_action(
+            self.client.clone(),
+            "realtime.calls.hangup",
+            call_id,
+            "hangup",
+        )
+    }
+
+    /// 转接通话。
+    pub fn refer(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        realtime_call_action(
+            self.client.clone(),
+            "realtime.calls.refer",
+            call_id,
+            "refer",
+        )
+    }
+
+    /// 拒绝通话。
+    pub fn reject(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        realtime_call_action(
+            self.client.clone(),
+            "realtime.calls.reject",
+            call_id,
+            "reject",
+        )
+    }
+}
+
+fn realtime_call_action(
+    client: Client,
+    endpoint_id: &'static str,
+    call_id: impl Into<String>,
+    action: &str,
+) -> JsonRequestBuilder<Value> {
+    JsonRequestBuilder::new(
+        client,
+        endpoint_id,
+        Method::POST,
+        format!("/realtime/calls/{}/{}", call_id.into(), action),
+    )
+}
+
+impl ConversationsResource {
+    /// 创建 conversation。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.create",
+            Method::POST,
+            "/conversations",
+        )
+    }
+
+    /// 获取 conversation。
+    pub fn retrieve(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.retrieve",
+            Method::GET,
+            format!("/conversations/{}", conversation_id.into()),
+        )
+    }
+
+    /// 更新 conversation。
+    pub fn update(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.update",
+            Method::POST,
+            format!("/conversations/{}", conversation_id.into()),
+        )
+    }
+
+    /// 删除 conversation。
+    pub fn delete(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.delete",
+            Method::DELETE,
+            format!("/conversations/{}", conversation_id.into()),
+        )
+    }
+
+    /// 返回 items 子资源。
+    pub fn items(&self) -> ConversationItemsResource {
+        ConversationItemsResource::new(self.client.clone())
+    }
+}
+
+impl ConversationItemsResource {
+    /// 创建 conversation item。
+    pub fn create(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.items.create",
+            Method::POST,
+            format!("/conversations/{}/items", conversation_id.into()),
+        )
+    }
+
+    /// 获取 conversation item。
+    pub fn retrieve(
+        &self,
+        conversation_id: impl Into<String>,
+        item_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.items.retrieve",
+            Method::GET,
+            format!(
+                "/conversations/{}/items/{}",
+                conversation_id.into(),
+                item_id.into()
+            ),
+        )
+    }
+
+    /// 列出 conversation items。
+    pub fn list(&self, conversation_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "conversations.items.list",
+            format!("/conversations/{}/items", conversation_id.into()),
+        )
+    }
+
+    /// 删除 conversation item。
+    pub fn delete(
+        &self,
+        conversation_id: impl Into<String>,
+        item_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "conversations.items.delete",
+            Method::DELETE,
+            format!(
+                "/conversations/{}/items/{}",
+                conversation_id.into(),
+                item_id.into()
+            ),
+        )
+    }
+}
+
+impl EvalsResource {
+    /// 创建 eval。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(self.client.clone(), "evals.create", Method::POST, "/evals")
+    }
+
+    /// 获取 eval。
+    pub fn retrieve(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.retrieve",
+            Method::GET,
+            format!("/evals/{}", eval_id.into()),
+        )
+    }
+
+    /// 更新 eval。
+    pub fn update(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.update",
+            Method::POST,
+            format!("/evals/{}", eval_id.into()),
+        )
+    }
+
+    /// 列出 evals。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(self.client.clone(), "evals.list", "/evals")
+    }
+
+    /// 删除 eval。
+    pub fn delete(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.delete",
+            Method::DELETE,
+            format!("/evals/{}", eval_id.into()),
+        )
+    }
+
+    /// 返回 runs 子资源。
+    pub fn runs(&self) -> EvalRunsResource {
+        EvalRunsResource::new(self.client.clone())
+    }
+}
+
+impl EvalRunsResource {
+    /// 创建 eval run。
+    pub fn create(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.create",
+            Method::POST,
+            format!("/evals/{}/runs", eval_id.into()),
+        )
+    }
+
+    /// 获取 eval run。
+    pub fn retrieve(
+        &self,
+        eval_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.retrieve",
+            Method::GET,
+            format!("/evals/{}/runs/{}", eval_id.into(), run_id.into()),
+        )
+    }
+
+    /// 列出 eval runs。
+    pub fn list(&self, eval_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.list",
+            format!("/evals/{}/runs", eval_id.into()),
+        )
+    }
+
+    /// 删除 eval run。
+    pub fn delete(
+        &self,
+        eval_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.delete",
+            Method::DELETE,
+            format!("/evals/{}/runs/{}", eval_id.into(), run_id.into()),
+        )
+    }
+
+    /// 取消 eval run。
+    pub fn cancel(
+        &self,
+        eval_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.cancel",
+            Method::POST,
+            format!("/evals/{}/runs/{}/cancel", eval_id.into(), run_id.into()),
+        )
+    }
+
+    /// 返回 output_items 子资源。
+    pub fn output_items(&self) -> EvalRunOutputItemsResource {
+        EvalRunOutputItemsResource::new(self.client.clone())
+    }
+}
+
+impl EvalRunOutputItemsResource {
+    /// 获取 output item。
+    pub fn retrieve(
+        &self,
+        eval_id: impl Into<String>,
+        run_id: impl Into<String>,
+        item_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.output_items.retrieve",
+            Method::GET,
+            format!(
+                "/evals/{}/runs/{}/output_items/{}",
+                eval_id.into(),
+                run_id.into(),
+                item_id.into()
+            ),
+        )
+    }
+
+    /// 列出 output items。
+    pub fn list(
+        &self,
+        eval_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "evals.runs.output_items.list",
+            format!(
+                "/evals/{}/runs/{}/output_items",
+                eval_id.into(),
+                run_id.into()
+            ),
+        )
+    }
+}
+
+impl ContainersResource {
+    /// 创建 container。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "containers.create",
+            Method::POST,
+            "/containers",
+        )
+    }
+
+    /// 获取 container。
+    pub fn retrieve(&self, container_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "containers.retrieve",
+            Method::GET,
+            format!("/containers/{}", container_id.into()),
+        )
+    }
+
+    /// 列出 containers。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(self.client.clone(), "containers.list", "/containers")
+    }
+
+    /// 删除 container。
+    pub fn delete(&self, container_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "containers.delete",
+            Method::DELETE,
+            format!("/containers/{}", container_id.into()),
+        )
+    }
+
+    /// 返回 files 子资源。
+    pub fn files(&self) -> ContainerFilesResource {
+        ContainerFilesResource::new(self.client.clone())
+    }
+}
+
+impl ContainerFilesResource {
+    /// 创建 container file。
+    pub fn create(&self, container_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "containers.files.create",
+            Method::POST,
+            format!("/containers/{}/files", container_id.into()),
+        )
+    }
+
+    /// 获取 container file。
+    pub fn retrieve(
+        &self,
+        container_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "containers.files.retrieve",
+            Method::GET,
+            format!(
+                "/containers/{}/files/{}",
+                container_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+
+    /// 列出 container files。
+    pub fn list(&self, container_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "containers.files.list",
+            format!("/containers/{}/files", container_id.into()),
+        )
+    }
+
+    /// 删除 container file。
+    pub fn delete(
+        &self,
+        container_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "containers.files.delete",
+            Method::DELETE,
+            format!(
+                "/containers/{}/files/{}",
+                container_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+
+    /// 返回 content 子资源。
+    pub fn content(&self) -> ContainerFilesContentResource {
+        ContainerFilesContentResource::new(self.client.clone())
+    }
+}
+
+impl ContainerFilesContentResource {
+    /// 获取 container file 内容。
+    pub fn retrieve(
+        &self,
+        container_id: impl Into<String>,
+        file_id: impl Into<String>,
+    ) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "containers.files.content.retrieve",
+            Method::GET,
+            format!(
+                "/containers/{}/files/{}/content",
+                container_id.into(),
+                file_id.into()
+            ),
+        )
+    }
+}
+
+impl SkillsResource {
+    /// 创建 skill。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.create",
+            Method::POST,
+            "/skills",
+        )
+    }
+
+    /// 获取 skill。
+    pub fn retrieve(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.retrieve",
+            Method::GET,
+            format!("/skills/{}", skill_id.into()),
+        )
+    }
+
+    /// 更新 skill。
+    pub fn update(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.update",
+            Method::POST,
+            format!("/skills/{}", skill_id.into()),
+        )
+    }
+
+    /// 列出 skills。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(self.client.clone(), "skills.list", "/skills")
+    }
+
+    /// 删除 skill。
+    pub fn delete(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.delete",
+            Method::DELETE,
+            format!("/skills/{}", skill_id.into()),
+        )
+    }
+
+    /// 返回 content 子资源。
+    pub fn content(&self) -> SkillsContentResource {
+        SkillsContentResource::new(self.client.clone())
+    }
+
+    /// 返回 versions 子资源。
+    pub fn versions(&self) -> SkillVersionsResource {
+        SkillVersionsResource::new(self.client.clone())
+    }
+}
+
+impl SkillsContentResource {
+    /// 获取 skill 内容。
+    pub fn retrieve(&self, skill_id: impl Into<String>) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "skills.content.retrieve",
+            Method::GET,
+            format!("/skills/{}/content", skill_id.into()),
+        )
+    }
+}
+
+impl SkillVersionsResource {
+    /// 创建 skill version。
+    pub fn create(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.versions.create",
+            Method::POST,
+            format!("/skills/{}/versions", skill_id.into()),
+        )
+    }
+
+    /// 获取 skill version。
+    pub fn retrieve(
+        &self,
+        skill_id: impl Into<String>,
+        version_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.versions.retrieve",
+            Method::GET,
+            format!("/skills/{}/versions/{}", skill_id.into(), version_id.into()),
+        )
+    }
+
+    /// 列出 skill versions。
+    pub fn list(&self, skill_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(
+            self.client.clone(),
+            "skills.versions.list",
+            format!("/skills/{}/versions", skill_id.into()),
+        )
+    }
+
+    /// 删除 skill version。
+    pub fn delete(
+        &self,
+        skill_id: impl Into<String>,
+        version_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "skills.versions.delete",
+            Method::DELETE,
+            format!("/skills/{}/versions/{}", skill_id.into(), version_id.into()),
+        )
+    }
+
+    /// 返回 content 子资源。
+    pub fn content(&self) -> SkillVersionsContentResource {
+        SkillVersionsContentResource::new(self.client.clone())
+    }
+}
+
+impl SkillVersionsContentResource {
+    /// 获取 skill version 内容。
+    pub fn retrieve(
+        &self,
+        skill_id: impl Into<String>,
+        version_id: impl Into<String>,
+    ) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "skills.versions.content.retrieve",
+            Method::GET,
+            format!(
+                "/skills/{}/versions/{}/content",
+                skill_id.into(),
+                version_id.into()
+            ),
+        )
+    }
+}
+
+impl VideosResource {
+    /// 创建视频。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.create",
+            Method::POST,
+            "/videos",
+        )
+    }
+
+    /// 获取视频。
+    pub fn retrieve(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.retrieve",
+            Method::GET,
+            format!("/videos/{}", video_id.into()),
+        )
+    }
+
+    /// 列出视频。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        ListRequestBuilder::new(self.client.clone(), "videos.list", "/videos")
+    }
+
+    /// 删除视频。
+    pub fn delete(&self, video_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.delete",
+            Method::DELETE,
+            format!("/videos/{}", video_id.into()),
+        )
+    }
+
+    /// 编辑视频。
+    pub fn edit(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.edit",
+            Method::POST,
+            format!("/videos/{}/edit", video_id.into()),
+        )
+    }
+
+    /// 扩展视频。
+    pub fn extend(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.extend",
+            Method::POST,
+            format!("/videos/{}/extend", video_id.into()),
+        )
+    }
+
+    /// 创建角色。
+    pub fn create_character(&self) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.create_character",
+            Method::POST,
+            "/videos/characters",
+        )
+    }
+
+    /// 获取角色。
+    pub fn get_character(&self, character_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.get_character",
+            Method::GET,
+            format!("/videos/characters/{}", character_id.into()),
+        )
+    }
+
+    /// 下载视频内容。
+    pub fn download_content(&self, video_id: impl Into<String>) -> BytesRequestBuilder {
+        BytesRequestBuilder::new(
+            self.client.clone(),
+            "videos.download_content",
+            Method::GET,
+            format!("/videos/{}/content", video_id.into()),
+        )
+    }
+
+    /// 混剪视频。
+    pub fn remix(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        JsonRequestBuilder::new(
+            self.client.clone(),
+            "videos.remix",
+            Method::POST,
+            format!("/videos/{}/remix", video_id.into()),
+        )
+    }
+}
+
+impl WebhooksResource {
+    fn verifier(&self) -> WebhookVerifier {
+        WebhookVerifier::new(self.client.inner.options.webhook_secret.clone())
+    }
+
+    /// 校验 Webhook 签名。
+    ///
+    /// # Errors
+    ///
+    /// 当签名不合法时返回错误。
+    pub fn verify_signature<H>(
+        &self,
+        payload: &str,
+        headers: &H,
+        secret: Option<&str>,
+        tolerance: Duration,
+    ) -> Result<()>
+    where
+        H: HeaderLookup,
+    {
+        self.verifier()
+            .verify_signature(payload, headers, secret, tolerance)
+    }
+
+    /// 校验签名并解包事件。
+    ///
+    /// # Errors
+    ///
+    /// 当签名校验失败或 JSON 解析失败时返回错误。
+    pub fn unwrap<H, T>(
+        &self,
+        payload: &str,
+        headers: &H,
+        secret: Option<&str>,
+        tolerance: Duration,
+    ) -> Result<T>
+    where
+        H: HeaderLookup,
+        T: serde::de::DeserializeOwned,
+    {
+        self.verifier().unwrap(payload, headers, secret, tolerance)
+    }
+}
+
+impl BetaResource {
+    /// 返回 assistants 子资源。
+    pub fn assistants(&self) -> BetaAssistantsResource {
+        BetaAssistantsResource::new(self.client.clone())
+    }
+
+    /// 返回 threads 子资源。
+    pub fn threads(&self) -> BetaThreadsResource {
+        BetaThreadsResource::new(self.client.clone())
+    }
+
+    /// 返回 chatkit 子资源。
+    pub fn chatkit(&self) -> BetaChatkitResource {
+        BetaChatkitResource::new(self.client.clone())
+    }
+
+    /// 返回 realtime 子资源。
+    pub fn realtime(&self) -> BetaRealtimeResource {
+        BetaRealtimeResource::new(self.client.clone())
+    }
+}
+
+impl BetaAssistantsResource {
+    /// 创建 assistant。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.assistants.create",
+            Method::POST,
+            "/assistants",
+        )
+    }
+
+    /// 获取 assistant。
+    pub fn retrieve(&self, assistant_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.assistants.retrieve",
+            Method::GET,
+            format!("/assistants/{}", assistant_id.into()),
+        )
+    }
+
+    /// 更新 assistant。
+    pub fn update(&self, assistant_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.assistants.update",
+            Method::POST,
+            format!("/assistants/{}", assistant_id.into()),
+        )
+    }
+
+    /// 列出 assistants。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        beta_list(self.client.clone(), "beta.assistants.list", "/assistants")
+    }
+
+    /// 删除 assistant。
+    pub fn delete(&self, assistant_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        beta_json(
+            self.client.clone(),
+            "beta.assistants.delete",
+            Method::DELETE,
+            format!("/assistants/{}", assistant_id.into()),
+        )
+    }
+}
+
+impl BetaThreadsResource {
+    /// 创建 thread。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.create",
+            Method::POST,
+            "/threads",
+        )
+    }
+
+    /// 获取 thread。
+    pub fn retrieve(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.retrieve",
+            Method::GET,
+            format!("/threads/{}", thread_id.into()),
+        )
+    }
+
+    /// 更新 thread。
+    pub fn update(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.update",
+            Method::POST,
+            format!("/threads/{}", thread_id.into()),
+        )
+    }
+
+    /// 删除 thread。
+    pub fn delete(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.delete",
+            Method::DELETE,
+            format!("/threads/{}", thread_id.into()),
+        )
+    }
+
+    /// 创建并运行 thread。
+    pub fn create_and_run(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.create_and_run",
+            Method::POST,
+            "/threads/runs",
+        )
+    }
+
+    /// 创建并运行流式 thread。
+    pub fn create_and_run_stream(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.create_and_run_stream",
+            Method::POST,
+            "/threads/runs",
+        )
+    }
+
+    /// 返回 messages 子资源。
+    pub fn messages(&self) -> BetaThreadMessagesResource {
+        BetaThreadMessagesResource::new(self.client.clone())
+    }
+
+    /// 返回 runs 子资源。
+    pub fn runs(&self) -> BetaThreadRunsResource {
+        BetaThreadRunsResource::new(self.client.clone())
+    }
+}
+
+impl BetaThreadMessagesResource {
+    /// 创建 thread message。
+    pub fn create(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.messages.create",
+            Method::POST,
+            format!("/threads/{}/messages", thread_id.into()),
+        )
+    }
+
+    /// 获取 thread message。
+    pub fn retrieve(
+        &self,
+        thread_id: impl Into<String>,
+        message_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.messages.retrieve",
+            Method::GET,
+            format!(
+                "/threads/{}/messages/{}",
+                thread_id.into(),
+                message_id.into()
+            ),
+        )
+    }
+
+    /// 更新 thread message。
+    pub fn update(
+        &self,
+        thread_id: impl Into<String>,
+        message_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.messages.update",
+            Method::POST,
+            format!(
+                "/threads/{}/messages/{}",
+                thread_id.into(),
+                message_id.into()
+            ),
+        )
+    }
+
+    /// 列出 thread messages。
+    pub fn list(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        beta_list(
+            self.client.clone(),
+            "beta.threads.messages.list",
+            format!("/threads/{}/messages", thread_id.into()),
+        )
+    }
+
+    /// 删除 thread message。
+    pub fn delete(
+        &self,
+        thread_id: impl Into<String>,
+        message_id: impl Into<String>,
+    ) -> JsonRequestBuilder<DeleteResponse> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.messages.delete",
+            Method::DELETE,
+            format!(
+                "/threads/{}/messages/{}",
+                thread_id.into(),
+                message_id.into()
+            ),
+        )
+    }
+}
+
+impl BetaThreadRunsResource {
+    /// 创建 run。
+    pub fn create(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.create",
+            Method::POST,
+            format!("/threads/{}/runs", thread_id.into()),
+        )
+    }
+
+    /// 获取 run。
+    pub fn retrieve(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.retrieve",
+            Method::GET,
+            format!("/threads/{}/runs/{}", thread_id.into(), run_id.into()),
+        )
+    }
+
+    /// 更新 run。
+    pub fn update(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.update",
+            Method::POST,
+            format!("/threads/{}/runs/{}", thread_id.into(), run_id.into()),
+        )
+    }
+
+    /// 列出 runs。
+    pub fn list(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        beta_list(
+            self.client.clone(),
+            "beta.threads.runs.list",
+            format!("/threads/{}/runs", thread_id.into()),
+        )
+    }
+
+    /// 取消 run。
+    pub fn cancel(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.cancel",
+            Method::POST,
+            format!(
+                "/threads/{}/runs/{}/cancel",
+                thread_id.into(),
+                run_id.into()
+            ),
+        )
+    }
+
+    /// 创建并流式获取 run。
+    pub fn create_and_stream(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.create_and_stream",
+            Method::POST,
+            format!("/threads/{}/runs", thread_id.into()),
+        )
+    }
+
+    /// 提交工具输出。
+    pub fn submit_tool_outputs(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.submit_tool_outputs",
+            Method::POST,
+            format!(
+                "/threads/{}/runs/{}/submit_tool_outputs",
+                thread_id.into(),
+                run_id.into()
+            ),
+        )
+    }
+
+    /// 流式提交工具输出。
+    pub fn submit_tool_outputs_stream(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.submit_tool_outputs_stream",
+            Method::POST,
+            format!(
+                "/threads/{}/runs/{}/submit_tool_outputs",
+                thread_id.into(),
+                run_id.into()
+            ),
+        )
+    }
+
+    /// 流式获取 run。
+    pub fn stream(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.stream",
+            Method::GET,
+            format!("/threads/{}/runs/{}", thread_id.into(), run_id.into()),
+        )
+    }
+
+    /// 返回 steps 子资源。
+    pub fn steps(&self) -> BetaThreadRunStepsResource {
+        BetaThreadRunStepsResource::new(self.client.clone())
+    }
+}
+
+impl BetaThreadRunStepsResource {
+    /// 获取 run step。
+    pub fn retrieve(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+        step_id: impl Into<String>,
+    ) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.threads.runs.steps.retrieve",
+            Method::GET,
+            format!(
+                "/threads/{}/runs/{}/steps/{}",
+                thread_id.into(),
+                run_id.into(),
+                step_id.into()
+            ),
+        )
+    }
+
+    /// 列出 run steps。
+    pub fn list(
+        &self,
+        thread_id: impl Into<String>,
+        run_id: impl Into<String>,
+    ) -> ListRequestBuilder<Value> {
+        beta_list(
+            self.client.clone(),
+            "beta.threads.runs.steps.list",
+            format!("/threads/{}/runs/{}/steps", thread_id.into(), run_id.into()),
+        )
+    }
+}
+
+impl BetaChatkitResource {
+    /// 返回 sessions 子资源。
+    pub fn sessions(&self) -> BetaChatkitSessionsResource {
+        BetaChatkitSessionsResource::new(self.client.clone())
+    }
+
+    /// 返回 threads 子资源。
+    pub fn threads(&self) -> BetaChatkitThreadsResource {
+        BetaChatkitThreadsResource::new(self.client.clone())
+    }
+}
+
+impl BetaChatkitSessionsResource {
+    /// 创建 chatkit session。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.chatkit.sessions.create",
+            Method::POST,
+            "/chatkit/sessions",
+        )
+    }
+
+    /// 取消 chatkit session。
+    pub fn cancel(&self, session_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.chatkit.sessions.cancel",
+            Method::POST,
+            format!("/chatkit/sessions/{}/cancel", session_id.into()),
+        )
+    }
+}
+
+impl BetaChatkitThreadsResource {
+    /// 获取 chatkit thread。
+    pub fn retrieve(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.chatkit.threads.retrieve",
+            Method::GET,
+            format!("/chatkit/threads/{}", thread_id.into()),
+        )
+    }
+
+    /// 列出 chatkit threads。
+    pub fn list(&self) -> ListRequestBuilder<Value> {
+        beta_list(
+            self.client.clone(),
+            "beta.chatkit.threads.list",
+            "/chatkit/threads",
+        )
+    }
+
+    /// 列出 chatkit thread items。
+    pub fn list_items(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
+        beta_list(
+            self.client.clone(),
+            "beta.chatkit.threads.list_items",
+            format!("/chatkit/threads/{}/items", thread_id.into()),
+        )
+    }
+
+    /// 删除 chatkit thread。
+    pub fn delete(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        beta_json(
+            self.client.clone(),
+            "beta.chatkit.threads.delete",
+            Method::DELETE,
+            format!("/chatkit/threads/{}", thread_id.into()),
+        )
+    }
+}
+
+impl BetaRealtimeResource {
+    /// 创建 Realtime WebSocket 连接构建器。
+    pub fn ws(&self) -> RealtimeSocketRequestBuilder {
+        RealtimeSocketRequestBuilder::new(self.client.clone())
+    }
+
+    /// 返回 sessions 子资源。
+    pub fn sessions(&self) -> BetaRealtimeSessionsResource {
+        BetaRealtimeSessionsResource::new(self.client.clone())
+    }
+
+    /// 返回 transcription_sessions 子资源。
+    pub fn transcription_sessions(&self) -> BetaRealtimeTranscriptionSessionsResource {
+        BetaRealtimeTranscriptionSessionsResource::new(self.client.clone())
+    }
+}
+
+impl BetaRealtimeSessionsResource {
+    /// 创建 beta realtime session。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.realtime.sessions.create",
+            Method::POST,
+            "/realtime/sessions",
+        )
+    }
+}
+
+impl BetaRealtimeTranscriptionSessionsResource {
+    /// 创建 beta realtime transcription session。
+    pub fn create(&self) -> JsonRequestBuilder<Value> {
+        beta_json(
+            self.client.clone(),
+            "beta.realtime.transcription_sessions.create",
+            Method::POST,
+            "/realtime/transcription_sessions",
+        )
+    }
+}
+
+fn beta_json<T>(
+    client: Client,
+    endpoint_id: &'static str,
+    method: Method,
+    path: impl Into<String>,
+) -> JsonRequestBuilder<T> {
+    JsonRequestBuilder::new(client, endpoint_id, method, path)
+        .extra_header("openai-beta", "assistants=v2")
+}
+
+fn beta_list<T>(
+    client: Client,
+    endpoint_id: &'static str,
+    path: impl Into<String>,
+) -> ListRequestBuilder<T> {
+    ListRequestBuilder::new(client, endpoint_id, path).extra_header("openai-beta", "assistants=v2")
+}

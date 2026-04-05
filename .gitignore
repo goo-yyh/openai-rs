@@ -1,0 +1,4 @@
+/target
+.chats/
+.vscode/
+.gitignore copy
