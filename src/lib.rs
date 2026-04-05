@@ -1,3 +1,4 @@
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![doc = include_str!("../README.md")]
 #![forbid(unsafe_code)]
 #![warn(rust_2024_compatibility, missing_debug_implementations)]
@@ -10,45 +11,80 @@ pub mod client;
 pub mod config;
 pub mod error;
 pub mod files;
+#[cfg(feature = "structured-output")]
+#[cfg_attr(docsrs, doc(cfg(feature = "structured-output")))]
 pub mod helpers;
 pub mod pagination;
 pub mod providers;
-pub mod resource;
 pub mod resources;
-pub mod response_meta;
+mod response_meta;
 pub mod stream;
-pub mod transport;
+mod transport;
 pub mod webhooks;
+#[cfg(any(feature = "realtime", feature = "responses-ws"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "realtime", feature = "responses-ws"))))]
 pub mod websocket;
 
 pub use auth::ApiKeySource;
 pub use client::{Client, ClientBuilder};
-pub use config::{ClientOptions, RequestOptions};
+pub use config::{ClientOptions, LogLevel, LogRecord, Logger, LoggerHandle, RequestOptions};
 pub use error::{
-    ApiError, ApiErrorKind, ConnectionError, Error, ProviderCompatibilityError, Result,
-    SerializationError, StreamError, WebSocketError, WebhookVerificationError,
+    ApiError, ApiErrorKind, ConnectionError, ContentFilterFinishReasonError, Error,
+    LengthFinishReasonError, ProviderCompatibilityError, Result, SerializationError, StreamError,
+    WebSocketError, WebSocketErrorKind, WebhookVerificationError,
 };
-pub use files::{FileLike, MultipartField, UploadSource};
-pub use helpers::{
-    ParsedChatCompletion, ParsedResponse, ToolDefinition, ToolHandler, ToolRegistry,
-    json_schema_for, parse_json_payload,
-};
+pub use files::{FileLike, MultipartField, ToFileInput, UploadSource, to_file};
+#[cfg(feature = "structured-output")]
+#[cfg_attr(docsrs, doc(cfg(feature = "structured-output")))]
+pub use helpers::{ParsedChatCompletion, ParsedResponse, json_schema_for, parse_json_payload};
+#[cfg(feature = "tool-runner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
+pub use helpers::{ToolDefinition, ToolHandler, ToolRegistry};
 pub use pagination::{CursorPage, ListEnvelope, Page, PageStream};
 pub use providers::{
     AuthScheme, AzureAuthMode, AzureOptions, CapabilitySet, CompatibilityMode, Provider,
     ProviderKind, ProviderProfile,
 };
 pub use resources::{
-    ChatCompletion, ChatCompletionChunk, ChatCompletionMessage, ChatCompletionToolCall,
-    DeleteResponse, EmbeddingResponse, FileObject, Model, Response, UploadObject,
+    BetaAssistant, BetaThread, BetaThreadMessage, BetaThreadRun, BetaThreadRunStep, ChatCompletion,
+    ChatCompletionChunk, ChatCompletionMessage, ChatCompletionToolCall, ChatContentDeltaEvent,
+    ChatLogProbsDeltaEvent, ChatRefusalDeltaEvent, ChatToolArgumentsDeltaEvent, DeleteResponse,
+    EmbeddingResponse, FileObject, Model, Response, UploadObject, VectorStore, VectorStoreFile,
+    VectorStoreFileBatch, VectorStoreSearchResponse,
+};
+#[cfg(feature = "tool-runner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
+pub use resources::{
+    ChatCompletionRunner, ChatCompletionStreamingRunner, ChatCompletionToolResult,
 };
 pub use response_meta::{ApiResponse, ResponseMeta};
 pub use stream::{
-    ChatCompletionStream, LineDecoder, RawSseStream, ResponseStream, SseEvent, SseStream,
+    AssistantEventStream, AssistantImageFileDoneEvent, AssistantMessageCreatedEvent,
+    AssistantMessageDeltaEvent, AssistantMessageDoneEvent, AssistantRunStepCreatedEvent,
+    AssistantRunStepDeltaEvent, AssistantRunStepDoneEvent, AssistantRuntimeEvent, AssistantStream,
+    AssistantStreamEvent, AssistantStreamSnapshot, AssistantTextCreatedEvent,
+    AssistantTextDeltaEvent, AssistantTextDoneEvent, AssistantToolCallCreatedEvent,
+    AssistantToolCallDeltaEvent, AssistantToolCallDoneEvent, ChatCompletionEventStream,
+    ChatCompletionRuntimeEvent, ChatCompletionStream, ChatContentDoneEvent,
+    ChatContentSnapshotEvent, ChatLogProbsDoneEvent, ChatLogProbsSnapshotEvent,
+    ChatRefusalDoneEvent, ChatRefusalSnapshotEvent, ChatToolArgumentsDoneEvent,
+    ChatToolArgumentsSnapshotEvent, LineDecoder, RawSseStream, ResponseEventStream,
+    ResponseFunctionCallArgumentsEvent, ResponseOutputTextEvent, ResponseRuntimeEvent,
+    ResponseStream, SseEvent, SseStream,
 };
 pub use webhooks::{HeaderLookup, WebhookEvent, WebhookVerifier};
-pub use websocket::{
-    RealtimeServerEvent, RealtimeSocket, RealtimeStreamMessage, ResponsesServerEvent,
-    ResponsesSocket, ResponsesStreamMessage, SocketCloseOptions, SocketStreamMessage,
-    WebSocketServerEvent,
-};
+#[cfg(feature = "responses-ws")]
+#[cfg_attr(docsrs, doc(cfg(feature = "responses-ws")))]
+pub use websocket::OpenAIResponsesWebSocket;
+#[cfg(feature = "realtime")]
+#[cfg_attr(docsrs, doc(cfg(feature = "realtime")))]
+pub use websocket::{OpenAIRealtimeWS, OpenAIRealtimeWebSocket};
+#[cfg(feature = "realtime")]
+#[cfg_attr(docsrs, doc(cfg(feature = "realtime")))]
+pub use websocket::{RealtimeServerEvent, RealtimeSocket, RealtimeStreamMessage};
+#[cfg(feature = "responses-ws")]
+#[cfg_attr(docsrs, doc(cfg(feature = "responses-ws")))]
+pub use websocket::{ResponsesServerEvent, ResponsesSocket, ResponsesStreamMessage};
+#[cfg(any(feature = "realtime", feature = "responses-ws"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "realtime", feature = "responses-ws"))))]
+pub use websocket::{SocketCloseOptions, SocketStreamMessage, WebSocketServerEvent};

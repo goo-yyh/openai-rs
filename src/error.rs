@@ -18,6 +18,12 @@ pub enum Error {
     /// 表示客户端配置无效。
     #[error("客户端配置无效: {0}")]
     InvalidConfig(String),
+    /// 表示请求缺少必填字段。
+    #[error("请求缺少必填字段: {field}")]
+    MissingRequiredField {
+        /// 缺失字段名。
+        field: &'static str,
+    },
     /// 表示缺少请求所需的凭证。
     #[error("缺少 API 凭证")]
     MissingCredentials,
@@ -39,6 +45,12 @@ pub enum Error {
     /// 表示序列化或反序列化失败。
     #[error(transparent)]
     Serialization(#[from] SerializationError),
+    /// 表示模型因长度截断而无法完成结构化语义。
+    #[error(transparent)]
+    LengthFinishReason(#[from] LengthFinishReasonError),
+    /// 表示模型因内容过滤而无法完成结构化语义。
+    #[error(transparent)]
+    ContentFilterFinishReason(#[from] ContentFilterFinishReasonError),
     /// 表示 Webhook 校验失败。
     #[error(transparent)]
     WebhookVerification(#[from] WebhookVerificationError),
@@ -178,6 +190,16 @@ pub struct StreamError {
     pub message: String,
 }
 
+/// 表示模型因为达到长度上限而提前终止。
+#[derive(Debug, Error, Clone)]
+#[error("无法继续解析响应内容: 模型因长度上限提前结束")]
+pub struct LengthFinishReasonError;
+
+/// 表示模型输出被内容过滤器拦截。
+#[derive(Debug, Error, Clone)]
+#[error("无法继续解析响应内容: 请求被内容过滤器拦截")]
+pub struct ContentFilterFinishReasonError;
+
 impl StreamError {
     /// 创建新的流式错误。
     pub fn new(message: impl Into<String>) -> Self {
@@ -188,18 +210,63 @@ impl StreamError {
 }
 
 /// 表示 WebSocket 连接或协议错误。
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum WebSocketErrorKind {
+    /// 传输层错误，例如底层连接或 IO 问题。
+    Transport,
+    /// 协议层错误，例如事件反序列化失败。
+    Protocol,
+    /// 服务端主动推送的错误事件。
+    Server,
+}
+
+/// 表示 WebSocket 连接或协议错误。
 #[derive(Debug, Error, Clone)]
 #[error("{message}")]
 pub struct WebSocketError {
+    /// 错误分类。
+    pub kind: WebSocketErrorKind,
     /// 错误消息。
     pub message: String,
+    /// 关联的服务端事件类型。
+    pub event_type: Option<String>,
 }
 
 impl WebSocketError {
     /// 创建新的 WebSocket 错误。
     pub fn new(message: impl Into<String>) -> Self {
         Self {
+            kind: WebSocketErrorKind::Protocol,
             message: message.into(),
+            event_type: None,
+        }
+    }
+
+    /// 创建新的传输层 WebSocket 错误。
+    pub fn transport(message: impl Into<String>) -> Self {
+        Self {
+            kind: WebSocketErrorKind::Transport,
+            message: message.into(),
+            event_type: None,
+        }
+    }
+
+    /// 创建新的协议层 WebSocket 错误。
+    pub fn protocol(message: impl Into<String>) -> Self {
+        Self {
+            kind: WebSocketErrorKind::Protocol,
+            message: message.into(),
+            event_type: None,
+        }
+    }
+
+    /// 创建新的服务端 WebSocket 错误。
+    pub fn server(message: impl Into<String>, event_type: Option<String>) -> Self {
+        Self {
+            kind: WebSocketErrorKind::Server,
+            message: message.into(),
+            event_type,
         }
     }
 }

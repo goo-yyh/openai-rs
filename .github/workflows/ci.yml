@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-public-api
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Cargo Deny
+        run: cargo deny check
+
+      - name: Public API
+        run: bash ./scripts/check-public-api.sh
+
+      - name: Examples
+        run: cargo check --examples --all-features
+
+      - name: Docs
+        run: cargo doc --all-features --no-deps
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  feature-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            args: ""
+          - name: no-default-features
+            args: "--no-default-features"
+          - name: stream-only
+            args: "--no-default-features --features stream"
+          - name: realtime
+            args: "--no-default-features --features realtime"
+          - name: responses-ws
+            args: "--no-default-features --features responses-ws"
+          - name: structured-output
+            args: "--no-default-features --features structured-output"
+          - name: tool-runner
+            args: "--no-default-features --features tool-runner"
+          - name: websocket
+            args: "--no-default-features --features realtime,responses-ws"
+          - name: all-features
+            args: "--all-features"
+    name: Feature Matrix (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Cargo Check
+        run: cargo check ${{ matrix.args }}
+
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: default
+            args: ""
+          - name: no-default-features
+            args: "--no-default-features"
+          - name: all-features
+            args: "--all-features"
+    name: Tests (${{ matrix.name }})
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Cargo Test
+        run: cargo test ${{ matrix.args }}

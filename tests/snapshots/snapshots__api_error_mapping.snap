@@ -1,0 +1,22 @@
+---
+source: tests/snapshots.rs
+expression: error
+---
+Api(
+    ApiError {
+        status: 429,
+        kind: RateLimit,
+        message: "too many requests",
+        request_id: Some(
+            "req_snapshot",
+        ),
+        provider: OpenAI,
+        raw: Some(
+            Object {
+                "error": Object {
+                    "message": String("too many requests"),
+                },
+            },
+        ),
+    },
+)

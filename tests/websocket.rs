@@ -1,3 +1,5 @@
+#![cfg(any(feature = "realtime", feature = "responses-ws"))]
+
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
@@ -9,7 +11,13 @@ use tokio_tungstenite::accept_hdr_async;
 use tokio_tungstenite::tungstenite::Message;
 use tokio_tungstenite::tungstenite::handshake::server::{Request, Response};
 
-use openai_rs::{Client, SocketCloseOptions, SocketStreamMessage};
+#[cfg(feature = "realtime")]
+use openai_rs::OpenAIRealtimeWebSocket;
+#[cfg(feature = "responses-ws")]
+use openai_rs::OpenAIResponsesWebSocket;
+use openai_rs::{
+    Client, RealtimeServerEvent, ResponsesServerEvent, SocketCloseOptions, SocketStreamMessage,
+};
 
 #[derive(Debug, Clone)]
 struct RecordedHandshake {
@@ -76,6 +84,7 @@ fn parse_query(uri: &str) -> BTreeMap<String, String> {
     url.query_pairs().into_owned().collect()
 }
 
+#[cfg(feature = "realtime")]
 #[tokio::test]
 async fn test_should_connect_realtime_ws_and_receive_message() {
     let (server_url, handshake, handle) =
@@ -108,8 +117,8 @@ async fn test_should_connect_realtime_ws_and_receive_message() {
 
     let message = events.next().await.unwrap();
     match message {
-        SocketStreamMessage::Message(event) => {
-            assert_eq!(event.event_type, "response.created");
+        SocketStreamMessage::Message(RealtimeServerEvent::ResponseCreated(event)) => {
+            assert_eq!(event.id.as_deref(), Some("evt_1"));
         }
         other => panic!("unexpected event: {other:?}"),
     }
@@ -129,6 +138,7 @@ async fn test_should_connect_realtime_ws_and_receive_message() {
     handle.await.unwrap();
 }
 
+#[cfg(feature = "realtime")]
 #[tokio::test]
 async fn test_should_use_azure_realtime_deployment_and_api_key_header() {
     let (server_url, handshake, handle) = spawn_websocket_server(None).await;
@@ -160,6 +170,7 @@ async fn test_should_use_azure_realtime_deployment_and_api_key_header() {
     handle.await.unwrap();
 }
 
+#[cfg(feature = "responses-ws")]
 #[tokio::test]
 async fn test_should_connect_responses_ws_and_use_bearer_auth() {
     let (server_url, handshake, handle) = spawn_websocket_server(Some(
@@ -187,11 +198,15 @@ async fn test_should_connect_responses_ws_and_use_bearer_auth() {
 
     let message = events.next().await.unwrap();
     match message {
-        SocketStreamMessage::Message(event) => {
-            assert_eq!(event.event_type, "response.output_text.delta");
+        SocketStreamMessage::Message(ResponsesServerEvent::ResponseOutputTextDelta(event)) => {
+            assert_eq!(event.delta.as_deref(), Some("hi"));
             assert_eq!(
-                event.data.get("delta").and_then(serde_json::Value::as_str),
-                Some("hi")
+                event
+                    .raw
+                    .data
+                    .get("delta")
+                    .and_then(serde_json::Value::as_str),
+                Some("hi"),
             );
         }
         other => panic!("unexpected event: {other:?}"),
@@ -202,6 +217,52 @@ async fn test_should_connect_responses_ws_and_use_bearer_auth() {
         recorded.headers.get("authorization"),
         Some(&"Bearer sk-test".into())
     );
+    assert_eq!(recorded.uri, "/v1/responses");
+
+    handle.await.unwrap();
+}
+
+#[cfg(feature = "realtime")]
+#[tokio::test]
+async fn test_should_connect_standalone_realtime_websocket_client() {
+    let (server_url, handshake, handle) = spawn_websocket_server(None).await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(format!("{server_url}/v1"))
+        .build()
+        .unwrap();
+
+    let socket = OpenAIRealtimeWebSocket::connect(client, "gpt-4o-realtime-preview")
+        .await
+        .unwrap();
+    socket.close(SocketCloseOptions::default()).await.unwrap();
+
+    let recorded = handshake.await.unwrap();
+    let query = parse_query(&recorded.uri);
+    assert_eq!(
+        query.get("model").map(String::as_str),
+        Some("gpt-4o-realtime-preview")
+    );
+
+    handle.await.unwrap();
+}
+
+#[cfg(feature = "responses-ws")]
+#[tokio::test]
+async fn test_should_connect_standalone_responses_websocket_client() {
+    let (server_url, handshake, handle) = spawn_websocket_server(None).await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(format!("{server_url}/v1"))
+        .build()
+        .unwrap();
+
+    let socket = OpenAIResponsesWebSocket::connect(client).await.unwrap();
+    socket.close(SocketCloseOptions::default()).await.unwrap();
+
+    let recorded = handshake.await.unwrap();
     assert_eq!(recorded.uri, "/v1/responses");
 
     handle.await.unwrap();

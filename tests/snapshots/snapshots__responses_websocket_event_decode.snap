@@ -1,0 +1,25 @@
+---
+source: tests/snapshots.rs
+expression: event
+---
+ResponseOutputTextDelta(
+    ResponseOutputTextDeltaEvent {
+        delta: Some(
+            "hello",
+        ),
+        response_id: Some(
+            "resp_1",
+        ),
+        item_id: Some(
+            "item_1",
+        ),
+        raw: WebSocketServerEvent {
+            event_type: "response.output_text.delta",
+            data: {
+                "delta": String("hello"),
+                "item_id": String("item_1"),
+                "response_id": String("resp_1"),
+            },
+        },
+    },
+)

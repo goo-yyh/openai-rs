@@ -13,23 +13,12 @@ use tracing::instrument;
 
 use crate::auth::ApiKeySource;
 use crate::client::ClientInner;
-use crate::config::RequestOptions;
+use crate::config::{LogLevel, RequestOptions};
 use crate::error::{ApiError, ConnectionError, Error, Result};
 use crate::files::{MultipartField, UploadSource};
 use crate::providers::{AuthScheme, RequestContext};
 use crate::response_meta::{ApiResponse, ResponseMeta, into_http_response};
 use crate::stream::{RawSseStream, SseStream};
-
-/// 表示请求期望返回的数据形态。
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ResponseKind {
-    /// 返回 JSON。
-    Json,
-    /// 返回字节流。
-    Bytes,
-    /// 返回 SSE。
-    Sse,
-}
 
 /// 表示 Multipart 负载。
 #[derive(Debug, Clone, Default)]
@@ -72,7 +61,7 @@ impl RequestSpec {
 }
 
 /// 发送 JSON 请求并解析返回值。
-#[instrument(skip(inner, spec))]
+#[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 pub(crate) async fn execute_json<T>(
     inner: &ClientInner,
     spec: RequestSpec,
@@ -91,7 +80,7 @@ where
 }
 
 /// 发送请求并返回原始字节。
-#[instrument(skip(inner, spec))]
+#[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 pub(crate) async fn execute_bytes(
     inner: &ClientInner,
     spec: RequestSpec,
@@ -101,7 +90,7 @@ pub(crate) async fn execute_bytes(
 }
 
 /// 发送 SSE 请求并返回类型化流。
-#[instrument(skip(inner, spec))]
+#[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 pub(crate) async fn execute_sse<T>(inner: &ClientInner, spec: RequestSpec) -> Result<SseStream<T>>
 where
     T: DeserializeOwned + Send + 'static,
@@ -112,7 +101,7 @@ where
 }
 
 /// 发送 SSE 请求并返回原始事件流。
-#[instrument(skip(inner, spec))]
+#[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 #[allow(dead_code)]
 pub(crate) async fn execute_raw_sse(
     inner: &ClientInner,
@@ -133,7 +122,7 @@ pub(crate) async fn execute_raw_http(
     Ok(into_http_response(&response.meta, response.data))
 }
 
-#[instrument(skip(inner, spec))]
+#[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 async fn execute(inner: &ClientInner, spec: RequestSpec) -> Result<(Bytes, ResponseMeta)> {
     let response = execute_response(inner, spec).await?;
     let meta = build_response_meta(&response, inner.provider.kind(), 1);
@@ -144,7 +133,7 @@ async fn execute(inner: &ClientInner, spec: RequestSpec) -> Result<(Bytes, Respo
     Ok((bytes, meta))
 }
 
-#[instrument(skip(inner, spec))]
+#[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 async fn execute_response(inner: &ClientInner, spec: RequestSpec) -> Result<reqwest::Response> {
     let max_retries = spec
         .options
@@ -163,6 +152,17 @@ async fn execute_response(inner: &ClientInner, spec: RequestSpec) -> Result<reqw
             return Err(Error::Cancelled);
         }
 
+        inner.log(
+            LogLevel::Debug,
+            "openai_rs::transport",
+            "发送请求",
+            BTreeMap::from([
+                ("attempt".into(), attempt.to_string()),
+                ("max_retries".into(), max_retries.to_string()),
+                ("endpoint_id".into(), spec.endpoint_id.to_string()),
+                ("provider".into(), format!("{:?}", inner.provider.kind())),
+            ]),
+        );
         let request = build_request(inner, &spec).await?;
         let execute_future = inner.http.execute(request);
 
@@ -210,6 +210,18 @@ async fn execute_response(inner: &ClientInner, spec: RequestSpec) -> Result<reqw
 
                 if (status.as_u16() == 429 || status.is_server_error()) && attempt < max_retries {
                     let delay = retry_after.unwrap_or_else(|| backoff_duration(attempt));
+                    inner.log(
+                        LogLevel::Info,
+                        "openai_rs::transport",
+                        "请求失败，准备重试",
+                        BTreeMap::from([
+                            ("attempt".into(), attempt.to_string()),
+                            ("delay_ms".into(), delay.as_millis().to_string()),
+                            ("status".into(), status.as_u16().to_string()),
+                            ("endpoint_id".into(), spec.endpoint_id.to_string()),
+                            ("provider".into(), format!("{:?}", inner.provider.kind())),
+                        ]),
+                    );
                     tokio::time::sleep(delay).await;
                     attempt += 1;
                     last_error = Some(error);
@@ -220,7 +232,19 @@ async fn execute_response(inner: &ClientInner, spec: RequestSpec) -> Result<reqw
             }
             Err(error) => {
                 if matches!(error, Error::Timeout | Error::Connection(_)) && attempt < max_retries {
-                    tokio::time::sleep(backoff_duration(attempt)).await;
+                    let delay = backoff_duration(attempt);
+                    inner.log(
+                        LogLevel::Info,
+                        "openai_rs::transport",
+                        "请求执行异常，准备重试",
+                        BTreeMap::from([
+                            ("attempt".into(), attempt.to_string()),
+                            ("delay_ms".into(), delay.as_millis().to_string()),
+                            ("endpoint_id".into(), spec.endpoint_id.to_string()),
+                            ("provider".into(), format!("{:?}", inner.provider.kind())),
+                        ]),
+                    );
+                    tokio::time::sleep(delay).await;
                     attempt += 1;
                     last_error = Some(error);
                     continue;
@@ -405,11 +429,8 @@ fn backoff_duration(attempt: u32) -> Duration {
 }
 
 /// 递归把 JSON 对象转换成 Multipart 文本字段。
-pub fn flatten_json_to_multipart_fields(
-    prefix: &str,
-    value: &Value,
-    output: &mut Vec<MultipartField>,
-) {
+#[cfg(test)]
+fn flatten_json_to_multipart_fields(prefix: &str, value: &Value, output: &mut Vec<MultipartField>) {
     match value {
         Value::Null => {}
         Value::Bool(value) => output.push(MultipartField {

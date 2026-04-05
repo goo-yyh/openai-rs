@@ -5,6 +5,7 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use bytes::Bytes;
+use reqwest::header::CONTENT_TYPE;
 use reqwest::multipart::Part;
 
 use crate::error::{Error, Result};
@@ -20,6 +21,116 @@ pub struct MultipartField {
 
 /// 统一的文件输入类型别名。
 pub type FileLike = UploadSource;
+
+/// 表示 `to_file()` 可接受的统一输入。
+pub enum ToFileInput {
+    /// 来自文件路径。
+    Path(PathBuf),
+    /// 来自内存字节。
+    Bytes(Bytes),
+    /// 来自读取器。
+    Reader(Box<dyn Read + Send>),
+    /// 来自 HTTP 响应。
+    Response(reqwest::Response),
+}
+
+impl fmt::Debug for ToFileInput {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Path(path) => f.debug_tuple("ToFileInput::Path").field(path).finish(),
+            Self::Bytes(bytes) => f
+                .debug_struct("ToFileInput::Bytes")
+                .field("size", &bytes.len())
+                .finish(),
+            Self::Reader(_) => f.write_str("ToFileInput::Reader(..)"),
+            Self::Response(response) => f
+                .debug_struct("ToFileInput::Response")
+                .field("url", response.url())
+                .finish(),
+        }
+    }
+}
+
+impl ToFileInput {
+    /// 从路径构造输入。
+    pub fn path(path: impl Into<PathBuf>) -> Self {
+        Self::Path(path.into())
+    }
+
+    /// 从读取器构造输入。
+    pub fn reader<R>(reader: R) -> Self
+    where
+        R: Read + Send + 'static,
+    {
+        Self::Reader(Box::new(reader))
+    }
+}
+
+impl From<PathBuf> for ToFileInput {
+    fn from(value: PathBuf) -> Self {
+        Self::Path(value)
+    }
+}
+
+impl From<Vec<u8>> for ToFileInput {
+    fn from(value: Vec<u8>) -> Self {
+        Self::Bytes(Bytes::from(value))
+    }
+}
+
+impl From<Bytes> for ToFileInput {
+    fn from(value: Bytes) -> Self {
+        Self::Bytes(value)
+    }
+}
+
+impl From<reqwest::Response> for ToFileInput {
+    fn from(value: reqwest::Response) -> Self {
+        Self::Response(value)
+    }
+}
+
+/// 从统一输入构造上传文件对象。
+///
+/// 当输入本身无法推导文件名时，调用方应显式提供 `filename`。
+///
+/// # Errors
+///
+/// 当读取输入失败，或字节/读取器输入未提供文件名时返回错误。
+pub async fn to_file(
+    input: impl Into<ToFileInput>,
+    filename: Option<impl Into<String>>,
+) -> Result<UploadSource> {
+    let filename = filename.map(Into::into);
+    match input.into() {
+        ToFileInput::Path(path) => {
+            let mut source = UploadSource::from_path(path)?;
+            if let Some(filename) = filename {
+                source = source.with_filename(filename);
+            }
+            Ok(source)
+        }
+        ToFileInput::Bytes(bytes) => {
+            let filename = filename.ok_or_else(|| {
+                Error::InvalidConfig("字节输入无法自动推导文件名，请显式提供 filename".into())
+            })?;
+            Ok(UploadSource::from_bytes(bytes, filename))
+        }
+        ToFileInput::Reader(reader) => {
+            let filename = filename.ok_or_else(|| {
+                Error::InvalidConfig("读取器输入无法自动推导文件名，请显式提供 filename".into())
+            })?;
+            UploadSource::from_reader(reader, filename)
+        }
+        ToFileInput::Response(response) => {
+            let mut source = UploadSource::from_response(response).await?;
+            if let Some(filename) = filename {
+                source = source.with_filename(filename);
+            }
+            Ok(source)
+        }
+    }
+}
 
 /// 表示一个可上传的文件来源。
 #[derive(Clone)]
@@ -116,6 +227,38 @@ impl UploadSource {
             data: Bytes::from(buffer),
             filename: filename.into(),
             mime_type: None,
+        })
+    }
+
+    /// 从 HTTP 响应中读取字节并创建上传源。
+    ///
+    /// 该方法会优先使用响应 URL 的最后一个路径段作为文件名。
+    /// 如果无法推导，则回退为 `upload.bin`。
+    ///
+    /// # Errors
+    ///
+    /// 当响应体读取失败时返回错误。
+    pub async fn from_response(response: reqwest::Response) -> Result<Self> {
+        let filename = response
+            .url()
+            .path_segments()
+            .and_then(|mut segments| segments.rfind(|segment| !segment.is_empty()))
+            .map(str::to_owned)
+            .unwrap_or_else(|| "upload.bin".into());
+        let mime_type = response
+            .headers()
+            .get(CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_owned);
+        let data = response
+            .bytes()
+            .await
+            .map_err(|error| Error::InvalidConfig(format!("读取上传响应失败: {error}")))?;
+
+        Ok(Self::Bytes {
+            data,
+            filename,
+            mime_type,
         })
     }
 

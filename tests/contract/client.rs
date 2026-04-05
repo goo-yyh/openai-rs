@@ -1,12 +1,64 @@
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
+use reqwest::header::{HeaderMap, HeaderValue};
 use serde_json::json;
+use serial_test::serial;
 use wiremock::matchers::{body_json, header, header_exists, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, Provider};
+use openai_rs::{Client, LogLevel, LogRecord, Provider};
+
+#[derive(Debug)]
+struct EnvGuard {
+    saved: Vec<(String, Option<String>)>,
+}
+
+impl EnvGuard {
+    fn set(pairs: &[(&str, &str)]) -> Self {
+        let saved = pairs
+            .iter()
+            .map(|(key, _)| ((*key).to_owned(), std::env::var(key).ok()))
+            .collect::<Vec<_>>();
+        for (key, value) in pairs {
+            // SAFETY: 测试使用 `serial` 串行运行，避免并发修改进程环境变量。
+            unsafe { std::env::set_var(key, value) };
+        }
+        Self { saved }
+    }
+
+    fn remove(keys: &[&str]) -> Self {
+        let saved = keys
+            .iter()
+            .map(|key| ((*key).to_owned(), std::env::var(key).ok()))
+            .collect::<Vec<_>>();
+        for key in keys {
+            // SAFETY: 测试使用 `serial` 串行运行，避免并发修改进程环境变量。
+            unsafe { std::env::remove_var(key) };
+        }
+        Self { saved }
+    }
+}
+
+impl Drop for EnvGuard {
+    fn drop(&mut self) {
+        for (key, value) in self.saved.drain(..) {
+            match value {
+                Some(value) => {
+                    // SAFETY: 测试使用 `serial` 串行运行，避免并发修改进程环境变量。
+                    unsafe { std::env::set_var(&key, value) };
+                }
+                None => {
+                    // SAFETY: 测试使用 `serial` 串行运行，避免并发修改进程环境变量。
+                    unsafe { std::env::remove_var(&key) };
+                }
+            }
+        }
+    }
+}
 
 #[tokio::test]
+#[serial]
 async fn test_should_build_default_openai_base_url() {
     let client = Client::builder()
         .provider(Provider::openai())
@@ -17,6 +69,7 @@ async fn test_should_build_default_openai_base_url() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_should_override_base_url_with_builder_option() {
     let client = Client::builder()
         .provider(Provider::openai())
@@ -28,6 +81,7 @@ async fn test_should_override_base_url_with_builder_option() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_should_merge_default_headers_and_request_headers() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
@@ -59,6 +113,7 @@ async fn test_should_merge_default_headers_and_request_headers() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_should_remove_header_when_value_is_none() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
@@ -87,6 +142,7 @@ async fn test_should_remove_header_when_value_is_none() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_should_merge_default_query_and_request_query() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
@@ -116,6 +172,7 @@ async fn test_should_merge_default_query_and_request_query() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_should_build_azure_request_from_endpoint_and_model() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
@@ -160,6 +217,7 @@ async fn test_should_build_azure_request_from_endpoint_and_model() {
 }
 
 #[tokio::test]
+#[serial]
 async fn test_should_send_azure_bearer_token_when_using_ad_token_provider() {
     let server = MockServer::start().await;
     Mock::given(method("POST"))
@@ -196,7 +254,184 @@ async fn test_should_send_azure_bearer_token_when_using_ad_token_provider() {
     assert_eq!(response.id, "resp_azure");
 }
 
+#[tokio::test]
+#[serial]
+async fn test_should_read_openai_base_url_and_api_key_from_env() {
+    let server = MockServer::start().await;
+    let server_uri = server.uri();
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .and(header("authorization", "Bearer sk-env"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_env",
+            "object": "response",
+            "status": "completed",
+            "output": [{"type":"output_text","text":"env ok"}]
+        })))
+        .mount(&server)
+        .await;
+
+    let _clear = EnvGuard::remove(&[
+        "AZURE_OPENAI_ENDPOINT",
+        "OPENAI_API_VERSION",
+        "AZURE_OPENAI_API_KEY",
+    ]);
+    let _guard = EnvGuard::set(&[
+        ("OPENAI_BASE_URL", server_uri.as_str()),
+        ("OPENAI_API_KEY", "sk-env"),
+    ]);
+
+    let client = Client::builder().build().unwrap();
+    assert_eq!(client.base_url(), server_uri);
+
+    let response = client
+        .responses()
+        .create()
+        .model("gpt-5")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.id, "resp_env");
+}
+
+#[tokio::test]
+#[serial]
+async fn test_should_use_custom_reqwest_client_defaults() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .and(header("x-http-client", "custom"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_http_client",
+            "object": "response",
+            "status": "completed",
+            "output": [{"type":"output_text","text":"ok"}]
+        })))
+        .mount(&server)
+        .await;
+
+    let mut default_headers = HeaderMap::new();
+    default_headers.insert("x-http-client", HeaderValue::from_static("custom"));
+    let http_client = reqwest::Client::builder()
+        .default_headers(default_headers)
+        .build()
+        .unwrap();
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .http_client(http_client)
+        .build()
+        .unwrap();
+
+    let response = client
+        .responses()
+        .create()
+        .model("gpt-5")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.id, "resp_http_client");
+}
+
+#[tokio::test]
+#[serial]
+async fn test_should_emit_sdk_logs_to_custom_logger() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_log",
+            "object": "response",
+            "status": "completed",
+            "output": []
+        })))
+        .mount(&server)
+        .await;
+
+    let records = Arc::new(Mutex::new(Vec::<LogRecord>::new()));
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .log_level(LogLevel::Debug)
+        .logger({
+            let records = records.clone();
+            move |record: &LogRecord| {
+                records.lock().unwrap().push(record.clone());
+            }
+        })
+        .build()
+        .unwrap();
+
+    let _ = client
+        .responses()
+        .create()
+        .model("gpt-5")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap();
+
+    let records = records.lock().unwrap();
+    assert!(records.iter().any(|record| {
+        record.level == LogLevel::Debug
+            && record.target == "openai_rs::transport"
+            && record.message == "发送请求"
+    }));
+}
+
+#[tokio::test]
+#[serial]
+async fn test_should_read_log_level_from_env() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_env_log",
+            "object": "response",
+            "status": "completed",
+            "output": []
+        })))
+        .mount(&server)
+        .await;
+
+    let server_uri = server.uri();
+    let _guard = EnvGuard::set(&[
+        ("OPENAI_BASE_URL", server_uri.as_str()),
+        ("OPENAI_API_KEY", "sk-env-log"),
+        ("OPENAI_LOG", "debug"),
+    ]);
+
+    let records = Arc::new(Mutex::new(Vec::<LogRecord>::new()));
+    let client = Client::builder()
+        .logger({
+            let records = records.clone();
+            move |record: &LogRecord| {
+                records.lock().unwrap().push(record.clone());
+            }
+        })
+        .build()
+        .unwrap();
+
+    let _ = client
+        .responses()
+        .create()
+        .model("gpt-5")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap();
+
+    let records = records.lock().unwrap();
+    assert!(records.iter().any(|record| record.level == LogLevel::Debug));
+}
+
 #[test]
+#[serial]
 fn test_should_reject_base_url_and_azure_endpoint_together() {
     let error = Client::builder()
         .provider(Provider::azure())

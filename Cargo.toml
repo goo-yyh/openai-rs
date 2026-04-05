@@ -2,37 +2,46 @@
 name = "openai-rs"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.94.1"
 description = "面向 OpenAI 兼容生态的 Rust SDK"
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/openai/openai-node"
+repository = "https://github.com/goo-yyh/openai-rs"
+homepage = "https://github.com/goo-yyh/openai-rs"
+documentation = "https://docs.rs/openai-rs"
+keywords = ["openai", "sdk", "api", "llm", "async"]
+categories = ["api-bindings", "asynchronous", "web-programming", "network-programming"]
 
 [lib]
 name = "openai_rs"
 path = "src/lib.rs"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [features]
-default = ["stream", "multipart", "webhooks", "structured-output", "tool-runner", "rustls-tls", "realtime", "responses-ws"]
+default = ["stream", "multipart", "webhooks", "rustls-tls"]
 stream = []
 multipart = []
 webhooks = []
 realtime = ["tokio-tungstenite"]
 responses-ws = ["tokio-tungstenite"]
-structured-output = []
+structured-output = ["dep:schemars"]
 tool-runner = ["structured-output"]
 rustls-tls = []
 
 [dependencies]
 async-stream = "0.3.6"
-async-trait = "0.1.89"
 base64 = "0.22.1"
 bytes = "1.11.1"
 futures-util = "0.3.32"
 hmac = "0.13.0"
 http = "1.4.0"
 mime_guess = "2.0.5"
+percent-encoding = "2.3.2"
 reqwest = { version = "0.13.2", default-features = false, features = ["charset", "http2", "json", "multipart", "query", "rustls", "stream"] }
-schemars = { version = "1.2.1", features = ["derive"] }
+schemars = { version = "1.2.1", features = ["derive"], optional = true }
 secrecy = { version = "0.10.3", features = ["serde"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -50,6 +59,7 @@ dotenvy = "0.15.7"
 insta = "1.47.2"
 proptest = "1.11.0"
 rstest = "0.26.1"
+schemars = { version = "1.2.1", features = ["derive"] }
 serial_test = "3.4.0"
 tracing-subscriber = "0.3.23"
 wiremock = "0.6.5"

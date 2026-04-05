@@ -1,0 +1,26 @@
+---
+source: tests/snapshots.rs
+expression: event
+---
+SessionCreated(
+    SessionCreatedEvent {
+        id: Some(
+            "sess_1",
+        ),
+        session: Some(
+            Object {
+                "id": String("sess_1"),
+                "object": String("realtime.session"),
+            },
+        ),
+        raw: WebSocketServerEvent {
+            event_type: "session.created",
+            data: {
+                "session": Object {
+                    "id": String("sess_1"),
+                    "object": String("realtime.session"),
+                },
+            },
+        },
+    },
+)

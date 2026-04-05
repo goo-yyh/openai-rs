@@ -1,8 +1,12 @@
 //! Structured output 与工具调用辅助能力。
 
+#[cfg(feature = "tool-runner")]
 use std::collections::BTreeMap;
+#[cfg(feature = "tool-runner")]
 use std::future::Future;
+#[cfg(feature = "tool-runner")]
 use std::pin::Pin;
+#[cfg(feature = "tool-runner")]
 use std::sync::Arc;
 
 use schemars::{JsonSchema, schema_for};
@@ -65,14 +69,19 @@ pub struct ParsedResponse<T> {
 }
 
 /// 工具处理函数的异步返回值类型。
+#[cfg(feature = "tool-runner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
 pub type ToolFuture = Pin<Box<dyn Future<Output = Result<Value>> + Send>>;
 
 /// 表示工具处理器。
+#[cfg(feature = "tool-runner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
 pub trait ToolHandler: Send + Sync {
     /// 执行一个工具调用。
     fn call(&self, arguments: Value) -> ToolFuture;
 }
 
+#[cfg(feature = "tool-runner")]
 impl<F, Fut> ToolHandler for F
 where
     F: Fn(Value) -> Fut + Send + Sync,
@@ -84,6 +93,8 @@ where
 }
 
 /// 表示单个工具定义。
+#[cfg(feature = "tool-runner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
 #[derive(Clone)]
 pub struct ToolDefinition {
     /// 工具名称。
@@ -95,6 +106,7 @@ pub struct ToolDefinition {
     handler: Arc<dyn ToolHandler>,
 }
 
+#[cfg(feature = "tool-runner")]
 impl std::fmt::Debug for ToolDefinition {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ToolDefinition")
@@ -105,6 +117,7 @@ impl std::fmt::Debug for ToolDefinition {
     }
 }
 
+#[cfg(feature = "tool-runner")]
 impl ToolDefinition {
     /// 使用显式 JSON Schema 创建工具定义。
     pub fn new<T, U, H>(name: T, description: Option<U>, parameters: Value, handler: H) -> Self
@@ -144,11 +157,14 @@ impl ToolDefinition {
 }
 
 /// 表示工具注册表。
+#[cfg(feature = "tool-runner")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
 #[derive(Debug, Clone, Default)]
 pub struct ToolRegistry {
     tools: BTreeMap<String, ToolDefinition>,
 }
 
+#[cfg(feature = "tool-runner")]
 impl ToolRegistry {
     /// 创建空的工具注册表。
     pub fn new() -> Self {

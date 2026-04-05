@@ -1,14 +1,16 @@
 //! 客户端入口与构建器。
 
 use std::collections::BTreeMap;
+use std::env;
 use std::future::Future;
 use std::sync::Arc;
 use std::time::Duration;
 
 use secrecy::SecretString;
+use tracing::{debug, error, info, warn};
 
 use crate::auth::ApiKeySource;
-use crate::config::ClientOptions;
+use crate::config::{ClientOptions, LogLevel, LogRecord, Logger, LoggerHandle};
 use crate::error::{Error, Result};
 use crate::pagination::{CursorPage, ListEnvelope};
 use crate::providers::{AzureOptions, CompatibilityMode, Provider, ProviderKind};
@@ -62,12 +64,13 @@ pub struct ClientBuilder {
     azure_options: AzureOptions,
     azure_endpoint: Option<String>,
     azure_configured: bool,
+    http_client: Option<reqwest::Client>,
 }
 
 impl Client {
     /// 创建客户端构建器。
     pub fn builder() -> ClientBuilder {
-        ClientBuilder::default()
+        ClientBuilder::from_env()
     }
 
     /// 返回当前客户端的 Provider。
@@ -309,9 +312,88 @@ impl ClientInner {
             .as_deref()
             .unwrap_or_else(|| self.provider.default_base_url())
     }
+
+    pub(crate) fn log(
+        &self,
+        level: LogLevel,
+        target: &'static str,
+        message: impl Into<String>,
+        fields: BTreeMap<String, String>,
+    ) {
+        if !self.options.log_level.allows(level) {
+            return;
+        }
+
+        let record = LogRecord {
+            level,
+            target,
+            message: message.into(),
+            fields,
+        };
+
+        if let Some(logger) = &self.options.logger {
+            logger.log(&record);
+        }
+
+        let rendered_fields = if record.fields.is_empty() {
+            String::new()
+        } else {
+            format!(
+                " {}",
+                record
+                    .fields
+                    .iter()
+                    .map(|(key, value)| format!("{key}={value}"))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            )
+        };
+        let rendered = format!("[{}] {}{}", target, record.message, rendered_fields);
+        match level {
+            LogLevel::Off => {}
+            LogLevel::Error => error!("{rendered}"),
+            LogLevel::Warn => warn!("{rendered}"),
+            LogLevel::Info => info!("{rendered}"),
+            LogLevel::Debug => debug!("{rendered}"),
+        }
+    }
 }
 
 impl ClientBuilder {
+    /// 从环境变量构建默认配置。
+    pub fn from_env() -> Self {
+        let mut builder = Self::default();
+
+        if let Some(webhook_secret) = read_env("OPENAI_WEBHOOK_SECRET") {
+            builder.options.webhook_secret = Some(SecretString::new(webhook_secret.into()));
+        }
+        if let Some(log_level) =
+            read_env("OPENAI_LOG").and_then(|value| value.parse::<LogLevel>().ok())
+        {
+            builder.options.log_level = log_level;
+        }
+
+        if let Some(azure_endpoint) = read_env("AZURE_OPENAI_ENDPOINT") {
+            builder = builder.azure_endpoint(azure_endpoint);
+            if let Some(api_version) = read_env("OPENAI_API_VERSION") {
+                builder = builder.azure_api_version(api_version);
+            }
+            if let Some(api_key) = read_env("AZURE_OPENAI_API_KEY") {
+                builder = builder.api_key(api_key);
+            }
+            return builder;
+        }
+
+        if let Some(base_url) = read_env("OPENAI_BASE_URL") {
+            builder.options.base_url = Some(base_url);
+        }
+        if let Some(api_key) = read_env("OPENAI_API_KEY") {
+            builder.api_key_source = Some(ApiKeySource::from_static(api_key));
+        }
+
+        builder
+    }
+
     /// 设置 Provider。
     pub fn provider(mut self, provider: Provider) -> Self {
         if provider.kind() != ProviderKind::Azure {
@@ -320,6 +402,27 @@ impl ClientBuilder {
             self.azure_configured = false;
         }
         self.options.provider = provider;
+        self
+    }
+
+    /// 注入一个自定义 `reqwest::Client`。
+    pub fn http_client(mut self, client: reqwest::Client) -> Self {
+        self.http_client = Some(client);
+        self
+    }
+
+    /// 设置 SDK 内部日志级别。
+    pub fn log_level(mut self, log_level: LogLevel) -> Self {
+        self.options.log_level = log_level;
+        self
+    }
+
+    /// 注入一个用户自定义日志器。
+    pub fn logger<L>(mut self, logger: L) -> Self
+    where
+        L: Logger + 'static,
+    {
+        self.options.logger = Some(LoggerHandle::new(logger));
         self
     }
 
@@ -511,16 +614,20 @@ impl ClientBuilder {
             }
         }
 
-        let mut default_headers = reqwest::header::HeaderMap::new();
-        default_headers.insert(
-            reqwest::header::USER_AGENT,
-            reqwest::header::HeaderValue::from_static("openai-rs/0.1.0"),
-        );
+        let http = if let Some(client) = self.http_client {
+            client
+        } else {
+            let mut default_headers = reqwest::header::HeaderMap::new();
+            default_headers.insert(
+                reqwest::header::USER_AGENT,
+                reqwest::header::HeaderValue::from_static("openai-rs/0.1.0"),
+            );
 
-        let http = reqwest::Client::builder()
-            .default_headers(default_headers)
-            .build()
-            .map_err(|error| Error::InvalidConfig(format!("创建 HTTP 客户端失败: {error}")))?;
+            reqwest::Client::builder()
+                .default_headers(default_headers)
+                .build()
+                .map_err(|error| Error::InvalidConfig(format!("创建 HTTP 客户端失败: {error}")))?
+        };
         Ok(Client::from_parts(
             http,
             options.provider.clone(),
@@ -528,4 +635,11 @@ impl ClientBuilder {
             options,
         ))
     }
+}
+
+fn read_env(key: &str) -> Option<String> {
+    env::var(key)
+        .ok()
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty())
 }

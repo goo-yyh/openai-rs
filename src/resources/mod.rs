@@ -1,11 +1,18 @@
 //! 资源命名空间、公开类型与请求构建器。
 
+mod beta;
+mod chat;
+mod responses;
+mod vector_stores;
+
 use std::collections::BTreeMap;
 use std::marker::PhantomData;
 use std::time::Duration;
 
 use bytes::Bytes;
 use http::Method;
+use percent_encoding::{AsciiSet, CONTROLS, utf8_percent_encode};
+#[cfg(feature = "structured-output")]
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -15,16 +22,31 @@ use crate::Client;
 use crate::config::RequestOptions;
 use crate::error::{Error, Result};
 use crate::files::{MultipartField, UploadSource};
-use crate::helpers::{
-    ParsedChatCompletion, ParsedResponse, ToolDefinition, ToolRegistry, parse_json_payload,
-};
+#[cfg(feature = "structured-output")]
+use crate::helpers::{ParsedChatCompletion, ParsedResponse, parse_json_payload};
+#[cfg(feature = "tool-runner")]
+use crate::helpers::{ToolDefinition, ToolRegistry};
 use crate::pagination::{CursorPage, ListEnvelope};
-use crate::resource::Resource;
 use crate::response_meta::ApiResponse;
-use crate::stream::{ChatCompletionStream, ResponseStream};
+#[cfg(feature = "tool-runner")]
+use crate::stream::ChatCompletionRuntimeEvent;
+use crate::stream::{
+    AssistantEventStream, AssistantStream, ChatCompletionEventStream, ChatCompletionStream,
+    ResponseEventStream, ResponseStream,
+};
 use crate::transport::{RequestSpec, merge_json_body};
 use crate::webhooks::{HeaderLookup, WebhookVerifier};
-use crate::websocket::{RealtimeSocket, ResponsesSocket};
+#[cfg(feature = "realtime")]
+use crate::websocket::RealtimeSocket;
+#[cfg(feature = "responses-ws")]
+use crate::websocket::ResponsesSocket;
+#[cfg(feature = "tool-runner")]
+use futures_util::StreamExt;
+
+pub use beta::{BetaAssistant, BetaThread, BetaThreadMessage, BetaThreadRun, BetaThreadRunStep};
+pub use vector_stores::{
+    VectorStore, VectorStoreFile, VectorStoreFileBatch, VectorStoreSearchResponse,
+};
 
 macro_rules! handle {
     ($(#[$meta:meta])* $name:ident) => {
@@ -37,12 +59,6 @@ macro_rules! handle {
         impl $name {
             pub(crate) fn new(client: Client) -> Self {
                 Self { client }
-            }
-        }
-
-        impl Resource for $name {
-            fn client(&self) -> &Client {
-                &self.client
             }
         }
     };
@@ -203,6 +219,9 @@ pub struct ChatCompletionMessage {
     /// 工具调用集合。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tool_calls: Vec<ChatCompletionToolCall>,
+    /// 拒绝回答文本。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub refusal: Option<String>,
     /// 推理内容。
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reasoning_content: Option<String>,
@@ -251,6 +270,52 @@ impl ChatCompletionMessage {
             ..Self::default()
         }
     }
+
+    /// 尝试把消息文本解析为结构化对象。
+    ///
+    /// # Errors
+    ///
+    /// 当文本存在但 JSON 解析失败时返回错误。
+    pub fn parse_content<T>(&self) -> Result<Option<T>>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        self.content
+            .as_deref()
+            .map(parse_jsonish_payload)
+            .transpose()
+    }
+
+    /// 尝试解析首个工具调用的参数。
+    ///
+    /// # Errors
+    ///
+    /// 当工具参数不是合法 JSON 时返回错误。
+    pub fn parse_tool_arguments<T>(&self) -> Result<Option<T>>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        self.tool_calls
+            .first()
+            .map(|tool_call| parse_json_arguments(&tool_call.function.arguments))
+            .transpose()
+    }
+
+    /// 尝试解析指定工具调用的参数。
+    ///
+    /// # Errors
+    ///
+    /// 当工具参数不是合法 JSON 时返回错误。
+    pub fn parse_tool_arguments_by_id<T>(&self, tool_call_id: &str) -> Result<Option<T>>
+    where
+        T: serde::de::DeserializeOwned,
+    {
+        self.tool_calls
+            .iter()
+            .find(|tool_call| tool_call.id == tool_call_id)
+            .map(|tool_call| parse_json_arguments(&tool_call.function.arguments))
+            .transpose()
+    }
 }
 
 /// 表示聊天补全中的单个候选项。
@@ -262,6 +327,8 @@ pub struct ChatCompletionChoice {
     pub finish_reason: Option<String>,
     /// 返回消息。
     pub message: ChatCompletionMessage,
+    /// token 级 logprobs。
+    pub logprobs: Option<Value>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -290,6 +357,24 @@ pub struct ChatCompletion {
     pub extra: BTreeMap<String, Value>,
 }
 
+impl ChatCompletion {
+    /// 校验返回结果没有因为长度或内容过滤而失去可解析语义。
+    ///
+    /// # Errors
+    ///
+    /// 当任一 choice 的 `finish_reason` 为 `length` 或 `content_filter` 时返回错误。
+    pub fn ensure_not_truncated(&self) -> Result<&Self> {
+        for choice in &self.choices {
+            match choice.finish_reason.as_deref() {
+                Some("length") => return Err(crate::LengthFinishReasonError.into()),
+                Some("content_filter") => return Err(crate::ContentFilterFinishReasonError.into()),
+                _ => {}
+            }
+        }
+        Ok(self)
+    }
+}
+
 /// 表示流式增量。
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ChatCompletionChunkDelta {
@@ -297,6 +382,8 @@ pub struct ChatCompletionChunkDelta {
     pub role: Option<String>,
     /// 文本内容增量。
     pub content: Option<String>,
+    /// 拒绝回答文本增量。
+    pub refusal: Option<String>,
     /// 推理内容增量。
     pub reasoning_content: Option<String>,
     /// 推理细节增量。
@@ -319,9 +406,51 @@ pub struct ChatCompletionChunkChoice {
     pub delta: ChatCompletionChunkDelta,
     /// 结束原因。
     pub finish_reason: Option<String>,
+    /// token 级 logprobs 增量。
+    pub logprobs: Option<Value>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示聊天文本增量事件。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChatContentDeltaEvent {
+    /// 候选索引。
+    pub choice_index: u32,
+    /// 文本增量。
+    pub delta: String,
+}
+
+/// 表示聊天拒绝回答增量事件。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChatRefusalDeltaEvent {
+    /// 候选索引。
+    pub choice_index: u32,
+    /// 拒绝文本增量。
+    pub delta: String,
+}
+
+/// 表示工具参数增量事件。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct ChatToolArgumentsDeltaEvent {
+    /// 候选索引。
+    pub choice_index: u32,
+    /// 工具调用索引。
+    pub tool_call_index: u32,
+    /// 工具名称增量。
+    pub name: Option<String>,
+    /// 参数增量。
+    pub delta: String,
+}
+
+/// 表示 token logprobs 增量事件。
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ChatLogProbsDeltaEvent {
+    /// 候选索引。
+    pub choice_index: u32,
+    /// logprobs 明细。
+    pub values: Vec<Value>,
 }
 
 /// 表示聊天补全 SSE 分片。
@@ -345,6 +474,92 @@ pub struct ChatCompletionChunk {
     pub extra: BTreeMap<String, Value>,
 }
 
+impl ChatCompletionChunk {
+    /// 提取所有文本内容增量。
+    pub fn content_deltas(&self) -> Vec<ChatContentDeltaEvent> {
+        self.choices
+            .iter()
+            .filter_map(|choice| {
+                choice
+                    .delta
+                    .content
+                    .as_ref()
+                    .map(|delta| ChatContentDeltaEvent {
+                        choice_index: choice.index,
+                        delta: delta.clone(),
+                    })
+            })
+            .collect()
+    }
+
+    /// 提取所有拒绝回答增量。
+    pub fn refusal_deltas(&self) -> Vec<ChatRefusalDeltaEvent> {
+        self.choices
+            .iter()
+            .filter_map(|choice| {
+                choice
+                    .delta
+                    .refusal
+                    .as_ref()
+                    .map(|delta| ChatRefusalDeltaEvent {
+                        choice_index: choice.index,
+                        delta: delta.clone(),
+                    })
+            })
+            .collect()
+    }
+
+    /// 提取所有工具参数增量。
+    pub fn tool_argument_deltas(&self) -> Vec<ChatToolArgumentsDeltaEvent> {
+        self.choices
+            .iter()
+            .flat_map(|choice| {
+                choice.delta.tool_calls.iter().filter_map(|tool_call| {
+                    let delta = tool_call.function.as_ref()?.arguments.clone()?;
+                    Some(ChatToolArgumentsDeltaEvent {
+                        choice_index: choice.index,
+                        tool_call_index: tool_call.index.unwrap_or_default(),
+                        name: tool_call
+                            .function
+                            .as_ref()
+                            .and_then(|function| function.name.clone()),
+                        delta,
+                    })
+                })
+            })
+            .collect()
+    }
+
+    /// 提取内容 token 的 logprobs 增量。
+    pub fn logprobs_content_deltas(&self) -> Vec<ChatLogProbsDeltaEvent> {
+        extract_logprobs(self, "content")
+    }
+
+    /// 提取拒绝回答 token 的 logprobs 增量。
+    pub fn logprobs_refusal_deltas(&self) -> Vec<ChatLogProbsDeltaEvent> {
+        extract_logprobs(self, "refusal")
+    }
+}
+
+fn extract_logprobs(chunk: &ChatCompletionChunk, field_name: &str) -> Vec<ChatLogProbsDeltaEvent> {
+    chunk
+        .choices
+        .iter()
+        .filter_map(|choice| {
+            let values = choice
+                .logprobs
+                .as_ref()
+                .and_then(|logprobs| logprobs.get(field_name))
+                .and_then(Value::as_array)?
+                .clone();
+            Some(ChatLogProbsDeltaEvent {
+                choice_index: choice.index,
+                values,
+            })
+        })
+        .collect()
+}
+
 /// 表示聊天工具定义。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatToolDefinition {
@@ -356,6 +571,7 @@ pub struct ChatToolDefinition {
 }
 
 impl ChatToolDefinition {
+    #[cfg(feature = "tool-runner")]
     fn from_tool(tool: &ToolDefinition) -> Self {
         Self {
             tool_type: "function".into(),
@@ -477,12 +693,74 @@ fn default_function_type() -> String {
     "function".into()
 }
 
+const PATH_SEGMENT_ENCODE_SET: &AsciiSet = &CONTROLS
+    .add(b'!')
+    .add(b'$')
+    .add(b'&')
+    .add(b'\'')
+    .add(b'(')
+    .add(b')')
+    .add(b'*')
+    .add(b'+')
+    .add(b',')
+    .add(b':')
+    .add(b';')
+    .add(b'=')
+    .add(b'@')
+    .add(b' ')
+    .add(b'"')
+    .add(b'#')
+    .add(b'%')
+    .add(b'/')
+    .add(b'?')
+    .add(b'[')
+    .add(b'\\')
+    .add(b']')
+    .add(b'^')
+    .add(b'`')
+    .add(b'{')
+    .add(b'}');
+
 fn value_from<T>(value: &T) -> Result<Value>
 where
     T: Serialize,
 {
     serde_json::to_value(value)
         .map_err(|error| Error::Serialization(crate::SerializationError::new(error.to_string())))
+}
+
+fn parse_jsonish_payload<T>(payload: &str) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    let trimmed = payload.trim();
+    let normalized = trimmed
+        .strip_prefix("```json")
+        .or_else(|| trimmed.strip_prefix("```"))
+        .map(|value| value.trim())
+        .and_then(|value| value.strip_suffix("```"))
+        .map_or(trimmed, str::trim);
+    serde_json::from_str(normalized).map_err(|error| {
+        Error::Serialization(crate::SerializationError::new(format!(
+            "结构化 JSON 解析失败: {error}"
+        )))
+    })
+}
+
+fn parse_json_arguments<T>(arguments: &str) -> Result<T>
+where
+    T: serde::de::DeserializeOwned,
+{
+    serde_json::from_str(arguments).map_err(|error| {
+        Error::Serialization(crate::SerializationError::new(format!(
+            "工具参数 JSON 解析失败: {error}"
+        )))
+    })
+}
+
+/// 对单个路径参数做安全编码，避免动态 ID 改写 URL 结构。
+pub(crate) fn encode_path_segment(segment: impl AsRef<str>) -> String {
+    utf8_percent_encode(segment.as_ref(), PATH_SEGMENT_ENCODE_SET).to_string()
 }
 
 /// 表示通用 JSON 请求构建器。
@@ -958,10 +1236,10 @@ impl ChatCompletionCreateRequestBuilder {
             .take()
             .ok_or_else(|| Error::InvalidConfig("聊天补全构建器缺少客户端".into()))?;
         if self.params.model.as_deref().unwrap_or_default().is_empty() {
-            return Err(Error::InvalidConfig("聊天补全请求缺少 model".into()));
+            return Err(Error::MissingRequiredField { field: "model" });
         }
         if self.params.messages.is_empty() {
-            return Err(Error::InvalidConfig("聊天补全请求缺少 messages".into()));
+            return Err(Error::MissingRequiredField { field: "messages" });
         }
         self.params.stream = Some(stream);
         let provider_key = client.provider().kind().as_key();
@@ -1019,6 +1297,12 @@ impl ChatCompletionCreateRequestBuilder {
 #[derive(Debug, Clone)]
 pub struct ChatCompletionStreamRequestBuilder {
     inner: ChatCompletionCreateRequestBuilder,
+}
+
+/// 表示 Assistants/Beta Threads 流式请求构建器。
+#[derive(Debug, Clone)]
+pub struct AssistantStreamRequestBuilder {
+    inner: JsonRequestBuilder<Value>,
 }
 
 impl ChatCompletionStreamRequestBuilder {
@@ -1097,15 +1381,126 @@ impl ChatCompletionStreamRequestBuilder {
         let (client, spec) = self.inner.build_spec(true)?;
         Ok(ChatCompletionStream::new(client.execute_sse(spec).await?))
     }
+
+    /// 发送流式聊天补全请求，并返回带高层语义事件的运行时流。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或流初始化失败时返回错误。
+    pub async fn send_events(self) -> Result<ChatCompletionEventStream> {
+        Ok(self.send().await?.events())
+    }
+}
+
+impl AssistantStreamRequestBuilder {
+    fn new(
+        client: Client,
+        endpoint_id: &'static str,
+        method: Method,
+        path: impl Into<String>,
+    ) -> Self {
+        Self {
+            inner: JsonRequestBuilder::new(client, endpoint_id, method, path),
+        }
+    }
+
+    /// 设置整个请求体为一个 `serde_json::Value`。
+    pub fn body_value(mut self, body: Value) -> Self {
+        self.inner = self.inner.body_value(body);
+        self
+    }
+
+    /// 使用任意可序列化对象设置请求体。
+    ///
+    /// # Errors
+    ///
+    /// 当序列化失败时返回错误。
+    pub fn json_body<U>(mut self, body: &U) -> Result<Self>
+    where
+        U: Serialize,
+    {
+        self.inner = self.inner.json_body(body)?;
+        Ok(self)
+    }
+
+    /// 添加一个额外请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_header(key, value);
+        self
+    }
+
+    /// 删除一个默认请求头。
+    pub fn remove_header(mut self, key: impl Into<String>) -> Self {
+        self.inner = self.inner.remove_header(key);
+        self
+    }
+
+    /// 添加一个额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_query(key, value);
+        self
+    }
+
+    /// 在 JSON 根对象中追加字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+
+    /// 在 provider 对应的 `provider_options` 下追加字段。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.provider_option(key, value);
+        self
+    }
+
+    /// 覆盖请求超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.inner = self.inner.timeout(timeout);
+        self
+    }
+
+    /// 覆盖最大重试次数。
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.inner = self.inner.max_retries(max_retries);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.inner = self.inner.cancellation_token(token);
+        self
+    }
+
+    /// 发送流式 Assistants 请求。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或流初始化失败时返回错误。
+    pub async fn send(self) -> Result<AssistantStream> {
+        let client = self.inner.client.clone();
+        let stream = client.execute_raw_sse(self.inner.into_spec()).await?;
+        Ok(AssistantStream::new(stream))
+    }
+
+    /// 发送流式 Assistants 请求，并返回带高层派生事件的运行时流。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或流初始化失败时返回错误。
+    pub async fn send_events(self) -> Result<AssistantEventStream> {
+        Ok(self.send().await?.events())
+    }
 }
 
 /// 表示聊天补全结构化解析构建器。
+#[cfg(feature = "structured-output")]
 #[derive(Debug, Clone)]
 pub struct ChatCompletionParseRequestBuilder<T> {
     inner: ChatCompletionCreateRequestBuilder,
     _marker: PhantomData<T>,
 }
 
+#[cfg(feature = "structured-output")]
 impl<T> ChatCompletionParseRequestBuilder<T> {
     fn new(client: Client) -> Self {
         Self {
@@ -1139,6 +1534,7 @@ impl<T> ChatCompletionParseRequestBuilder<T> {
     }
 }
 
+#[cfg(feature = "structured-output")]
 impl<T> ChatCompletionParseRequestBuilder<T>
 where
     T: JsonSchema + serde::de::DeserializeOwned,
@@ -1150,17 +1546,26 @@ where
     /// 当模型返回内容为空或 JSON 解析失败时返回错误。
     pub async fn send(self) -> Result<ParsedChatCompletion<T>> {
         let response = self.inner.send().await?;
-        let content = response
+        response.ensure_not_truncated()?;
+        let choice = response
             .choices
             .first()
-            .and_then(|choice| choice.message.content.as_deref())
-            .ok_or_else(|| Error::InvalidConfig("聊天补全返回中缺少 assistant 文本内容".into()))?;
-        let parsed = parse_json_payload(content)?;
+            .ok_or_else(|| Error::InvalidConfig("聊天补全返回中缺少 choice".into()))?;
+        let parsed = if let Some(content) = choice.message.content.as_deref() {
+            parse_json_payload(content)?
+        } else if let Some(parsed_arguments) = choice.message.parse_tool_arguments()? {
+            parsed_arguments
+        } else {
+            return Err(Error::InvalidConfig(
+                "聊天补全返回中既没有 assistant 文本，也没有可解析的工具参数".into(),
+            ));
+        };
         Ok(ParsedChatCompletion { response, parsed })
     }
 }
 
 /// 表示工具运行构建器。
+#[cfg(feature = "tool-runner")]
 #[derive(Debug, Clone)]
 pub struct ChatCompletionRunToolsRequestBuilder {
     inner: ChatCompletionCreateRequestBuilder,
@@ -1168,6 +1573,7 @@ pub struct ChatCompletionRunToolsRequestBuilder {
     max_rounds: usize,
 }
 
+#[cfg(feature = "tool-runner")]
 impl ChatCompletionRunToolsRequestBuilder {
     fn new(client: Client) -> Self {
         Self {
@@ -1207,12 +1613,53 @@ impl ChatCompletionRunToolsRequestBuilder {
         self
     }
 
+    /// 发送请求并返回工具调用运行 trace。
+    ///
+    /// # Errors
+    ///
+    /// 当工具不存在、工具执行失败或请求失败时返回错误。
+    pub async fn into_runner(self) -> Result<ChatCompletionRunner> {
+        let execution = self.execute(false).await?;
+        Ok(ChatCompletionRunner::from_execution(execution))
+    }
+
+    /// 使用流式请求执行工具调用，并返回包含流式事件的运行 trace。
+    ///
+    /// # Errors
+    ///
+    /// 当工具不存在、工具执行失败、流式请求失败或结束原因不可解析时返回错误。
+    pub async fn into_streaming_runner(self) -> Result<ChatCompletionStreamingRunner> {
+        let execution = self.execute(true).await?;
+        Ok(ChatCompletionStreamingRunner::from_execution(execution))
+    }
+
     /// 发送请求并自动处理工具调用。
     ///
     /// # Errors
     ///
     /// 当工具不存在、工具执行失败或请求失败时返回错误。
     pub async fn send(self) -> Result<ChatCompletion> {
+        self.into_runner()
+            .await?
+            .final_chat_completion()
+            .cloned()
+            .ok_or_else(|| Error::InvalidConfig("工具运行未返回最终聊天补全结果".into()))
+    }
+
+    /// 使用流式请求执行工具调用轮次，并返回最终聊天补全结果。
+    ///
+    /// # Errors
+    ///
+    /// 当工具不存在、工具执行失败、流式请求失败或结束原因不可解析时返回错误。
+    pub async fn send_streaming(self) -> Result<ChatCompletion> {
+        self.into_streaming_runner()
+            .await?
+            .final_chat_completion()
+            .cloned()
+            .ok_or_else(|| Error::InvalidConfig("工具运行未返回最终聊天补全结果".into()))
+    }
+
+    async fn execute(self, stream: bool) -> Result<ChatCompletionRunExecution> {
         let mut inner = self.inner;
         if inner.params.tools.is_empty() {
             inner.params.tools = self
@@ -1223,21 +1670,41 @@ impl ChatCompletionRunToolsRequestBuilder {
         }
 
         let mut messages = inner.params.messages.clone();
+        let mut execution = ChatCompletionRunExecution {
+            messages: messages.clone(),
+            ..ChatCompletionRunExecution::default()
+        };
         for _ in 0..self.max_rounds {
-            let response = ChatCompletionCreateRequestBuilder {
+            let request = ChatCompletionCreateRequestBuilder {
                 params: ChatCompletionCreateParams {
                     messages: messages.clone(),
                     ..inner.params.clone()
                 },
                 ..inner.clone()
-            }
-            .send()
-            .await?;
-            let Some(choice) = response.choices.first() else {
-                return Ok(response);
             };
+            let response = if stream {
+                let (client, spec) = request.build_spec(true)?;
+                let mut event_stream =
+                    ChatCompletionStream::new(client.execute_sse(spec).await?).events();
+                while let Some(event) = event_stream.next().await {
+                    execution.stream_events.push(event?);
+                }
+                let response = event_stream
+                    .snapshot()
+                    .ok_or_else(|| Error::InvalidConfig("流式聊天补全未返回最终结果".into()))?;
+                response.ensure_not_truncated()?;
+                response
+            } else {
+                request.send().await?
+            };
+            execution.chat_completions.push(response.clone());
+            let Some(choice) = response.choices.first() else {
+                return Ok(execution);
+            };
+            response.ensure_not_truncated()?;
+            execution.messages.push(choice.message.clone());
             if choice.message.tool_calls.is_empty() {
-                return Ok(response);
+                return Ok(execution);
             }
 
             messages.push(choice.message.clone());
@@ -1258,11 +1725,210 @@ impl ChatCompletionRunToolsRequestBuilder {
                 } else {
                     output.to_string()
                 };
-                messages.push(ChatCompletionMessage::tool(tool_call.id.clone(), content));
+                let tool_message =
+                    ChatCompletionMessage::tool(tool_call.id.clone(), content.clone());
+                messages.push(tool_message.clone());
+                execution.messages.push(tool_message);
+                execution.tool_results.push(ChatCompletionToolResult {
+                    tool_call: tool_call.clone(),
+                    output: content,
+                });
             }
         }
 
         Err(Error::InvalidConfig("工具调用轮次已超过上限".into()))
+    }
+}
+
+/// 表示一次工具调用返回的结果。
+#[cfg(feature = "tool-runner")]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatCompletionToolResult {
+    /// 对应的工具调用。
+    pub tool_call: ChatCompletionToolCall,
+    /// 工具执行输出文本。
+    pub output: String,
+}
+
+#[cfg(feature = "tool-runner")]
+#[derive(Debug, Clone, Default)]
+struct ChatCompletionRunExecution {
+    messages: Vec<ChatCompletionMessage>,
+    chat_completions: Vec<ChatCompletion>,
+    tool_results: Vec<ChatCompletionToolResult>,
+    stream_events: Vec<ChatCompletionRuntimeEvent>,
+}
+
+/// 表示非流式工具调用运行 trace。
+#[cfg(feature = "tool-runner")]
+#[derive(Debug, Clone, Default)]
+pub struct ChatCompletionRunner {
+    messages: Vec<ChatCompletionMessage>,
+    chat_completions: Vec<ChatCompletion>,
+    tool_results: Vec<ChatCompletionToolResult>,
+}
+
+#[cfg(feature = "tool-runner")]
+impl ChatCompletionRunner {
+    fn from_execution(execution: ChatCompletionRunExecution) -> Self {
+        Self {
+            messages: execution.messages,
+            chat_completions: execution.chat_completions,
+            tool_results: execution.tool_results,
+        }
+    }
+
+    /// 返回运行过程中累积的全部消息。
+    pub fn messages(&self) -> &[ChatCompletionMessage] {
+        &self.messages
+    }
+
+    /// 返回运行过程中累积的全部聊天补全。
+    pub fn all_chat_completions(&self) -> &[ChatCompletion] {
+        &self.chat_completions
+    }
+
+    /// 返回运行过程中累积的全部工具调用结果。
+    pub fn tool_results(&self) -> &[ChatCompletionToolResult] {
+        &self.tool_results
+    }
+
+    /// 返回最终聊天补全结果。
+    pub fn final_chat_completion(&self) -> Option<&ChatCompletion> {
+        self.chat_completions.last()
+    }
+
+    /// 返回最终 assistant 消息。
+    pub fn final_message(&self) -> Option<&ChatCompletionMessage> {
+        self.messages
+            .iter()
+            .rev()
+            .find(|message| message.role == "assistant")
+    }
+
+    /// 返回最终 assistant 文本。
+    pub fn final_content(&self) -> Option<&str> {
+        self.final_message()
+            .and_then(|message| message.content.as_deref())
+    }
+
+    /// 返回最终工具调用。
+    pub fn final_function_tool_call(&self) -> Option<&ChatCompletionToolCall> {
+        self.tool_results.last().map(|result| &result.tool_call)
+    }
+
+    /// 返回最终工具调用结果。
+    pub fn final_function_tool_call_result(&self) -> Option<&str> {
+        self.tool_results
+            .last()
+            .map(|result| result.output.as_str())
+    }
+
+    /// 汇总所有补全响应中的 usage 字段。
+    pub fn total_usage(&self) -> Option<Value> {
+        let mut completion_tokens = 0u64;
+        let mut prompt_tokens = 0u64;
+        let mut total_tokens = 0u64;
+        let mut found = false;
+        for completion in &self.chat_completions {
+            let Some(usage) = completion.usage.as_ref() else {
+                continue;
+            };
+            completion_tokens += usage
+                .get("completion_tokens")
+                .and_then(Value::as_u64)
+                .unwrap_or_default();
+            prompt_tokens += usage
+                .get("prompt_tokens")
+                .and_then(Value::as_u64)
+                .unwrap_or_default();
+            total_tokens += usage
+                .get("total_tokens")
+                .and_then(Value::as_u64)
+                .unwrap_or_default();
+            found = true;
+        }
+
+        found.then(|| {
+            serde_json::json!({
+                "completion_tokens": completion_tokens,
+                "prompt_tokens": prompt_tokens,
+                "total_tokens": total_tokens,
+            })
+        })
+    }
+}
+
+/// 表示流式工具调用运行 trace。
+#[cfg(feature = "tool-runner")]
+#[derive(Debug, Clone, Default)]
+pub struct ChatCompletionStreamingRunner {
+    runner: ChatCompletionRunner,
+    stream_events: Vec<ChatCompletionRuntimeEvent>,
+}
+
+#[cfg(feature = "tool-runner")]
+impl ChatCompletionStreamingRunner {
+    fn from_execution(execution: ChatCompletionRunExecution) -> Self {
+        Self {
+            runner: ChatCompletionRunner::from_execution(ChatCompletionRunExecution {
+                messages: execution.messages,
+                chat_completions: execution.chat_completions,
+                tool_results: execution.tool_results,
+                stream_events: Vec::new(),
+            }),
+            stream_events: execution.stream_events,
+        }
+    }
+
+    /// 返回流式运行过程中产生的全部高层事件。
+    pub fn events(&self) -> &[ChatCompletionRuntimeEvent] {
+        &self.stream_events
+    }
+
+    /// 返回运行过程中累积的全部消息。
+    pub fn messages(&self) -> &[ChatCompletionMessage] {
+        self.runner.messages()
+    }
+
+    /// 返回运行过程中累积的全部聊天补全。
+    pub fn all_chat_completions(&self) -> &[ChatCompletion] {
+        self.runner.all_chat_completions()
+    }
+
+    /// 返回运行过程中累积的全部工具调用结果。
+    pub fn tool_results(&self) -> &[ChatCompletionToolResult] {
+        self.runner.tool_results()
+    }
+
+    /// 返回最终聊天补全结果。
+    pub fn final_chat_completion(&self) -> Option<&ChatCompletion> {
+        self.runner.final_chat_completion()
+    }
+
+    /// 返回最终 assistant 消息。
+    pub fn final_message(&self) -> Option<&ChatCompletionMessage> {
+        self.runner.final_message()
+    }
+
+    /// 返回最终 assistant 文本。
+    pub fn final_content(&self) -> Option<&str> {
+        self.runner.final_content()
+    }
+
+    /// 返回最终工具调用。
+    pub fn final_function_tool_call(&self) -> Option<&ChatCompletionToolCall> {
+        self.runner.final_function_tool_call()
+    }
+
+    /// 返回最终工具调用结果。
+    pub fn final_function_tool_call_result(&self) -> Option<&str> {
+        self.runner.final_function_tool_call_result()
+    }
+
+    /// 汇总所有补全响应中的 usage 字段。
+    pub fn total_usage(&self) -> Option<Value> {
+        self.runner.total_usage()
     }
 }
 
@@ -1280,9 +1946,13 @@ pub struct ResponseCreateRequestBuilder {
 #[derive(Debug, Clone)]
 pub struct ResponseStreamRequestBuilder {
     inner: ResponseCreateRequestBuilder,
+    response_id: Option<String>,
+    starting_after: Option<u64>,
 }
 
 /// 表示 Realtime WebSocket 连接构建器。
+#[cfg(feature = "realtime")]
+#[cfg_attr(docsrs, doc(cfg(feature = "realtime")))]
 #[derive(Debug, Clone)]
 pub struct RealtimeSocketRequestBuilder {
     client: Client,
@@ -1291,6 +1961,8 @@ pub struct RealtimeSocketRequestBuilder {
 }
 
 /// 表示 Responses WebSocket 连接构建器。
+#[cfg(feature = "responses-ws")]
+#[cfg_attr(docsrs, doc(cfg(feature = "responses-ws")))]
 #[derive(Debug, Clone)]
 pub struct ResponsesSocketRequestBuilder {
     client: Client,
@@ -1301,6 +1973,8 @@ impl ResponseStreamRequestBuilder {
     fn new(client: Client) -> Self {
         Self {
             inner: ResponseCreateRequestBuilder::new(client),
+            response_id: None,
+            starting_after: None,
         }
     }
 
@@ -1322,9 +1996,75 @@ impl ResponseStreamRequestBuilder {
         self
     }
 
+    /// 直接设置输入载荷。
+    pub fn input(mut self, input: Value) -> Self {
+        self.inner = self.inner.input(input);
+        self
+    }
+
+    /// 设置温度。
+    pub fn temperature(mut self, temperature: f32) -> Self {
+        self.inner = self.inner.temperature(temperature);
+        self
+    }
+
+    /// 追加工具定义。
+    pub fn tool(mut self, tool: ChatToolDefinition) -> Self {
+        self.inner = self.inner.tool(tool);
+        self
+    }
+
     /// 添加请求体字段。
     pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
         self.inner = self.inner.extra_body(key, value);
+        self
+    }
+
+    /// 添加 provider 选项。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.provider_option(key, value);
+        self
+    }
+
+    /// 添加额外请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner.options.insert_header(key, value);
+        self
+    }
+
+    /// 添加额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner.options.insert_query(key, value);
+        self
+    }
+
+    /// 覆盖请求超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.inner.options.timeout = Some(timeout);
+        self
+    }
+
+    /// 覆盖最大重试次数。
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.inner.options.max_retries = Some(max_retries);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.inner.options.cancellation_token = Some(token);
+        self
+    }
+
+    /// 按响应 ID 继续一个已有的 Responses SSE 流。
+    pub fn response_id(mut self, response_id: impl Into<String>) -> Self {
+        self.response_id = Some(response_id.into());
+        self
+    }
+
+    /// 当继续已有流时，只消费给定序号之后的事件。
+    pub fn starting_after(mut self, sequence_number: u64) -> Self {
+        self.starting_after = Some(sequence_number);
         self
     }
 
@@ -1333,12 +2073,59 @@ impl ResponseStreamRequestBuilder {
     /// # Errors
     ///
     /// 当参数校验失败、请求失败或流初始化失败时返回错误。
-    pub async fn send(self) -> Result<ResponseStream> {
-        let (client, spec) = self.inner.build_spec(true)?;
+    pub async fn send(mut self) -> Result<ResponseStream> {
+        let (client, spec) = if let Some(response_id) = self.response_id.take() {
+            if self.inner.params.model.is_some()
+                || self.inner.params.input.is_some()
+                || self.inner.params.temperature.is_some()
+                || !self.inner.params.tools.is_empty()
+                || !self.inner.extra_body.is_empty()
+                || !self.inner.provider_options.is_empty()
+            {
+                return Err(Error::InvalidConfig(
+                    "按 response_id 继续流时，不应再设置创建期参数或请求体扩展字段".into(),
+                ));
+            }
+
+            let client = self
+                .inner
+                .client
+                .take()
+                .ok_or_else(|| Error::InvalidConfig("Responses 构建器缺少客户端".into()))?;
+            let mut spec = RequestSpec::new(
+                "responses.stream.retrieve",
+                Method::GET,
+                format!("/responses/{}", encode_path_segment(response_id)),
+            );
+            spec.options = self.inner.options;
+            spec.options.insert_query("stream", "true");
+            if let Some(sequence_number) = self.starting_after {
+                spec.options
+                    .insert_query("starting_after", sequence_number.to_string());
+            }
+            (client, spec)
+        } else {
+            if self.starting_after.is_some() {
+                return Err(Error::InvalidConfig(
+                    "`starting_after` 只能与 `response_id` 一起使用".into(),
+                ));
+            }
+            self.inner.build_spec(true)?
+        };
         Ok(ResponseStream::new(client.execute_sse(spec).await?))
+    }
+
+    /// 发送流式 Responses 请求，并返回带高层语义事件的运行时流。
+    ///
+    /// # Errors
+    ///
+    /// 当参数校验失败、请求失败或流初始化失败时返回错误。
+    pub async fn send_events(self) -> Result<ResponseEventStream> {
+        Ok(self.send().await?.events())
     }
 }
 
+#[cfg(feature = "realtime")]
 impl RealtimeSocketRequestBuilder {
     fn new(client: Client) -> Self {
         Self {
@@ -1376,6 +2163,7 @@ impl RealtimeSocketRequestBuilder {
     }
 }
 
+#[cfg(feature = "responses-ws")]
 impl ResponsesSocketRequestBuilder {
     fn new(client: Client) -> Self {
         Self {
@@ -1462,16 +2250,46 @@ impl ResponseCreateRequestBuilder {
         self
     }
 
+    /// 添加额外请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_header(key, value);
+        self
+    }
+
+    /// 添加额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.options.insert_query(key, value);
+        self
+    }
+
+    /// 覆盖请求超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.options.timeout = Some(timeout);
+        self
+    }
+
+    /// 覆盖最大重试次数。
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.options.max_retries = Some(max_retries);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.options.cancellation_token = Some(token);
+        self
+    }
+
     fn build_spec(mut self, stream: bool) -> Result<(Client, RequestSpec)> {
         let client = self
             .client
             .take()
             .ok_or_else(|| Error::InvalidConfig("Responses 构建器缺少客户端".into()))?;
         if self.params.model.as_deref().unwrap_or_default().is_empty() {
-            return Err(Error::InvalidConfig("Responses 请求缺少 model".into()));
+            return Err(Error::MissingRequiredField { field: "model" });
         }
         if self.params.input.is_none() {
-            return Err(Error::InvalidConfig("Responses 请求缺少 input".into()));
+            return Err(Error::MissingRequiredField { field: "input" });
         }
 
         self.params.stream = Some(stream);
@@ -1517,12 +2335,14 @@ impl ResponseCreateRequestBuilder {
 }
 
 /// 表示 Responses 结构化解析构建器。
+#[cfg(feature = "structured-output")]
 #[derive(Debug, Clone)]
 pub struct ResponseParseRequestBuilder<T> {
     inner: ResponseCreateRequestBuilder,
     _marker: PhantomData<T>,
 }
 
+#[cfg(feature = "structured-output")]
 impl<T> ResponseParseRequestBuilder<T> {
     fn new(client: Client) -> Self {
         Self {
@@ -1550,6 +2370,7 @@ impl<T> ResponseParseRequestBuilder<T> {
     }
 }
 
+#[cfg(feature = "structured-output")]
 impl<T> ResponseParseRequestBuilder<T>
 where
     T: JsonSchema + serde::de::DeserializeOwned,
@@ -1814,90 +2635,6 @@ impl CompletionsResource {
     }
 }
 
-impl ChatResource {
-    /// 返回聊天补全资源。
-    pub fn completions(&self) -> ChatCompletionsResource {
-        ChatCompletionsResource::new(self.client.clone())
-    }
-}
-
-impl ChatCompletionsResource {
-    /// 创建聊天补全请求构建器。
-    pub fn create(&self) -> ChatCompletionCreateRequestBuilder {
-        ChatCompletionCreateRequestBuilder::new(self.client.clone())
-    }
-
-    /// 创建聊天补全流式请求构建器。
-    pub fn stream(&self) -> ChatCompletionStreamRequestBuilder {
-        ChatCompletionStreamRequestBuilder::new(self.client.clone())
-    }
-
-    /// 创建结构化解析请求构建器。
-    pub fn parse<T>(&self) -> ChatCompletionParseRequestBuilder<T> {
-        ChatCompletionParseRequestBuilder::new(self.client.clone())
-    }
-
-    /// 创建工具运行构建器。
-    pub fn run_tools(&self) -> ChatCompletionRunToolsRequestBuilder {
-        ChatCompletionRunToolsRequestBuilder::new(self.client.clone())
-    }
-
-    /// 根据 ID 获取聊天补全对象。
-    pub fn retrieve(&self, id: impl Into<String>) -> JsonRequestBuilder<ChatCompletion> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "chat.completions.retrieve",
-            Method::GET,
-            format!("/chat/completions/{}", id.into()),
-        )
-    }
-
-    /// 更新聊天补全对象。
-    pub fn update(&self, id: impl Into<String>) -> JsonRequestBuilder<ChatCompletion> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "chat.completions.update",
-            Method::POST,
-            format!("/chat/completions/{}", id.into()),
-        )
-    }
-
-    /// 列出聊天补全对象。
-    pub fn list(&self) -> ListRequestBuilder<ChatCompletion> {
-        ListRequestBuilder::new(
-            self.client.clone(),
-            "chat.completions.list",
-            "/chat/completions",
-        )
-    }
-
-    /// 删除聊天补全对象。
-    pub fn delete(&self, id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "chat.completions.delete",
-            Method::DELETE,
-            format!("/chat/completions/{}", id.into()),
-        )
-    }
-
-    /// 返回聊天补全消息子资源。
-    pub fn messages(&self) -> ChatCompletionMessagesResource {
-        ChatCompletionMessagesResource::new(self.client.clone())
-    }
-}
-
-impl ChatCompletionMessagesResource {
-    /// 列出某个聊天补全下的消息。
-    pub fn list(&self, completion_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        ListRequestBuilder::new(
-            self.client.clone(),
-            "chat.completions.messages.list",
-            format!("/chat/completions/{}/messages", completion_id.into()),
-        )
-    }
-}
-
 impl EmbeddingsResource {
     /// 创建 embeddings 请求构建器。
     pub fn create(&self) -> JsonRequestBuilder<EmbeddingResponse> {
@@ -1922,7 +2659,7 @@ impl FilesResource {
             self.client.clone(),
             "files.retrieve",
             Method::GET,
-            format!("/files/{}", file_id.into()),
+            format!("/files/{}", encode_path_segment(file_id.into())),
         )
     }
 
@@ -1937,7 +2674,7 @@ impl FilesResource {
             self.client.clone(),
             "files.delete",
             Method::DELETE,
-            format!("/files/{}", file_id.into()),
+            format!("/files/{}", encode_path_segment(file_id.into())),
         )
     }
 
@@ -1947,7 +2684,7 @@ impl FilesResource {
             self.client.clone(),
             "files.content",
             Method::GET,
-            format!("/files/{}/content", file_id.into()),
+            format!("/files/{}/content", encode_path_segment(file_id.into())),
         )
     }
 }
@@ -2061,7 +2798,7 @@ impl ModelsResource {
             self.client.clone(),
             "models.retrieve",
             Method::GET,
-            format!("/models/{}", model_id.into()),
+            format!("/models/{}", encode_path_segment(model_id.into())),
         )
     }
 
@@ -2071,7 +2808,7 @@ impl ModelsResource {
             self.client.clone(),
             "models.delete",
             Method::DELETE,
-            format!("/models/{}", model_id.into()),
+            format!("/models/{}", encode_path_segment(model_id.into())),
         )
     }
 }
@@ -2110,7 +2847,7 @@ impl FineTuningJobsResource {
             self.client.clone(),
             "fine_tuning.jobs.retrieve",
             Method::GET,
-            format!("/fine_tuning/jobs/{}", job_id.into()),
+            format!("/fine_tuning/jobs/{}", encode_path_segment(job_id.into())),
         )
     }
 
@@ -2129,7 +2866,10 @@ impl FineTuningJobsResource {
             self.client.clone(),
             "fine_tuning.jobs.cancel",
             Method::POST,
-            format!("/fine_tuning/jobs/{}/cancel", job_id.into()),
+            format!(
+                "/fine_tuning/jobs/{}/cancel",
+                encode_path_segment(job_id.into())
+            ),
         )
     }
 
@@ -2139,7 +2879,10 @@ impl FineTuningJobsResource {
             self.client.clone(),
             "fine_tuning.jobs.pause",
             Method::POST,
-            format!("/fine_tuning/jobs/{}/pause", job_id.into()),
+            format!(
+                "/fine_tuning/jobs/{}/pause",
+                encode_path_segment(job_id.into())
+            ),
         )
     }
 
@@ -2149,7 +2892,10 @@ impl FineTuningJobsResource {
             self.client.clone(),
             "fine_tuning.jobs.resume",
             Method::POST,
-            format!("/fine_tuning/jobs/{}/resume", job_id.into()),
+            format!(
+                "/fine_tuning/jobs/{}/resume",
+                encode_path_segment(job_id.into())
+            ),
         )
     }
 
@@ -2158,7 +2904,10 @@ impl FineTuningJobsResource {
         ListRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.list_events",
-            format!("/fine_tuning/jobs/{}/events", job_id.into()),
+            format!(
+                "/fine_tuning/jobs/{}/events",
+                encode_path_segment(job_id.into())
+            ),
         )
     }
 
@@ -2174,7 +2923,10 @@ impl FineTuningJobCheckpointsResource {
         ListRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.checkpoints.list",
-            format!("/fine_tuning/jobs/{}/checkpoints", job_id.into()),
+            format!(
+                "/fine_tuning/jobs/{}/checkpoints",
+                encode_path_segment(job_id.into())
+            ),
         )
     }
 }
@@ -2188,7 +2940,7 @@ impl FineTuningCheckpointPermissionsResource {
             Method::POST,
             format!(
                 "/fine_tuning/checkpoints/{}/permissions",
-                checkpoint_id.into()
+                encode_path_segment(checkpoint_id.into())
             ),
         )
     }
@@ -2205,8 +2957,8 @@ impl FineTuningCheckpointPermissionsResource {
             Method::GET,
             format!(
                 "/fine_tuning/checkpoints/{}/permissions/{}",
-                checkpoint_id.into(),
-                permission_id.into()
+                encode_path_segment(checkpoint_id.into()),
+                encode_path_segment(permission_id.into())
             ),
         )
     }
@@ -2218,7 +2970,7 @@ impl FineTuningCheckpointPermissionsResource {
             "fine_tuning.checkpoints.permissions.list",
             format!(
                 "/fine_tuning/checkpoints/{}/permissions",
-                checkpoint_id.into()
+                encode_path_segment(checkpoint_id.into())
             ),
         )
     }
@@ -2235,8 +2987,8 @@ impl FineTuningCheckpointPermissionsResource {
             Method::DELETE,
             format!(
                 "/fine_tuning/checkpoints/{}/permissions/{}",
-                checkpoint_id.into(),
-                permission_id.into()
+                encode_path_segment(checkpoint_id.into()),
+                encode_path_segment(permission_id.into())
             ),
         )
     }
@@ -2283,231 +3035,6 @@ impl GradersResource {
     }
 }
 
-impl VectorStoresResource {
-    /// 创建 vector store。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.create",
-            Method::POST,
-            "/vector_stores",
-        )
-    }
-
-    /// 获取 vector store。
-    pub fn retrieve(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.retrieve",
-            Method::GET,
-            format!("/vector_stores/{}", vector_store_id.into()),
-        )
-    }
-
-    /// 更新 vector store。
-    pub fn update(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.update",
-            Method::POST,
-            format!("/vector_stores/{}", vector_store_id.into()),
-        )
-    }
-
-    /// 列出 vector store。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
-        ListRequestBuilder::new(self.client.clone(), "vector_stores.list", "/vector_stores")
-    }
-
-    /// 删除 vector store。
-    pub fn delete(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.delete",
-            Method::DELETE,
-            format!("/vector_stores/{}", vector_store_id.into()),
-        )
-    }
-
-    /// 搜索 vector store。
-    pub fn search(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.search",
-            Method::POST,
-            format!("/vector_stores/{}/search", vector_store_id.into()),
-        )
-    }
-
-    /// 返回 files 子资源。
-    pub fn files(&self) -> VectorStoreFilesResource {
-        VectorStoreFilesResource::new(self.client.clone())
-    }
-
-    /// 返回 file_batches 子资源。
-    pub fn file_batches(&self) -> VectorStoreFileBatchesResource {
-        VectorStoreFileBatchesResource::new(self.client.clone())
-    }
-}
-
-impl VectorStoreFilesResource {
-    /// 创建 vector store 文件。
-    pub fn create(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.files.create",
-            Method::POST,
-            format!("/vector_stores/{}/files", vector_store_id.into()),
-        )
-    }
-
-    /// 获取 vector store 文件。
-    pub fn retrieve(
-        &self,
-        vector_store_id: impl Into<String>,
-        file_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.files.retrieve",
-            Method::GET,
-            format!(
-                "/vector_stores/{}/files/{}",
-                vector_store_id.into(),
-                file_id.into()
-            ),
-        )
-    }
-
-    /// 更新 vector store 文件。
-    pub fn update(
-        &self,
-        vector_store_id: impl Into<String>,
-        file_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.files.update",
-            Method::POST,
-            format!(
-                "/vector_stores/{}/files/{}",
-                vector_store_id.into(),
-                file_id.into()
-            ),
-        )
-    }
-
-    /// 列出 vector store 文件。
-    pub fn list(&self, vector_store_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        ListRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.files.list",
-            format!("/vector_stores/{}/files", vector_store_id.into()),
-        )
-    }
-
-    /// 删除 vector store 文件。
-    pub fn delete(
-        &self,
-        vector_store_id: impl Into<String>,
-        file_id: impl Into<String>,
-    ) -> JsonRequestBuilder<DeleteResponse> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.files.delete",
-            Method::DELETE,
-            format!(
-                "/vector_stores/{}/files/{}",
-                vector_store_id.into(),
-                file_id.into()
-            ),
-        )
-    }
-
-    /// 获取 vector store 文件内容。
-    pub fn content(
-        &self,
-        vector_store_id: impl Into<String>,
-        file_id: impl Into<String>,
-    ) -> BytesRequestBuilder {
-        BytesRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.files.content",
-            Method::GET,
-            format!(
-                "/vector_stores/{}/files/{}/content",
-                vector_store_id.into(),
-                file_id.into()
-            ),
-        )
-    }
-}
-
-impl VectorStoreFileBatchesResource {
-    /// 创建 file batch。
-    pub fn create(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.file_batches.create",
-            Method::POST,
-            format!("/vector_stores/{}/file_batches", vector_store_id.into()),
-        )
-    }
-
-    /// 获取 file batch。
-    pub fn retrieve(
-        &self,
-        vector_store_id: impl Into<String>,
-        batch_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.file_batches.retrieve",
-            Method::GET,
-            format!(
-                "/vector_stores/{}/file_batches/{}",
-                vector_store_id.into(),
-                batch_id.into()
-            ),
-        )
-    }
-
-    /// 取消 file batch。
-    pub fn cancel(
-        &self,
-        vector_store_id: impl Into<String>,
-        batch_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.file_batches.cancel",
-            Method::POST,
-            format!(
-                "/vector_stores/{}/file_batches/{}/cancel",
-                vector_store_id.into(),
-                batch_id.into()
-            ),
-        )
-    }
-
-    /// 列出 file batch 文件。
-    pub fn list_files(
-        &self,
-        vector_store_id: impl Into<String>,
-        batch_id: impl Into<String>,
-    ) -> ListRequestBuilder<Value> {
-        ListRequestBuilder::new(
-            self.client.clone(),
-            "vector_stores.file_batches.list_files",
-            format!(
-                "/vector_stores/{}/file_batches/{}/files",
-                vector_store_id.into(),
-                batch_id.into()
-            ),
-        )
-    }
-}
-
 impl BatchesResource {
     /// 创建 batch。
     pub fn create(&self) -> JsonRequestBuilder<Value> {
@@ -2525,7 +3052,7 @@ impl BatchesResource {
             self.client.clone(),
             "batches.retrieve",
             Method::GET,
-            format!("/batches/{}", batch_id.into()),
+            format!("/batches/{}", encode_path_segment(batch_id.into())),
         )
     }
 
@@ -2540,7 +3067,7 @@ impl BatchesResource {
             self.client.clone(),
             "batches.cancel",
             Method::POST,
-            format!("/batches/{}/cancel", batch_id.into()),
+            format!("/batches/{}/cancel", encode_path_segment(batch_id.into())),
         )
     }
 }
@@ -2562,7 +3089,7 @@ impl UploadsResource {
             self.client.clone(),
             "uploads.cancel",
             Method::POST,
-            format!("/uploads/{}/cancel", upload_id.into()),
+            format!("/uploads/{}/cancel", encode_path_segment(upload_id.into())),
         )
     }
 
@@ -2572,7 +3099,10 @@ impl UploadsResource {
             self.client.clone(),
             "uploads.complete",
             Method::POST,
-            format!("/uploads/{}/complete", upload_id.into()),
+            format!(
+                "/uploads/{}/complete",
+                encode_path_segment(upload_id.into())
+            ),
         )
     }
 
@@ -2589,189 +3119,9 @@ impl UploadPartsResource {
             self.client.clone(),
             "uploads.parts.create",
             Method::POST,
-            format!("/uploads/{}/parts", upload_id.into()),
+            format!("/uploads/{}/parts", encode_path_segment(upload_id.into())),
         )
     }
-}
-
-impl ResponsesResource {
-    /// 创建 responses 请求构建器。
-    pub fn create(&self) -> ResponseCreateRequestBuilder {
-        ResponseCreateRequestBuilder::new(self.client.clone())
-    }
-
-    /// 创建 responses 结构化解析构建器。
-    pub fn parse<T>(&self) -> ResponseParseRequestBuilder<T> {
-        ResponseParseRequestBuilder::new(self.client.clone())
-    }
-
-    /// 创建 responses 流式构建器。
-    pub fn stream(&self) -> ResponseStreamRequestBuilder {
-        ResponseStreamRequestBuilder::new(self.client.clone())
-    }
-
-    /// 创建 Responses WebSocket 连接构建器。
-    pub fn ws(&self) -> ResponsesSocketRequestBuilder {
-        ResponsesSocketRequestBuilder::new(self.client.clone())
-    }
-
-    /// 获取 response。
-    pub fn retrieve(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "responses.retrieve",
-            Method::GET,
-            format!("/responses/{}", response_id.into()),
-        )
-    }
-
-    /// 删除 response。
-    pub fn delete(&self, response_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "responses.delete",
-            Method::DELETE,
-            format!("/responses/{}", response_id.into()),
-        )
-    }
-
-    /// 取消后台 response。
-    pub fn cancel(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "responses.cancel",
-            Method::POST,
-            format!("/responses/{}/cancel", response_id.into()),
-        )
-    }
-
-    /// 压缩 response。
-    pub fn compact(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "responses.compact",
-            Method::POST,
-            format!("/responses/{}/compact", response_id.into()),
-        )
-    }
-
-    /// 返回 input_items 子资源。
-    pub fn input_items(&self) -> ResponseInputItemsResource {
-        ResponseInputItemsResource::new(self.client.clone())
-    }
-
-    /// 返回 input_tokens 子资源。
-    pub fn input_tokens(&self) -> ResponseInputTokensResource {
-        ResponseInputTokensResource::new(self.client.clone())
-    }
-}
-
-impl ResponseInputItemsResource {
-    /// 列出 response 输入项。
-    pub fn list(&self, response_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        ListRequestBuilder::new(
-            self.client.clone(),
-            "responses.input_items.list",
-            format!("/responses/{}/input_items", response_id.into()),
-        )
-    }
-}
-
-impl ResponseInputTokensResource {
-    /// 统计输入 token。
-    pub fn count(&self) -> JsonRequestBuilder<InputTokenCount> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "responses.input_tokens.count",
-            Method::POST,
-            "/responses/input_tokens",
-        )
-    }
-}
-
-impl RealtimeResource {
-    /// 创建 Realtime WebSocket 连接构建器。
-    pub fn ws(&self) -> RealtimeSocketRequestBuilder {
-        RealtimeSocketRequestBuilder::new(self.client.clone())
-    }
-
-    /// 返回 client_secrets 子资源。
-    pub fn client_secrets(&self) -> RealtimeClientSecretsResource {
-        RealtimeClientSecretsResource::new(self.client.clone())
-    }
-
-    /// 返回 calls 子资源。
-    pub fn calls(&self) -> RealtimeCallsResource {
-        RealtimeCallsResource::new(self.client.clone())
-    }
-}
-
-impl RealtimeClientSecretsResource {
-    /// 创建 client secret。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "realtime.client_secrets.create",
-            Method::POST,
-            "/realtime/client_secrets",
-        )
-    }
-}
-
-impl RealtimeCallsResource {
-    /// 接听通话。
-    pub fn accept(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        realtime_call_action(
-            self.client.clone(),
-            "realtime.calls.accept",
-            call_id,
-            "accept",
-        )
-    }
-
-    /// 挂断通话。
-    pub fn hangup(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        realtime_call_action(
-            self.client.clone(),
-            "realtime.calls.hangup",
-            call_id,
-            "hangup",
-        )
-    }
-
-    /// 转接通话。
-    pub fn refer(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        realtime_call_action(
-            self.client.clone(),
-            "realtime.calls.refer",
-            call_id,
-            "refer",
-        )
-    }
-
-    /// 拒绝通话。
-    pub fn reject(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        realtime_call_action(
-            self.client.clone(),
-            "realtime.calls.reject",
-            call_id,
-            "reject",
-        )
-    }
-}
-
-fn realtime_call_action(
-    client: Client,
-    endpoint_id: &'static str,
-    call_id: impl Into<String>,
-    action: &str,
-) -> JsonRequestBuilder<Value> {
-    JsonRequestBuilder::new(
-        client,
-        endpoint_id,
-        Method::POST,
-        format!("/realtime/calls/{}/{}", call_id.into(), action),
-    )
 }
 
 impl ConversationsResource {
@@ -2791,7 +3141,10 @@ impl ConversationsResource {
             self.client.clone(),
             "conversations.retrieve",
             Method::GET,
-            format!("/conversations/{}", conversation_id.into()),
+            format!(
+                "/conversations/{}",
+                encode_path_segment(conversation_id.into())
+            ),
         )
     }
 
@@ -2801,7 +3154,10 @@ impl ConversationsResource {
             self.client.clone(),
             "conversations.update",
             Method::POST,
-            format!("/conversations/{}", conversation_id.into()),
+            format!(
+                "/conversations/{}",
+                encode_path_segment(conversation_id.into())
+            ),
         )
     }
 
@@ -2811,7 +3167,10 @@ impl ConversationsResource {
             self.client.clone(),
             "conversations.delete",
             Method::DELETE,
-            format!("/conversations/{}", conversation_id.into()),
+            format!(
+                "/conversations/{}",
+                encode_path_segment(conversation_id.into())
+            ),
         )
     }
 
@@ -2828,7 +3187,10 @@ impl ConversationItemsResource {
             self.client.clone(),
             "conversations.items.create",
             Method::POST,
-            format!("/conversations/{}/items", conversation_id.into()),
+            format!(
+                "/conversations/{}/items",
+                encode_path_segment(conversation_id.into())
+            ),
         )
     }
 
@@ -2844,8 +3206,8 @@ impl ConversationItemsResource {
             Method::GET,
             format!(
                 "/conversations/{}/items/{}",
-                conversation_id.into(),
-                item_id.into()
+                encode_path_segment(conversation_id.into()),
+                encode_path_segment(item_id.into())
             ),
         )
     }
@@ -2855,7 +3217,10 @@ impl ConversationItemsResource {
         ListRequestBuilder::new(
             self.client.clone(),
             "conversations.items.list",
-            format!("/conversations/{}/items", conversation_id.into()),
+            format!(
+                "/conversations/{}/items",
+                encode_path_segment(conversation_id.into())
+            ),
         )
     }
 
@@ -2871,8 +3236,8 @@ impl ConversationItemsResource {
             Method::DELETE,
             format!(
                 "/conversations/{}/items/{}",
-                conversation_id.into(),
-                item_id.into()
+                encode_path_segment(conversation_id.into()),
+                encode_path_segment(item_id.into())
             ),
         )
     }
@@ -2890,7 +3255,7 @@ impl EvalsResource {
             self.client.clone(),
             "evals.retrieve",
             Method::GET,
-            format!("/evals/{}", eval_id.into()),
+            format!("/evals/{}", encode_path_segment(eval_id.into())),
         )
     }
 
@@ -2900,7 +3265,7 @@ impl EvalsResource {
             self.client.clone(),
             "evals.update",
             Method::POST,
-            format!("/evals/{}", eval_id.into()),
+            format!("/evals/{}", encode_path_segment(eval_id.into())),
         )
     }
 
@@ -2915,7 +3280,7 @@ impl EvalsResource {
             self.client.clone(),
             "evals.delete",
             Method::DELETE,
-            format!("/evals/{}", eval_id.into()),
+            format!("/evals/{}", encode_path_segment(eval_id.into())),
         )
     }
 
@@ -2932,7 +3297,7 @@ impl EvalRunsResource {
             self.client.clone(),
             "evals.runs.create",
             Method::POST,
-            format!("/evals/{}/runs", eval_id.into()),
+            format!("/evals/{}/runs", encode_path_segment(eval_id.into())),
         )
     }
 
@@ -2946,7 +3311,11 @@ impl EvalRunsResource {
             self.client.clone(),
             "evals.runs.retrieve",
             Method::GET,
-            format!("/evals/{}/runs/{}", eval_id.into(), run_id.into()),
+            format!(
+                "/evals/{}/runs/{}",
+                encode_path_segment(eval_id.into()),
+                encode_path_segment(run_id.into())
+            ),
         )
     }
 
@@ -2955,7 +3324,7 @@ impl EvalRunsResource {
         ListRequestBuilder::new(
             self.client.clone(),
             "evals.runs.list",
-            format!("/evals/{}/runs", eval_id.into()),
+            format!("/evals/{}/runs", encode_path_segment(eval_id.into())),
         )
     }
 
@@ -2969,7 +3338,11 @@ impl EvalRunsResource {
             self.client.clone(),
             "evals.runs.delete",
             Method::DELETE,
-            format!("/evals/{}/runs/{}", eval_id.into(), run_id.into()),
+            format!(
+                "/evals/{}/runs/{}",
+                encode_path_segment(eval_id.into()),
+                encode_path_segment(run_id.into())
+            ),
         )
     }
 
@@ -2983,7 +3356,11 @@ impl EvalRunsResource {
             self.client.clone(),
             "evals.runs.cancel",
             Method::POST,
-            format!("/evals/{}/runs/{}/cancel", eval_id.into(), run_id.into()),
+            format!(
+                "/evals/{}/runs/{}/cancel",
+                encode_path_segment(eval_id.into()),
+                encode_path_segment(run_id.into())
+            ),
         )
     }
 
@@ -3007,9 +3384,9 @@ impl EvalRunOutputItemsResource {
             Method::GET,
             format!(
                 "/evals/{}/runs/{}/output_items/{}",
-                eval_id.into(),
-                run_id.into(),
-                item_id.into()
+                encode_path_segment(eval_id.into()),
+                encode_path_segment(run_id.into()),
+                encode_path_segment(item_id.into())
             ),
         )
     }
@@ -3025,8 +3402,8 @@ impl EvalRunOutputItemsResource {
             "evals.runs.output_items.list",
             format!(
                 "/evals/{}/runs/{}/output_items",
-                eval_id.into(),
-                run_id.into()
+                encode_path_segment(eval_id.into()),
+                encode_path_segment(run_id.into())
             ),
         )
     }
@@ -3049,7 +3426,7 @@ impl ContainersResource {
             self.client.clone(),
             "containers.retrieve",
             Method::GET,
-            format!("/containers/{}", container_id.into()),
+            format!("/containers/{}", encode_path_segment(container_id.into())),
         )
     }
 
@@ -3064,7 +3441,7 @@ impl ContainersResource {
             self.client.clone(),
             "containers.delete",
             Method::DELETE,
-            format!("/containers/{}", container_id.into()),
+            format!("/containers/{}", encode_path_segment(container_id.into())),
         )
     }
 
@@ -3081,7 +3458,10 @@ impl ContainerFilesResource {
             self.client.clone(),
             "containers.files.create",
             Method::POST,
-            format!("/containers/{}/files", container_id.into()),
+            format!(
+                "/containers/{}/files",
+                encode_path_segment(container_id.into())
+            ),
         )
     }
 
@@ -3097,8 +3477,8 @@ impl ContainerFilesResource {
             Method::GET,
             format!(
                 "/containers/{}/files/{}",
-                container_id.into(),
-                file_id.into()
+                encode_path_segment(container_id.into()),
+                encode_path_segment(file_id.into())
             ),
         )
     }
@@ -3108,7 +3488,10 @@ impl ContainerFilesResource {
         ListRequestBuilder::new(
             self.client.clone(),
             "containers.files.list",
-            format!("/containers/{}/files", container_id.into()),
+            format!(
+                "/containers/{}/files",
+                encode_path_segment(container_id.into())
+            ),
         )
     }
 
@@ -3124,8 +3507,8 @@ impl ContainerFilesResource {
             Method::DELETE,
             format!(
                 "/containers/{}/files/{}",
-                container_id.into(),
-                file_id.into()
+                encode_path_segment(container_id.into()),
+                encode_path_segment(file_id.into())
             ),
         )
     }
@@ -3149,8 +3532,8 @@ impl ContainerFilesContentResource {
             Method::GET,
             format!(
                 "/containers/{}/files/{}/content",
-                container_id.into(),
-                file_id.into()
+                encode_path_segment(container_id.into()),
+                encode_path_segment(file_id.into())
             ),
         )
     }
@@ -3173,7 +3556,7 @@ impl SkillsResource {
             self.client.clone(),
             "skills.retrieve",
             Method::GET,
-            format!("/skills/{}", skill_id.into()),
+            format!("/skills/{}", encode_path_segment(skill_id.into())),
         )
     }
 
@@ -3183,7 +3566,7 @@ impl SkillsResource {
             self.client.clone(),
             "skills.update",
             Method::POST,
-            format!("/skills/{}", skill_id.into()),
+            format!("/skills/{}", encode_path_segment(skill_id.into())),
         )
     }
 
@@ -3198,7 +3581,7 @@ impl SkillsResource {
             self.client.clone(),
             "skills.delete",
             Method::DELETE,
-            format!("/skills/{}", skill_id.into()),
+            format!("/skills/{}", encode_path_segment(skill_id.into())),
         )
     }
 
@@ -3220,7 +3603,7 @@ impl SkillsContentResource {
             self.client.clone(),
             "skills.content.retrieve",
             Method::GET,
-            format!("/skills/{}/content", skill_id.into()),
+            format!("/skills/{}/content", encode_path_segment(skill_id.into())),
         )
     }
 }
@@ -3232,7 +3615,7 @@ impl SkillVersionsResource {
             self.client.clone(),
             "skills.versions.create",
             Method::POST,
-            format!("/skills/{}/versions", skill_id.into()),
+            format!("/skills/{}/versions", encode_path_segment(skill_id.into())),
         )
     }
 
@@ -3246,7 +3629,11 @@ impl SkillVersionsResource {
             self.client.clone(),
             "skills.versions.retrieve",
             Method::GET,
-            format!("/skills/{}/versions/{}", skill_id.into(), version_id.into()),
+            format!(
+                "/skills/{}/versions/{}",
+                encode_path_segment(skill_id.into()),
+                encode_path_segment(version_id.into())
+            ),
         )
     }
 
@@ -3255,7 +3642,7 @@ impl SkillVersionsResource {
         ListRequestBuilder::new(
             self.client.clone(),
             "skills.versions.list",
-            format!("/skills/{}/versions", skill_id.into()),
+            format!("/skills/{}/versions", encode_path_segment(skill_id.into())),
         )
     }
 
@@ -3269,7 +3656,11 @@ impl SkillVersionsResource {
             self.client.clone(),
             "skills.versions.delete",
             Method::DELETE,
-            format!("/skills/{}/versions/{}", skill_id.into(), version_id.into()),
+            format!(
+                "/skills/{}/versions/{}",
+                encode_path_segment(skill_id.into()),
+                encode_path_segment(version_id.into())
+            ),
         )
     }
 
@@ -3292,8 +3683,8 @@ impl SkillVersionsContentResource {
             Method::GET,
             format!(
                 "/skills/{}/versions/{}/content",
-                skill_id.into(),
-                version_id.into()
+                encode_path_segment(skill_id.into()),
+                encode_path_segment(version_id.into())
             ),
         )
     }
@@ -3316,7 +3707,7 @@ impl VideosResource {
             self.client.clone(),
             "videos.retrieve",
             Method::GET,
-            format!("/videos/{}", video_id.into()),
+            format!("/videos/{}", encode_path_segment(video_id.into())),
         )
     }
 
@@ -3331,7 +3722,7 @@ impl VideosResource {
             self.client.clone(),
             "videos.delete",
             Method::DELETE,
-            format!("/videos/{}", video_id.into()),
+            format!("/videos/{}", encode_path_segment(video_id.into())),
         )
     }
 
@@ -3341,7 +3732,7 @@ impl VideosResource {
             self.client.clone(),
             "videos.edit",
             Method::POST,
-            format!("/videos/{}/edit", video_id.into()),
+            format!("/videos/{}/edit", encode_path_segment(video_id.into())),
         )
     }
 
@@ -3351,7 +3742,7 @@ impl VideosResource {
             self.client.clone(),
             "videos.extend",
             Method::POST,
-            format!("/videos/{}/extend", video_id.into()),
+            format!("/videos/{}/extend", encode_path_segment(video_id.into())),
         )
     }
 
@@ -3371,7 +3762,10 @@ impl VideosResource {
             self.client.clone(),
             "videos.get_character",
             Method::GET,
-            format!("/videos/characters/{}", character_id.into()),
+            format!(
+                "/videos/characters/{}",
+                encode_path_segment(character_id.into())
+            ),
         )
     }
 
@@ -3381,7 +3775,7 @@ impl VideosResource {
             self.client.clone(),
             "videos.download_content",
             Method::GET,
-            format!("/videos/{}/content", video_id.into()),
+            format!("/videos/{}/content", encode_path_segment(video_id.into())),
         )
     }
 
@@ -3391,7 +3785,7 @@ impl VideosResource {
             self.client.clone(),
             "videos.remix",
             Method::POST,
-            format!("/videos/{}/remix", video_id.into()),
+            format!("/videos/{}/remix", encode_path_segment(video_id.into())),
         )
     }
 }
@@ -3438,520 +3832,4 @@ impl WebhooksResource {
     {
         self.verifier().unwrap(payload, headers, secret, tolerance)
     }
-}
-
-impl BetaResource {
-    /// 返回 assistants 子资源。
-    pub fn assistants(&self) -> BetaAssistantsResource {
-        BetaAssistantsResource::new(self.client.clone())
-    }
-
-    /// 返回 threads 子资源。
-    pub fn threads(&self) -> BetaThreadsResource {
-        BetaThreadsResource::new(self.client.clone())
-    }
-
-    /// 返回 chatkit 子资源。
-    pub fn chatkit(&self) -> BetaChatkitResource {
-        BetaChatkitResource::new(self.client.clone())
-    }
-
-    /// 返回 realtime 子资源。
-    pub fn realtime(&self) -> BetaRealtimeResource {
-        BetaRealtimeResource::new(self.client.clone())
-    }
-}
-
-impl BetaAssistantsResource {
-    /// 创建 assistant。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.assistants.create",
-            Method::POST,
-            "/assistants",
-        )
-    }
-
-    /// 获取 assistant。
-    pub fn retrieve(&self, assistant_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.assistants.retrieve",
-            Method::GET,
-            format!("/assistants/{}", assistant_id.into()),
-        )
-    }
-
-    /// 更新 assistant。
-    pub fn update(&self, assistant_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.assistants.update",
-            Method::POST,
-            format!("/assistants/{}", assistant_id.into()),
-        )
-    }
-
-    /// 列出 assistants。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
-        beta_list(self.client.clone(), "beta.assistants.list", "/assistants")
-    }
-
-    /// 删除 assistant。
-    pub fn delete(&self, assistant_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        beta_json(
-            self.client.clone(),
-            "beta.assistants.delete",
-            Method::DELETE,
-            format!("/assistants/{}", assistant_id.into()),
-        )
-    }
-}
-
-impl BetaThreadsResource {
-    /// 创建 thread。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.create",
-            Method::POST,
-            "/threads",
-        )
-    }
-
-    /// 获取 thread。
-    pub fn retrieve(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.retrieve",
-            Method::GET,
-            format!("/threads/{}", thread_id.into()),
-        )
-    }
-
-    /// 更新 thread。
-    pub fn update(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.update",
-            Method::POST,
-            format!("/threads/{}", thread_id.into()),
-        )
-    }
-
-    /// 删除 thread。
-    pub fn delete(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.delete",
-            Method::DELETE,
-            format!("/threads/{}", thread_id.into()),
-        )
-    }
-
-    /// 创建并运行 thread。
-    pub fn create_and_run(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.create_and_run",
-            Method::POST,
-            "/threads/runs",
-        )
-    }
-
-    /// 创建并运行流式 thread。
-    pub fn create_and_run_stream(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.create_and_run_stream",
-            Method::POST,
-            "/threads/runs",
-        )
-    }
-
-    /// 返回 messages 子资源。
-    pub fn messages(&self) -> BetaThreadMessagesResource {
-        BetaThreadMessagesResource::new(self.client.clone())
-    }
-
-    /// 返回 runs 子资源。
-    pub fn runs(&self) -> BetaThreadRunsResource {
-        BetaThreadRunsResource::new(self.client.clone())
-    }
-}
-
-impl BetaThreadMessagesResource {
-    /// 创建 thread message。
-    pub fn create(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.messages.create",
-            Method::POST,
-            format!("/threads/{}/messages", thread_id.into()),
-        )
-    }
-
-    /// 获取 thread message。
-    pub fn retrieve(
-        &self,
-        thread_id: impl Into<String>,
-        message_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.messages.retrieve",
-            Method::GET,
-            format!(
-                "/threads/{}/messages/{}",
-                thread_id.into(),
-                message_id.into()
-            ),
-        )
-    }
-
-    /// 更新 thread message。
-    pub fn update(
-        &self,
-        thread_id: impl Into<String>,
-        message_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.messages.update",
-            Method::POST,
-            format!(
-                "/threads/{}/messages/{}",
-                thread_id.into(),
-                message_id.into()
-            ),
-        )
-    }
-
-    /// 列出 thread messages。
-    pub fn list(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        beta_list(
-            self.client.clone(),
-            "beta.threads.messages.list",
-            format!("/threads/{}/messages", thread_id.into()),
-        )
-    }
-
-    /// 删除 thread message。
-    pub fn delete(
-        &self,
-        thread_id: impl Into<String>,
-        message_id: impl Into<String>,
-    ) -> JsonRequestBuilder<DeleteResponse> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.messages.delete",
-            Method::DELETE,
-            format!(
-                "/threads/{}/messages/{}",
-                thread_id.into(),
-                message_id.into()
-            ),
-        )
-    }
-}
-
-impl BetaThreadRunsResource {
-    /// 创建 run。
-    pub fn create(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.create",
-            Method::POST,
-            format!("/threads/{}/runs", thread_id.into()),
-        )
-    }
-
-    /// 获取 run。
-    pub fn retrieve(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.retrieve",
-            Method::GET,
-            format!("/threads/{}/runs/{}", thread_id.into(), run_id.into()),
-        )
-    }
-
-    /// 更新 run。
-    pub fn update(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.update",
-            Method::POST,
-            format!("/threads/{}/runs/{}", thread_id.into(), run_id.into()),
-        )
-    }
-
-    /// 列出 runs。
-    pub fn list(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        beta_list(
-            self.client.clone(),
-            "beta.threads.runs.list",
-            format!("/threads/{}/runs", thread_id.into()),
-        )
-    }
-
-    /// 取消 run。
-    pub fn cancel(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.cancel",
-            Method::POST,
-            format!(
-                "/threads/{}/runs/{}/cancel",
-                thread_id.into(),
-                run_id.into()
-            ),
-        )
-    }
-
-    /// 创建并流式获取 run。
-    pub fn create_and_stream(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.create_and_stream",
-            Method::POST,
-            format!("/threads/{}/runs", thread_id.into()),
-        )
-    }
-
-    /// 提交工具输出。
-    pub fn submit_tool_outputs(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.submit_tool_outputs",
-            Method::POST,
-            format!(
-                "/threads/{}/runs/{}/submit_tool_outputs",
-                thread_id.into(),
-                run_id.into()
-            ),
-        )
-    }
-
-    /// 流式提交工具输出。
-    pub fn submit_tool_outputs_stream(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.submit_tool_outputs_stream",
-            Method::POST,
-            format!(
-                "/threads/{}/runs/{}/submit_tool_outputs",
-                thread_id.into(),
-                run_id.into()
-            ),
-        )
-    }
-
-    /// 流式获取 run。
-    pub fn stream(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.stream",
-            Method::GET,
-            format!("/threads/{}/runs/{}", thread_id.into(), run_id.into()),
-        )
-    }
-
-    /// 返回 steps 子资源。
-    pub fn steps(&self) -> BetaThreadRunStepsResource {
-        BetaThreadRunStepsResource::new(self.client.clone())
-    }
-}
-
-impl BetaThreadRunStepsResource {
-    /// 获取 run step。
-    pub fn retrieve(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-        step_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.threads.runs.steps.retrieve",
-            Method::GET,
-            format!(
-                "/threads/{}/runs/{}/steps/{}",
-                thread_id.into(),
-                run_id.into(),
-                step_id.into()
-            ),
-        )
-    }
-
-    /// 列出 run steps。
-    pub fn list(
-        &self,
-        thread_id: impl Into<String>,
-        run_id: impl Into<String>,
-    ) -> ListRequestBuilder<Value> {
-        beta_list(
-            self.client.clone(),
-            "beta.threads.runs.steps.list",
-            format!("/threads/{}/runs/{}/steps", thread_id.into(), run_id.into()),
-        )
-    }
-}
-
-impl BetaChatkitResource {
-    /// 返回 sessions 子资源。
-    pub fn sessions(&self) -> BetaChatkitSessionsResource {
-        BetaChatkitSessionsResource::new(self.client.clone())
-    }
-
-    /// 返回 threads 子资源。
-    pub fn threads(&self) -> BetaChatkitThreadsResource {
-        BetaChatkitThreadsResource::new(self.client.clone())
-    }
-}
-
-impl BetaChatkitSessionsResource {
-    /// 创建 chatkit session。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.chatkit.sessions.create",
-            Method::POST,
-            "/chatkit/sessions",
-        )
-    }
-
-    /// 取消 chatkit session。
-    pub fn cancel(&self, session_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.chatkit.sessions.cancel",
-            Method::POST,
-            format!("/chatkit/sessions/{}/cancel", session_id.into()),
-        )
-    }
-}
-
-impl BetaChatkitThreadsResource {
-    /// 获取 chatkit thread。
-    pub fn retrieve(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.chatkit.threads.retrieve",
-            Method::GET,
-            format!("/chatkit/threads/{}", thread_id.into()),
-        )
-    }
-
-    /// 列出 chatkit threads。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
-        beta_list(
-            self.client.clone(),
-            "beta.chatkit.threads.list",
-            "/chatkit/threads",
-        )
-    }
-
-    /// 列出 chatkit thread items。
-    pub fn list_items(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        beta_list(
-            self.client.clone(),
-            "beta.chatkit.threads.list_items",
-            format!("/chatkit/threads/{}/items", thread_id.into()),
-        )
-    }
-
-    /// 删除 chatkit thread。
-    pub fn delete(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        beta_json(
-            self.client.clone(),
-            "beta.chatkit.threads.delete",
-            Method::DELETE,
-            format!("/chatkit/threads/{}", thread_id.into()),
-        )
-    }
-}
-
-impl BetaRealtimeResource {
-    /// 创建 Realtime WebSocket 连接构建器。
-    pub fn ws(&self) -> RealtimeSocketRequestBuilder {
-        RealtimeSocketRequestBuilder::new(self.client.clone())
-    }
-
-    /// 返回 sessions 子资源。
-    pub fn sessions(&self) -> BetaRealtimeSessionsResource {
-        BetaRealtimeSessionsResource::new(self.client.clone())
-    }
-
-    /// 返回 transcription_sessions 子资源。
-    pub fn transcription_sessions(&self) -> BetaRealtimeTranscriptionSessionsResource {
-        BetaRealtimeTranscriptionSessionsResource::new(self.client.clone())
-    }
-}
-
-impl BetaRealtimeSessionsResource {
-    /// 创建 beta realtime session。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.realtime.sessions.create",
-            Method::POST,
-            "/realtime/sessions",
-        )
-    }
-}
-
-impl BetaRealtimeTranscriptionSessionsResource {
-    /// 创建 beta realtime transcription session。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
-            self.client.clone(),
-            "beta.realtime.transcription_sessions.create",
-            Method::POST,
-            "/realtime/transcription_sessions",
-        )
-    }
-}
-
-fn beta_json<T>(
-    client: Client,
-    endpoint_id: &'static str,
-    method: Method,
-    path: impl Into<String>,
-) -> JsonRequestBuilder<T> {
-    JsonRequestBuilder::new(client, endpoint_id, method, path)
-        .extra_header("openai-beta", "assistants=v2")
-}
-
-fn beta_list<T>(
-    client: Client,
-    endpoint_id: &'static str,
-    path: impl Into<String>,
-) -> ListRequestBuilder<T> {
-    ListRequestBuilder::new(client, endpoint_id, path).extra_header("openai-beta", "assistants=v2")
 }

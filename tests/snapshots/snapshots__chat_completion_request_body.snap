@@ -1,0 +1,22 @@
+---
+source: tests/snapshots.rs
+expression: "serde_json::to_string_pretty(&body).unwrap()"
+---
+{
+  "messages": [
+    {
+      "content": "你是一个测试助手",
+      "role": "system"
+    },
+    {
+      "content": "请返回一句话",
+      "role": "user"
+    }
+  ],
+  "metadata": {
+    "suite": "snapshot"
+  },
+  "model": "gpt-5.4",
+  "stream": false,
+  "temperature": 0.20000000298023224
+}

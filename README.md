@@ -1,38 +1,88 @@
 # openai-rs
 
-`openai-rs` 是一个面向 OpenAI 兼容生态的异步 Rust SDK，实现目标是对齐 `openai-node` 的公开功能面，同时保留 Rust 侧更直接的强类型与 builder 体验。
+`openai-rs` 是一个面向 OpenAI 兼容生态的异步 Rust SDK。
 
-当前版本已经覆盖：
+当前实现目标是：
 
-- OpenAI、Azure OpenAI、智谱、MiniMax、ZenMux 与自定义 Provider
-- 标准 HTTP 请求、SSE 流、Realtime WebSocket、Responses WebSocket
-- 超时、重试、默认 header/query 合并、统一错误映射
-- Multipart 上传、Webhook HMAC 校验、Structured Output、Tool Runner
-- `openai-node` 对应的顶层资源命名空间与主要子资源
-- 高频路径强类型实现，长尾路径统一收敛到通用 request builder
+- 对齐 `openai-node` 的主要公开能力
+- 提供 Rust 风格的 builder、强类型和异步体验
+- 兼容 OpenAI、Azure OpenAI 与常见 OpenAI 兼容 Provider
 
-默认 feature 已启用：
+## 版本与兼容策略
 
-- `stream`
-- `multipart`
-- `webhooks`
-- `structured-output`
-- `tool-runner`
-- `realtime`
-- `responses-ws`
-- `rustls-tls`
+- 当前版本线：`0.1.x`
+- MSRV：`1.94.1`
+- Rust Edition：`2024`
 
-## 工具链
+当前仍处于 `0.x` 阶段，版本策略如下：
 
-- Rust stable `1.94.1`
-- Edition `2024`
+- patch 版本不应引入有意的 breaking change
+- minor 版本允许对公开 API 做收敛和重整，但会尽量附带迁移说明
+- 内部实现细节不是稳定承诺的一部分，例如 transport 内部拼装逻辑、provider 内部 profile 细节、非公开模块结构
+
+长期优化路线见 [specs/0003_improve.md](./specs/0003_improve.md)。
+
+## Provider 支持矩阵
+
+| Provider | 支持级别 | 说明 |
+| --- | --- | --- |
+| OpenAI | 一等支持 | 默认行为与测试覆盖优先围绕 OpenAI 语义设计 |
+| Azure OpenAI | 一等支持 | 支持 endpoint、deployment、`api-version`、`api-key` 与 Azure AD token |
+| Zhipu | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
+| MiniMax | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
+| ZenMux | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
+| Custom Provider | 扩展支持 | SDK 提供稳定入口，具体兼容行为由接入方自行保证 |
 
 ## 安装
 
+默认 feature 较轻，只启用 HTTP / SSE / Multipart / Webhook 相关能力：
+
 ```toml
 [dependencies]
-openai-rs = { path = "./openai-rs" }
+openai-rs = "0.1"
 ```
+
+如果你需要结构化输出、工具调用或 WebSocket，再按需开启：
+
+```toml
+[dependencies]
+openai-rs = { version = "0.1", features = ["structured-output", "tool-runner", "realtime", "responses-ws"] }
+```
+
+如果你希望完全按需选择能力：
+
+```toml
+[dependencies]
+openai-rs = { version = "0.1", default-features = false, features = ["stream", "multipart", "rustls-tls"] }
+```
+
+## Feature Flags
+
+| Feature | 默认启用 | 说明 |
+| --- | --- | --- |
+| `stream` | 是 | SSE / 流式响应能力 |
+| `multipart` | 是 | 文件上传与 multipart 请求支持 |
+| `webhooks` | 是 | Webhook HMAC 校验 |
+| `rustls-tls` | 是 | `reqwest` / WebSocket 的 rustls TLS 组合 |
+| `structured-output` | 否 | `parse::<T>()`、JSON Schema 辅助与结构化输出能力 |
+| `tool-runner` | 否 | tool runner、工具注册与自动工具调用循环 |
+| `realtime` | 否 | Realtime WebSocket 能力 |
+| `responses-ws` | 否 | Responses WebSocket 能力 |
+
+说明：
+
+- `tool-runner` 依赖 `structured-output`
+- `ws()`、`RealtimeSocket`、`ResponsesSocket` 等 WebSocket API 只会在对应 feature 开启时公开
+
+## 专题文档
+
+- [Azure OpenAI 接入](./docs/azure.md)
+- [流式与 Realtime](./docs/realtime-and-streaming.md)
+- [Structured Output 与 Tool Runner](./docs/structured-output-and-tools.md)
+- [迁移说明](./docs/migration.md)
+- [可观测性说明](./docs/observability.md)
+- [发布检查清单](./docs/release-checklist.md)
+- [ADR: codegen 策略](./docs/adr/0001_codegen_strategy.md)
 
 ## 快速开始
 
@@ -77,13 +127,12 @@ let client = Client::builder()
 let response = client
     .responses()
     .create()
-    .model("ignored-when-deployment-is-injected")
     .input_text("用一句话解释所有权")
     .send()
     .await?;
 ```
 
-若使用 Microsoft Entra / Azure AD Token，可直接切到 Bearer 模式：
+如需 Azure AD / Entra Bearer Token：
 
 ```rust,ignore
 use openai_rs::Client;
@@ -114,6 +163,8 @@ println!("{:?}", response.output_text());
 
 ### Structured Output
 
+需要 `structured-output` feature。
+
 ```rust,ignore
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -135,6 +186,8 @@ let parsed = client
 ```
 
 ### Tool Runner
+
+需要 `tool-runner` feature。
 
 ```rust,ignore
 use openai_rs::ToolDefinition;
@@ -169,6 +222,8 @@ let final_response = client
 
 ### Realtime WebSocket
 
+需要 `realtime` feature。
+
 ```rust,ignore
 use futures_util::StreamExt;
 use openai_rs::SocketStreamMessage;
@@ -194,13 +249,15 @@ if let Some(SocketStreamMessage::Open) = stream.next().await {
 }
 ```
 
-Azure Realtime 可以直接复用 builder 中配置的 deployment：
+Azure Realtime 可以直接复用 client 上配置好的 deployment：
 
 ```rust,ignore
 let socket = client.realtime().ws().connect().await?;
 ```
 
 ### Responses WebSocket
+
+需要 `responses-ws` feature。
 
 ```rust,ignore
 use futures_util::StreamExt;
@@ -221,9 +278,7 @@ socket
 
 while let Some(event) = stream.next().await {
     match event {
-        SocketStreamMessage::Message(message) => {
-            println!("{message:#?}");
-        }
+        SocketStreamMessage::Message(message) => println!("{message:#?}"),
         SocketStreamMessage::Error(error) => {
             eprintln!("{error}");
             break;
@@ -236,74 +291,74 @@ while let Some(event) = stream.next().await {
 
 ## 资源结构
 
-`Client` 已暴露与 `openai-node` 对齐的顶层命名空间：
+`Client` 当前暴露与 `openai-node` 对齐的主要顶层命名空间，包括但不限于：
 
-- `completions`
 - `chat`
-- `embeddings`
+- `responses`
+- `models`
 - `files`
+- `uploads`
 - `images`
 - `audio`
 - `moderations`
-- `models`
-- `fine_tuning`
-- `graders`
 - `vector_stores`
-- `webhooks`
+- `fine_tuning`
 - `batches`
-- `uploads`
-- `responses`
+- `webhooks`
 - `realtime`
-- `conversations`
-- `evals`
-- `containers`
-- `skills`
-- `videos`
 - `beta`
 
-实现策略分两层：
+高频路径优先提供强类型实现，长尾路径统一收敛到通用 request builder。
 
-- 高频接口使用强类型 builder，例如 `chat.completions`、`responses`、`models`、`files`、`uploads`
-- 长尾接口统一使用 `JsonRequestBuilder<T>`、`BytesRequestBuilder`、`ListRequestBuilder<T>`
+当前已经优先把以下长尾资源提升为强类型返回值：
 
-这样可以保持功能面完整，同时避免把所有资源都膨胀成极重的样板类型层。
+- `beta.assistants`
+- `beta.threads`
+- `beta.threads.messages`
+- `beta.threads.runs`
+- `beta.threads.runs.steps`
+- `vector_stores`
+- `vector_stores.files`
+- `vector_stores.file_batches`
 
-## 关键能力
+## Examples
 
-- `Client::with_options` 支持克隆后局部覆写配置
-- `ClientBuilder::api_key_async_provider` 支持异步凭证回调
-- Azure 支持 `endpoint`、`api-version`、`deployment`、`api-key`、Bearer Token / Azure AD Token
-- `ChatCompletionStream` 与 `ResponseStream` 会做常见增量聚合
-- `RealtimeSocket` 与 `ResponsesSocket` 提供统一的生命周期事件流
-- `WebhookVerifier` 支持签名校验与事件解包
+仓库内置了可编译示例：
 
-## 测试
+- [examples/openai_chat.rs](./examples/openai_chat.rs)
+- [examples/openai_responses.rs](./examples/openai_responses.rs)
+- [examples/azure_chat.rs](./examples/azure_chat.rs)
+- [examples/realtime_ws.rs](./examples/realtime_ws.rs)
+- [examples/files_upload.rs](./examples/files_upload.rs)
 
-主要测试目录：
+## 校验与开发
 
-```text
-tests/
-├── contract/
-├── provider_live/
-└── websocket.rs
-```
-
-当前默认测试覆盖：
-
-- Provider 默认配置与严格模式校验
-- Azure 路径改写、deployment 注入与 Bearer / `api-key` 鉴权
-- Client 默认 header/query 合并
-- 聊天补全、Responses、分页、Structured Output、Tool Runner 关键链路
-- SSE 行解码、Multipart 展开、Webhook 验签
-- Realtime WebSocket 与 Responses WebSocket 握手、鉴权与事件流
-
-验证命令：
+常用检查命令：
 
 ```bash
 cargo build
 cargo test
-cargo +nightly fmt
+cargo check --no-default-features
+cargo check --no-default-features --features structured-output,tool-runner
+cargo check --no-default-features --features realtime,responses-ws
+cargo check --examples --all-features
 cargo clippy --all-targets --all-features -- -D warnings
+cargo deny check
+bash ./scripts/check-public-api.sh
 ```
 
-真实 provider 的 smoke tests 位于 `tests/provider_live/`，默认使用 `#[ignore]`。
+补充说明：
+
+- `tests/provider_live/` 下的 live smoke tests 默认 `#[ignore]`
+- 若缺少对应环境变量，这些 live tests 会自动跳过
+
+## 项目状态
+
+当前仓库已经具备可发布的 SDK 基础能力，后续优化重点放在：
+
+- 公开 API 面进一步收缩
+- `resources` 目录拆分
+- 长尾资源强类型化
+- feature matrix 与公共 API 稳定性治理
+
+对应规划见 [specs/0003_improve.md](./specs/0003_improve.md)。

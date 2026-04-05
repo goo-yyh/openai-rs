@@ -1,0 +1,21 @@
+---
+source: tests/snapshots.rs
+expression: "serde_json::to_string_pretty(&json!({\n    \"events\": events, \"output_text\": stream.output_text(),\n})).unwrap()"
+---
+{
+  "events": [
+    {
+      "delta": "hel",
+      "type": "response.output_text.delta"
+    },
+    {
+      "delta": "lo",
+      "type": "response.output_text.delta"
+    },
+    {
+      "text": "hello",
+      "type": "response.output_text.done"
+    }
+  ],
+  "output_text": "hello"
+}
