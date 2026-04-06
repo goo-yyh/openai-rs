@@ -279,7 +279,12 @@ async fn build_request(inner: &ClientInner, spec: &RequestSpec) -> Result<reqwes
 
     if let Some(multipart) = &spec.multipart {
         let mut form = reqwest::multipart::Form::new();
-        for field in &multipart.fields {
+        let mut fields = Vec::new();
+        if let Some(body) = &body {
+            flatten_json_to_multipart_fields("", body, &mut fields);
+        }
+        fields.extend(multipart.fields.iter().cloned());
+        for field in &fields {
             form = form.text(field.name.clone(), field.value.clone());
         }
         for (name, source) in &multipart.files {
@@ -429,7 +434,6 @@ fn backoff_duration(attempt: u32) -> Duration {
 }
 
 /// 递归把 JSON 对象转换成 Multipart 文本字段。
-#[cfg(test)]
 fn flatten_json_to_multipart_fields(prefix: &str, value: &Value, output: &mut Vec<MultipartField>) {
     match value {
         Value::Null => {}

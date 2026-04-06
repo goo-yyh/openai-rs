@@ -32,7 +32,7 @@ use crate::response_meta::ApiResponse;
 use crate::stream::ChatCompletionRuntimeEvent;
 use crate::stream::{
     AssistantEventStream, AssistantStream, ChatCompletionEventStream, ChatCompletionStream,
-    ResponseEventStream, ResponseStream,
+    RawSseStream, ResponseEventStream, ResponseStream, SseStream,
 };
 use crate::transport::{RequestSpec, merge_json_body};
 use crate::webhooks::{HeaderLookup, WebhookVerifier};
@@ -917,6 +917,39 @@ where
         let client = self.client.clone();
         client.execute_raw_http(self.into_spec()).await
     }
+
+    /// 发送请求并返回原始 SSE 事件流。
+    ///
+    /// 该方法会自动追加 `Accept: text/event-stream` 请求头。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_raw_sse(self) -> Result<RawSseStream> {
+        let client = self.client.clone();
+        let mut spec = self.into_spec();
+        spec.options.insert_header("accept", "text/event-stream");
+        client.execute_raw_sse(spec).await
+    }
+}
+
+impl<T> JsonRequestBuilder<T>
+where
+    T: serde::de::DeserializeOwned + Send + 'static,
+{
+    /// 发送请求并把 SSE 数据流解析为指定类型。
+    ///
+    /// 该方法会自动追加 `Accept: text/event-stream` 请求头。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或 SSE 事件反序列化失败时返回错误。
+    pub async fn send_sse(self) -> Result<SseStream<T>> {
+        let client = self.client.clone();
+        let mut spec = self.into_spec();
+        spec.options.insert_header("accept", "text/event-stream");
+        client.execute_sse(spec).await
+    }
 }
 
 /// 表示二进制响应请求构建器。
@@ -1013,6 +1046,37 @@ impl BytesRequestBuilder {
     pub async fn send_raw(self) -> Result<http::Response<Bytes>> {
         let client = self.inner.client.clone();
         client.execute_raw_http(self.inner.into_spec()).await
+    }
+
+    /// 发送请求并返回原始 SSE 事件流。
+    ///
+    /// 该方法会自动追加 `Accept: text/event-stream` 请求头。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_raw_sse(self) -> Result<RawSseStream> {
+        let client = self.inner.client.clone();
+        let mut spec = self.inner.into_spec();
+        spec.options.insert_header("accept", "text/event-stream");
+        client.execute_raw_sse(spec).await
+    }
+
+    /// 发送请求并把 SSE 数据流解析为指定类型。
+    ///
+    /// 该方法会自动追加 `Accept: text/event-stream` 请求头。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败或 SSE 事件反序列化失败时返回错误。
+    pub async fn send_sse<T>(self) -> Result<SseStream<T>>
+    where
+        T: serde::de::DeserializeOwned + Send + 'static,
+    {
+        let client = self.inner.client.clone();
+        let mut spec = self.inner.into_spec();
+        spec.options.insert_header("accept", "text/event-stream");
+        client.execute_sse(spec).await
     }
 }
 
@@ -2748,6 +2812,14 @@ impl AudioSpeechResource {
             "/audio/speech",
         )
     }
+
+    /// 创建 SSE 语音合成请求。
+    ///
+    /// 该请求会自动在请求体中追加 `stream_format = "sse"`。
+    pub fn stream(&self) -> BytesRequestBuilder {
+        self.create()
+            .extra_body("stream_format", Value::String("sse".into()))
+    }
 }
 
 impl AudioTranscriptionsResource {
@@ -2759,6 +2831,13 @@ impl AudioTranscriptionsResource {
             Method::POST,
             "/audio/transcriptions",
         )
+    }
+
+    /// 创建流式转写请求。
+    ///
+    /// 该请求会自动在请求体中追加 `stream = true`。
+    pub fn stream(&self) -> JsonRequestBuilder<Value> {
+        self.create().extra_body("stream", Value::Bool(true))
     }
 }
 

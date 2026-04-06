@@ -8,7 +8,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use openai_rs::{
     AssistantRuntimeEvent, BetaAssistant, BetaThreadMessage, BetaThreadRun, ChatCompletionChunk,
     ChatCompletionMessage, ChatCompletionRuntimeEvent, Client, Model, ResponseRuntimeEvent,
-    VectorStore,
+    UploadSource, VectorStore,
 };
 
 #[tokio::test]
@@ -817,6 +817,56 @@ async fn test_should_emit_chat_runtime_events() {
 }
 
 #[tokio::test]
+async fn test_should_parse_partial_json_in_chat_runtime_events() {
+    let server = MockServer::start().await;
+    let body = concat!(
+        "data: {\"id\":\"chatcmpl_json_1\",\"object\":\"chat.completion.chunk\",\"model\":\"gpt-5.4\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"{\\\"city\\\":\\\"Sha\"}}]}\n\n",
+        "data: {\"id\":\"chatcmpl_json_1\",\"object\":\"chat.completion.chunk\",\"model\":\"gpt-5.4\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"nghai\\\"}\"}}]}\n\n",
+        "data: {\"id\":\"chatcmpl_json_1\",\"object\":\"chat.completion.chunk\",\"model\":\"gpt-5.4\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(body, "text/event-stream"))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .build()
+        .unwrap();
+
+    let mut stream = client
+        .chat()
+        .completions()
+        .stream()
+        .model("gpt-5.4")
+        .message_user("hello")
+        .send_events()
+        .await
+        .unwrap();
+
+    let mut saw_partial = false;
+    let mut saw_final = false;
+    while let Some(event) = stream.next().await {
+        if let ChatCompletionRuntimeEvent::ContentDelta(event) = event.unwrap() {
+            if event.snapshot == "{\"city\":\"Sha" {
+                saw_partial = true;
+                assert_eq!(event.parsed, Some(json!({"city":"Sha"})));
+            }
+            if event.snapshot == "{\"city\":\"Shanghai\"}" {
+                saw_final = true;
+                assert_eq!(event.parsed, Some(json!({"city":"Shanghai"})));
+            }
+        }
+    }
+
+    assert!(saw_partial);
+    assert!(saw_final);
+}
+
+#[tokio::test]
 async fn test_should_emit_response_runtime_events() {
     let server = MockServer::start().await;
     let body = concat!(
@@ -867,6 +917,12 @@ async fn test_should_emit_response_runtime_events() {
             ResponseRuntimeEvent::FunctionCallArgumentsDelta(event) => {
                 saw_arguments_delta = true;
                 assert_eq!(event.item_id.as_deref(), Some("fc_1"));
+                if event.snapshot == "{\"city\":\"Sha" {
+                    assert_eq!(event.parsed_arguments, Some(json!({"city":"Sha"})));
+                }
+                if event.snapshot == "{\"city\":\"Shanghai\"}" {
+                    assert_eq!(event.parsed_arguments, Some(json!({"city":"Shanghai"})));
+                }
             }
             ResponseRuntimeEvent::OutputTextDelta(event) => {
                 saw_output_text_delta = true;
@@ -883,6 +939,99 @@ async fn test_should_emit_response_runtime_events() {
     assert!(saw_arguments_delta);
     assert!(saw_output_text_delta);
     assert!(saw_completed);
+}
+
+#[tokio::test]
+async fn test_should_stream_audio_transcriptions_over_sse() {
+    let server = MockServer::start().await;
+    let body = concat!(
+        "data: {\"type\":\"transcript.text.delta\",\"delta\":\"ni\"}\n\n",
+        "data: {\"type\":\"transcript.text.done\",\"text\":\"ni hao\"}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/audio/transcriptions"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(body, "text/event-stream"))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .build()
+        .unwrap();
+
+    let file = UploadSource::from_bytes("fake-wav", "sample.wav").with_mime_type("audio/wav");
+    let mut stream = client
+        .audio()
+        .transcriptions()
+        .stream()
+        .multipart_text("model", "gpt-4o-mini-transcribe")
+        .multipart_file("file", file)
+        .send_sse()
+        .await
+        .unwrap();
+
+    let first = stream.next().await.unwrap().unwrap();
+    let second = stream.next().await.unwrap().unwrap();
+    assert_eq!(first["type"], "transcript.text.delta");
+    assert_eq!(second["type"], "transcript.text.done");
+
+    let requests = server.received_requests().await.unwrap();
+    let content_type = requests[0]
+        .headers
+        .get("content-type")
+        .and_then(|value| value.to_str().ok())
+        .unwrap();
+    let body = String::from_utf8_lossy(&requests[0].body);
+    assert!(content_type.starts_with("multipart/form-data"));
+    assert!(body.contains("name=\"stream\""));
+    assert!(body.contains("\r\ntrue\r\n"));
+    assert!(body.contains("name=\"model\""));
+    assert!(body.contains("gpt-4o-mini-transcribe"));
+    assert!(body.contains("filename=\"sample.wav\""));
+}
+
+#[tokio::test]
+async fn test_should_stream_audio_speech_over_sse() {
+    let server = MockServer::start().await;
+    let body = concat!(
+        "event: response.output_audio.delta\n",
+        "data: {\"type\":\"response.output_audio.delta\",\"delta\":\"AAAA\"}\n\n",
+        "data: [DONE]\n\n"
+    );
+    Mock::given(method("POST"))
+        .and(path("/audio/speech"))
+        .respond_with(ResponseTemplate::new(200).set_body_raw(body, "text/event-stream"))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .build()
+        .unwrap();
+
+    let mut stream = client
+        .audio()
+        .speech()
+        .stream()
+        .body_value(json!({
+            "model": "gpt-4o-mini-tts",
+            "voice": "alloy",
+            "input": "你好"
+        }))
+        .send_raw_sse()
+        .await
+        .unwrap();
+
+    let first = stream.next().await.unwrap().unwrap();
+    assert_eq!(first.event.as_deref(), Some("response.output_audio.delta"));
+    assert!(first.data.contains("\"delta\":\"AAAA\""));
+
+    let requests = server.received_requests().await.unwrap();
+    let body: serde_json::Value = requests[0].body_json().unwrap();
+    assert_eq!(body["stream_format"], "sse");
 }
 
 #[tokio::test]

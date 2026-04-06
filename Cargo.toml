@@ -3,7 +3,7 @@ name = "openai-rs"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.94.1"
-description = "面向 OpenAI 兼容生态的 Rust SDK"
+description = "Rust SDK for OpenAI-compatible ecosystem"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/goo-yyh/openai-rs"
@@ -48,7 +48,7 @@ serde_json = "1.0.149"
 sha2 = "0.11.0"
 subtle = "2.6.1"
 thiserror = "2.0.18"
-tokio = { version = "1.51.0", features = ["fs", "io-util", "macros", "net", "rt-multi-thread", "sync", "time"] }
+tokio = { version = "1.51.0", features = ["fs", "io-util", "macros", "net", "process", "rt-multi-thread", "sync", "time"] }
 tokio-tungstenite = { version = "0.29.0", features = ["rustls-tls-webpki-roots"], optional = true }
 tokio-util = { version = "0.7.18", features = ["rt"] }
 tracing = { version = "0.1.44", features = ["attributes"] }

@@ -1,0 +1,2 @@
+{"messages":[{"role":"system","content":"你是一个摘要助手"},{"role":"user","content":"总结 Rust 的所有权规则"},{"role":"assistant","content":"Rust 的所有权要求每个值只有一个所有者，离开作用域自动释放，可通过借用在不转移所有权的情况下访问数据。"}]}
+{"messages":[{"role":"system","content":"你是一个摘要助手"},{"role":"user","content":"解释 Tokio 是什么"},{"role":"assistant","content":"Tokio 是 Rust 生态中常用的异步运行时，提供任务调度、网络 IO、计时器和并发原语。"}]}

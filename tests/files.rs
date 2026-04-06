@@ -1,6 +1,7 @@
 use std::io::Cursor;
 
 use bytes::Bytes;
+use tokio::io::AsyncWriteExt;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -63,6 +64,31 @@ async fn test_should_build_file_from_response_and_infer_filename() {
 
     assert_eq!(source.filename(), "audio.mp3");
     assert_eq!(source.mime_type(), Some("audio/mpeg"));
+}
+
+#[tokio::test]
+async fn test_should_build_file_from_async_reader() {
+    let (reader, mut writer) = tokio::io::duplex(64);
+    tokio::spawn(async move {
+        writer.write_all(b"async-reader").await.unwrap();
+        writer.shutdown().await.unwrap();
+    });
+
+    let source = to_file(ToFileInput::async_reader(reader), Some("audio.wav"))
+        .await
+        .unwrap();
+
+    assert_eq!(source.filename(), "audio.wav");
+    assert_eq!(source.bytes(), &Bytes::from_static(b"async-reader"));
+}
+
+#[tokio::test]
+async fn test_should_accept_existing_upload_source() {
+    let source = UploadSource::from_bytes(Bytes::from_static(b"ok"), "old.txt");
+    let source = to_file(source, Some("new.txt")).await.unwrap();
+
+    assert_eq!(source.filename(), "new.txt");
+    assert_eq!(source.bytes(), &Bytes::from_static(b"ok"));
 }
 
 #[test]

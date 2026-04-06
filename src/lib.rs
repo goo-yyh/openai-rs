@@ -6,6 +6,7 @@
 //! `openai-rs` 提供了一个围绕 OpenAI 兼容接口构建的异步 Rust SDK。
 //! 它支持多 Provider、分页、SSE 流、Multipart 上传、Webhook 校验以及工具调用辅助能力。
 
+pub mod audio_helpers;
 pub mod auth;
 pub mod client;
 pub mod config;
@@ -25,6 +26,7 @@ pub mod webhooks;
 #[cfg_attr(docsrs, doc(cfg(any(feature = "realtime", feature = "responses-ws"))))]
 pub mod websocket;
 
+pub use audio_helpers::{AudioPlaybackInput, RecordAudioOptions, play_audio, record_audio};
 pub use auth::ApiKeySource;
 pub use client::{Client, ClientBuilder};
 pub use config::{ClientOptions, LogLevel, LogRecord, Logger, LoggerHandle, RequestOptions};

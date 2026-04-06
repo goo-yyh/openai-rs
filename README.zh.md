@@ -1,60 +1,60 @@
-# openai-rs
+# openai-rs（中文版）
 
-[中文版 README](./README.zh.md)
+[English README](./README.md)
 
-`openai-rs` is an async Rust SDK for the OpenAI-compatible ecosystem.
+`openai-rs` 是一个面向 OpenAI 兼容生态的异步 Rust SDK。
 
 > [!IMPORTANT]
-> `openai-rs` is a community-maintained, unofficial library.
+> `openai-rs` 是一个社区维护的、非官方库。
 >
-> It is a Rust rewrite heavily informed by [openai-node](https://github.com/openai/openai-node): its resource layout, capability coverage, README structure, and example topics were all reviewed against `openai-node`, then adapted into Rust-native builders, types, and async streams. It is not affiliated with OpenAI and does not represent an official OpenAI SDK.
+> 它以 [openai-node](https://github.com/openai/openai-node) 作为主要参考，对其资源命名空间、能力覆盖、README 主题组织和 examples 进行了 Rust 风格重写与实现，但它不隶属于 OpenAI，也不代表 OpenAI 官方立场。
 
-## Positioning
+## 定位
 
-The project aims to:
+`openai-rs` 的目标是：
 
-- cover the major capability surface already available in `openai-node`
-- provide Rust-native builders, typed models, async streams, and error handling
-- support OpenAI, Azure OpenAI, and common OpenAI-compatible providers
+- 尽可能覆盖 `openai-node` 已具备的主要功能和资源面
+- 提供更符合 Rust 习惯的 builder、类型系统、错误处理和异步流接口
+- 支持 OpenAI、Azure OpenAI，以及常见 OpenAI 兼容 Provider
 
-If you already know `openai-node`, the rough mental model is:
+如果你熟悉 `openai-node`，可以把它理解为：
 
-- the capability surface tries to stay close to `openai-node`
-- the public API is intentionally Rust-flavored instead of mirroring TypeScript shapes
-- streaming uses `futures::Stream`
-- raw HTTP, SSE, and WebSocket primitives are still accessible when needed
+- 能力范围尽量向 `openai-node` 对齐
+- 使用方式改成 Rust 风格
+- 流式接口统一落在 `futures::Stream`
+- 原始 HTTP / SSE / WebSocket 细节也仍然可访问
 
-## Versioning and Compatibility
+## 版本与兼容策略
 
-- Current line: `0.1.x`
-- MSRV: `1.94.1`
-- Rust edition: `2024`
+- 当前版本线：`0.1.x`
+- MSRV：`1.94.1`
+- Rust Edition：`2024`
 
-The crate is still in `0.x`:
+当前仍处于 `0.x` 阶段：
 
-- patch releases should not intentionally introduce breaking changes
-- minor releases may still reshape parts of the public API, with migration notes when practical
-- internal transport logic, provider profile internals, and private module structure are not part of the stability contract
+- patch 版本不应引入有意的 breaking change
+- minor 版本允许对公开 API 做收敛和重整，但会尽量附带迁移说明
+- transport、provider profile、内部模块组织不属于稳定承诺的一部分
 
-Longer-term planning lives in [specs/0003_improve.md](./specs/0003_improve.md).
+长期演进路线见 [specs/0003_improve.md](./specs/0003_improve.md)。
 
-## Installation
+## 安装
 
-The default feature set is intentionally lighter and focuses on HTTP, SSE, multipart, and webhooks:
+默认 feature 较轻，只启用 HTTP / SSE / Multipart / Webhook 相关能力：
 
 ```toml
 [dependencies]
 openai-rs = "0.1"
 ```
 
-If you also need structured output, tool runners, or WebSocket support:
+如果你需要 structured output、tool runner 或 WebSocket：
 
 ```toml
 [dependencies]
 openai-rs = { version = "0.1", features = ["structured-output", "tool-runner", "realtime", "responses-ws"] }
 ```
 
-If you want full control over features:
+如果你希望完全按需启用：
 
 ```toml
 [dependencies]
@@ -63,27 +63,27 @@ openai-rs = { version = "0.1", default-features = false, features = ["stream", "
 
 ## Feature Flags
 
-| Feature | Enabled by default | Purpose |
+| Feature | 默认启用 | 说明 |
 | --- | --- | --- |
-| `stream` | Yes | SSE and streaming response support |
-| `multipart` | Yes | File uploads and multipart requests |
-| `webhooks` | Yes | Webhook HMAC verification |
-| `rustls-tls` | Yes | rustls-based TLS for `reqwest` and WebSockets |
-| `structured-output` | No | `parse::<T>()`, JSON Schema helpers, structured outputs |
-| `tool-runner` | No | tool registration, tool execution loops, runner traces |
-| `realtime` | No | Realtime WebSocket support |
-| `responses-ws` | No | Responses WebSocket support |
+| `stream` | 是 | SSE / 流式响应能力 |
+| `multipart` | 是 | 文件上传与 multipart 请求支持 |
+| `webhooks` | 是 | Webhook HMAC 校验 |
+| `rustls-tls` | 是 | `reqwest` / WebSocket 的 rustls TLS 组合 |
+| `structured-output` | 否 | `parse::<T>()`、JSON Schema 辅助与结构化输出能力 |
+| `tool-runner` | 否 | 工具注册、工具执行循环和运行 trace |
+| `realtime` | 否 | Realtime WebSocket 能力 |
+| `responses-ws` | 否 | Responses WebSocket 能力 |
 
-Notes:
+说明：
 
-- `tool-runner` depends on `structured-output`
-- WebSocket APIs such as `ws()`, `RealtimeSocket`, and `ResponsesSocket` are only exported when their features are enabled
+- `tool-runner` 依赖 `structured-output`
+- `ws()`、`RealtimeSocket`、`ResponsesSocket` 等 WebSocket API 只会在对应 feature 开启时公开
 
-## Quick Start
+## 快速开始
 
 ### Responses API
 
-The `Responses API` is the primary path, matching the role it plays in the `openai-node` README.
+`Responses API` 是首选主链路，对应 `openai-node` README 里的 primary API。
 
 ```rust,ignore
 use openai_rs::Client;
@@ -133,9 +133,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Streaming Responses
+## 流式响应
 
-Like `openai-node`, `openai-rs` supports Server-Sent Events. The Rust-facing shape uses async streams instead of emitters.
+`openai-rs` 对应 `openai-node` 的 SSE 能力，使用 `Stream` 暴露：
 
 ```rust,ignore
 use futures_util::StreamExt;
@@ -165,17 +165,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Related examples:
+对应例子：
 
 - [examples/chat_stream.rs](./examples/chat_stream.rs)
 - [examples/responses_stream.rs](./examples/responses_stream.rs)
 - [examples/responses_stream_background.rs](./examples/responses_stream_background.rs)
 
-## File Uploads
+## 文件上传
 
-Just like `openai-node`, `openai-rs` exposes a unified upload helper.
+和 `openai-node` 一样，`openai-rs` 也提供统一上传 helper。
 
-`to_file()` currently accepts:
+当前 `to_file()` 支持：
 
 - `PathBuf`
 - `bytes::Bytes`
@@ -209,21 +209,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Related examples:
+对应例子：
 
 - [examples/files_upload.rs](./examples/files_upload.rs)
 - [examples/fine_tuning.rs](./examples/fine_tuning.rs)
 
 ## Audio
 
-`openai-rs` now covers:
+`openai-rs` 现在覆盖了：
 
 - `audio.speech.create`
-- SSE streaming for `audio.speech`
+- `audio.speech` SSE 流
 - `audio.transcriptions.create`
-- SSE streaming for `audio.transcriptions`
+- `audio.transcriptions` SSE 流
 - `audio.translations.create`
-- local helper utilities: `play_audio()` and `record_audio()`
+- 本地 helper：`play_audio()`、`record_audio()`
 
 ```rust,ignore
 use openai_rs::{AudioPlaybackInput, Client, play_audio};
@@ -251,18 +251,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-Related examples:
+对应例子：
 
 - [examples/audio_roundtrip.rs](./examples/audio_roundtrip.rs)
 - [examples/text_to_speech.rs](./examples/text_to_speech.rs)
 - [examples/speech_to_text.rs](./examples/speech_to_text.rs)
 
-## Webhook Verification
+## Webhook 验签
 
-As in `openai-node`, `openai-rs` provides both:
+和 `openai-node` README 一样，`openai-rs` 同时提供：
 
-- signature-only verification via `verify_signature()`
-- verify-and-parse via `unwrap()`
+- 只验签：`verify_signature()`
+- 验签并解析：`unwrap()`
 
 ```rust,ignore
 use std::collections::BTreeMap;
@@ -284,13 +284,13 @@ let event: serde_json::Value = client
     .unwrap(raw_body, &headers, None, Duration::from_secs(300))?;
 ```
 
-Related example:
+对应例子：
 
 - [examples/webhook_verification.rs](./examples/webhook_verification.rs)
 
-## Error Handling
+## 错误处理
 
-Failures are exposed through the unified `openai_rs::Error` type. API-level failures are represented as `Error::Api(ApiError)`.
+请求失败时会返回统一的 `openai_rs::Error`。其中 API 业务错误会落到 `Error::Api(ApiError)`：
 
 ```rust,ignore
 use openai_rs::{ApiErrorKind, Error};
@@ -318,16 +318,16 @@ match client
 }
 ```
 
-Related example:
+对应例子：
 
 - [examples/errors.rs](./examples/errors.rs)
 
-## Request IDs, Raw Responses, and Response Metadata
+## Request ID、原始响应和响应元信息
 
-`openai-node` emphasizes request ids and raw response access. `openai-rs` exposes the same debugging surface through two methods:
+`openai-node` README 里强调了 request id 和 raw response 访问方式。`openai-rs` 提供两组对应能力：
 
-- `send_with_meta()` returns `ApiResponse<T>` so you can read `meta.request_id`
-- `send_raw()` returns `http::Response<Bytes>`
+- `send_with_meta()`：返回 `ApiResponse<T>`，可直接取 `meta.request_id`
+- `send_raw()`：返回 `http::Response<Bytes>`
 
 ```rust,ignore
 let raw = client
@@ -353,19 +353,19 @@ let response = client
 println!("{:?}", response.meta.request_id);
 ```
 
-Related example:
+对应例子：
 
 - [examples/raw_response.rs](./examples/raw_response.rs)
 
-## Retries and Timeouts
+## 重试与超时
 
-The default behavior is intentionally close to the behavior documented in `openai-node`:
+默认行为与 `openai-node` README 描述接近：
 
-- default timeout: 10 minutes
-- default retries: 2
-- connection errors, timeouts, `408`, `409`, `429`, and `5xx` responses are retried by default
+- 默认超时：10 分钟
+- 默认重试：2 次
+- 连接错误、超时、`408`、`409`、`429`、`5xx` 默认会触发重试
 
-Client-wide configuration:
+客户端级配置：
 
 ```rust,ignore
 use std::time::Duration;
@@ -377,7 +377,7 @@ let client = openai_rs::Client::builder()
     .build()?;
 ```
 
-Per-request overrides:
+请求级覆盖：
 
 ```rust,ignore
 use std::time::Duration;
@@ -393,9 +393,9 @@ let response = client
     .await?;
 ```
 
-## Auto Pagination
+## 自动分页
 
-List APIs return `CursorPage<T>`, which supports:
+列表接口返回 `CursorPage<T>`，支持：
 
 - `has_next_page()`
 - `next_page().await`
@@ -420,19 +420,19 @@ while let Some(model) = stream.next().await {
 }
 ```
 
-Related example:
+对应例子：
 
 - [examples/pagination.rs](./examples/pagination.rs)
 
 ## Logging
 
-Matching the `openai-node` README topic, `openai-rs` supports:
+对应 `openai-node` README 的 logging 一节，`openai-rs` 支持：
 
 - `OPENAI_LOG`
 - `ClientBuilder::log_level(...)`
 - `ClientBuilder::logger(...)`
 
-Available levels:
+日志级别：
 
 - `off`
 - `error`
@@ -456,13 +456,13 @@ let client = openai_rs::Client::builder()
     .build()?;
 ```
 
-Related example:
+对应例子：
 
 - [examples/logging.rs](./examples/logging.rs)
 
-## Realtime and Responses WebSocket
+## Realtime 与 Responses WebSocket
 
-`openai-rs` currently supports:
+`openai-rs` 当前支持：
 
 - `client.realtime().ws()`
 - `client.responses().ws()`
@@ -470,7 +470,7 @@ Related example:
 - `OpenAIRealtimeWS`
 - `OpenAIResponsesWebSocket`
 
-Realtime example:
+Realtime 示例：
 
 ```rust,ignore
 use futures_util::StreamExt;
@@ -489,7 +489,7 @@ socket.send_json(&serde_json::json!({
     "type": "response.create",
     "response": {
         "modalities": ["text"],
-        "instructions": "Explain the borrow checker"
+        "instructions": "介绍 borrow checker"
     }
 })).await?;
 
@@ -506,16 +506,16 @@ while let Some(event) = stream.next().await {
 }
 ```
 
-Related examples:
+对应例子：
 
 - [examples/realtime_ws.rs](./examples/realtime_ws.rs)
 - [examples/responses_websocket.rs](./examples/responses_websocket.rs)
 
-More background: [docs/realtime-and-streaming.md](./docs/realtime-and-streaming.md).
+更多说明见 [docs/realtime-and-streaming.md](./docs/realtime-and-streaming.md)。
 
 ## Azure OpenAI
 
-`openai-rs` does not expose a separate `AzureOpenAI` class. Instead, the same capability is configured through `ClientBuilder`:
+`openai-rs` 没有单独的 `AzureOpenAI` 类，而是通过 `ClientBuilder` 上的 Azure 配置项提供同等能力：
 
 - `azure_endpoint(...)`
 - `azure_api_version(...)`
@@ -536,22 +536,22 @@ let client = Client::builder()
 let response = client
     .responses()
     .create()
-    .input_text("Explain ownership in one sentence")
+    .input_text("用一句话解释所有权")
     .send()
     .await?;
 ```
 
-Related example:
+对应例子：
 
 - [examples/azure_chat.rs](./examples/azure_chat.rs)
 
-More background: [docs/azure.md](./docs/azure.md).
+更多说明见 [docs/azure.md](./docs/azure.md)。
 
-## Structured Output and Tool Runners
+## Structured Output 与 Tool Runner
 
-This is the Rust-side answer to the `helpers/zod`, `parse()`, and `runTools()` story in `openai-node`.
+这部分是 `openai-node` 里 `helpers/zod`、`parse()`、`runTools()` 等能力在 Rust 中的对应实现。
 
-Structured output:
+Structured output：
 
 ```rust,ignore
 use schemars::JsonSchema;
@@ -569,14 +569,14 @@ let parsed = client
     .parse::<Summary>()
     .model("gpt-5.4")
     .messages(vec![
-        openai_rs::ChatCompletionMessage::system("Only output JSON."),
-        openai_rs::ChatCompletionMessage::user("Return title and bullets"),
+        openai_rs::ChatCompletionMessage::system("只输出 JSON。"),
+        openai_rs::ChatCompletionMessage::user("返回 title 和 bullets"),
     ])
     .send()
     .await?;
 ```
 
-Tool runner:
+Tool runner：
 
 ```rust,ignore
 use openai_rs::ToolDefinition;
@@ -584,7 +584,7 @@ use serde_json::json;
 
 let tool = ToolDefinition::new(
     "get_weather",
-    Some("Fetch weather by city"),
+    Some("根据城市查询天气"),
     json!({
         "type": "object",
         "properties": {
@@ -601,7 +601,7 @@ let tool = ToolDefinition::new(
 );
 ```
 
-Related examples:
+对应例子：
 
 - [examples/parsing.rs](./examples/parsing.rs)
 - [examples/parsing_stream.rs](./examples/parsing_stream.rs)
@@ -613,11 +613,11 @@ Related examples:
 - [examples/responses_structured_outputs.rs](./examples/responses_structured_outputs.rs)
 - [examples/responses_structured_outputs_tools.rs](./examples/responses_structured_outputs_tools.rs)
 
-More background: [docs/structured-output-and-tools.md](./docs/structured-output-and-tools.md).
+更多说明见 [docs/structured-output-and-tools.md](./docs/structured-output-and-tools.md)。
 
 ## Examples
 
-### Running Examples
+### 示例运行
 
 ```bash
 cargo run --example openai_responses
@@ -630,11 +630,11 @@ cargo run --example realtime_ws --features realtime
 cargo run --example responses_websocket --features responses-ws
 ```
 
-### Coverage Mapping Against `openai-node/examples`
+### `openai-node/examples` 覆盖映射
 
-The table below maps `openai-node/examples` topics to their Rust equivalents. The Rust side does not mechanically duplicate every Node runtime wrapper, but the underlying capabilities are represented here.
+下面这张表把 `openai-node/examples` 的主题映射到 `openai-rs/examples` 的对应样例。Rust 端不会机械复制 Node 的每个运行时包装，但对应能力都能在这些例子中找到。
 
-| `openai-node` example | `openai-rs` example(s) |
+| `openai-node` 示例 | `openai-rs` 对应示例 |
 | --- | --- |
 | `demo.ts`, `chat-params-types.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
 | `stream.ts` | [examples/chat_stream.rs](./examples/chat_stream.rs) |
@@ -665,36 +665,36 @@ The table below maps `openai-node/examples` topics to their Rust equivalents. Th
 | `responses/websocket.ts` | [examples/responses_websocket.rs](./examples/responses_websocket.rs) |
 | `stream-to-client-browser.ts`, `stream-to-client-express.ts`, `stream-to-client-next.ts`, `stream-to-client-raw.ts` | [examples/stream_to_client_raw.rs](./examples/stream_to_client_raw.rs) |
 
-Notes:
+补充说明：
 
-- examples that are strongly tied to Node, browsers, or web frameworks are represented on the Rust side using framework-neutral raw forwarding patterns
-- Node examples that rely on `zod` map to `serde` + `schemars` + `parse::<T>()` in Rust
-- emitter-based examples map to `Stream` plus runtime event enums
+- Node/browser/framework 绑定较强的示例，在 Rust 侧统一用框架无关的 raw forwarding 方式展示
+- Node 里依赖 `zod` 的示例，在 Rust 侧改用 `serde` + `schemars` + `parse::<T>()`
+- Node 里依赖 emitter 的示例，在 Rust 侧改用 `Stream` 和 runtime event
 
-## Provider Support Matrix
+## Provider 支持矩阵
 
-| Provider | Support level | Notes |
+| Provider | 支持级别 | 说明 |
 | --- | --- | --- |
-| OpenAI | First-class | The main compatibility target and the primary focus for behavior and tests |
-| Azure OpenAI | First-class | Supports endpoint, deployment, `api-version`, `api-key`, and Azure AD tokens |
-| Zhipu | Compatibility | Routed through the compatibility layer; real behavior depends on the provider |
-| MiniMax | Compatibility | Routed through the compatibility layer; real behavior depends on the provider |
-| ZenMux | Compatibility | Routed through the compatibility layer; real behavior depends on the provider |
-| Custom providers | Extensible | The SDK exposes stable integration points; final compatibility depends on the integrator |
+| OpenAI | 一等支持 | 默认行为与测试覆盖优先围绕 OpenAI 语义设计 |
+| Azure OpenAI | 一等支持 | 支持 endpoint、deployment、`api-version`、`api-key` 与 Azure AD token |
+| Zhipu | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
+| MiniMax | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
+| ZenMux | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
+| Custom Provider | 扩展支持 | SDK 提供稳定入口，具体兼容行为由接入方自行保证 |
 
-## Topic Guides
+## 专题文档
 
-- [Azure integration](./docs/azure.md)
-- [Streaming and Realtime](./docs/realtime-and-streaming.md)
-- [Structured output and tools](./docs/structured-output-and-tools.md)
-- [Migration notes](./docs/migration.md)
-- [Observability](./docs/observability.md)
-- [Release checklist](./docs/release-checklist.md)
-- [ADR: codegen strategy](./docs/adr/0001_codegen_strategy.md)
+- [Azure OpenAI 接入](./docs/azure.md)
+- [流式与 Realtime](./docs/realtime-and-streaming.md)
+- [Structured Output 与 Tool Runner](./docs/structured-output-and-tools.md)
+- [迁移说明](./docs/migration.md)
+- [可观测性说明](./docs/observability.md)
+- [发布检查清单](./docs/release-checklist.md)
+- [ADR: codegen 策略](./docs/adr/0001_codegen_strategy.md)
 
-## Development Checks
+## 校验与开发
 
-Common verification commands:
+常用检查命令：
 
 ```bash
 cargo build
@@ -708,24 +708,24 @@ cargo deny check
 bash ./scripts/check-public-api.sh
 ```
 
-Additional notes:
+补充说明：
 
-- live smoke tests under `tests/provider_live/` are `#[ignore]` by default
-- when required environment variables are missing, those live tests auto-skip
+- `tests/provider_live/` 下的 live smoke tests 默认 `#[ignore]`
+- 若缺少对应环境变量，这些 live tests 会自动跳过
 
-## Project Status
+## 项目状态
 
-The crate already has a publishable SDK baseline. The next round of work is focused more on refinement than on basic capability gaps:
+当前仓库已经具备可发布的 SDK 基础能力，后续优化重点放在：
 
-- further tightening the stable public API surface
-- continuing to strongly type long-tail resources
-- expanding docs and examples
-- hardening feature-matrix and public-API stability checks
+- 公开 API 面进一步收缩
+- 长尾资源继续强类型化
+- 文档和 examples 继续增强
+- feature matrix 与公共 API 稳定性治理
 
-If your goal is:
+如果你的目标是：
 
-- a Rust SDK that tracks the functional surface of `openai-node` closely
-- a community-maintained, unofficial implementation
-- Rust-native builders, types, and async streams instead of TypeScript emitter semantics
+- 找一个和 `openai-node` 能力覆盖尽量接近的 Rust SDK
+- 接受它是社区维护、非官方实现
+- 更偏好 Rust builder / type / async stream 的接口风格
 
-then `openai-rs` is already a strong primary SDK candidate.
+那么 `openai-rs` 当前已经适合作为主 SDK 使用。

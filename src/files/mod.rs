@@ -3,10 +3,12 @@
 use std::fmt;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::pin::Pin;
 
 use bytes::Bytes;
 use reqwest::header::CONTENT_TYPE;
 use reqwest::multipart::Part;
+use tokio::io::{AsyncRead, AsyncReadExt};
 
 use crate::error::{Error, Result};
 
@@ -28,8 +30,12 @@ pub enum ToFileInput {
     Path(PathBuf),
     /// 来自内存字节。
     Bytes(Bytes),
+    /// 来自已有上传源。
+    UploadSource(UploadSource),
     /// 来自读取器。
     Reader(Box<dyn Read + Send>),
+    /// 来自异步读取器。
+    AsyncReader(Pin<Box<dyn AsyncRead + Send>>),
     /// 来自 HTTP 响应。
     Response(reqwest::Response),
 }
@@ -42,7 +48,12 @@ impl fmt::Debug for ToFileInput {
                 .debug_struct("ToFileInput::Bytes")
                 .field("size", &bytes.len())
                 .finish(),
+            Self::UploadSource(source) => f
+                .debug_tuple("ToFileInput::UploadSource")
+                .field(source)
+                .finish(),
             Self::Reader(_) => f.write_str("ToFileInput::Reader(..)"),
+            Self::AsyncReader(_) => f.write_str("ToFileInput::AsyncReader(..)"),
             Self::Response(response) => f
                 .debug_struct("ToFileInput::Response")
                 .field("url", response.url())
@@ -64,6 +75,19 @@ impl ToFileInput {
     {
         Self::Reader(Box::new(reader))
     }
+
+    /// 从异步读取器构造输入。
+    pub fn async_reader<R>(reader: R) -> Self
+    where
+        R: AsyncRead + Send + 'static,
+    {
+        Self::AsyncReader(Box::pin(reader))
+    }
+
+    /// 从已有上传源构造输入。
+    pub fn upload(source: UploadSource) -> Self {
+        Self::UploadSource(source)
+    }
 }
 
 impl From<PathBuf> for ToFileInput {
@@ -81,6 +105,12 @@ impl From<Vec<u8>> for ToFileInput {
 impl From<Bytes> for ToFileInput {
     fn from(value: Bytes) -> Self {
         Self::Bytes(value)
+    }
+}
+
+impl From<UploadSource> for ToFileInput {
+    fn from(value: UploadSource) -> Self {
+        Self::UploadSource(value)
     }
 }
 
@@ -116,11 +146,26 @@ pub async fn to_file(
             })?;
             Ok(UploadSource::from_bytes(bytes, filename))
         }
+        ToFileInput::UploadSource(source) => Ok(match filename {
+            Some(filename) => source.with_filename(filename),
+            None => source,
+        }),
         ToFileInput::Reader(reader) => {
             let filename = filename.ok_or_else(|| {
                 Error::InvalidConfig("读取器输入无法自动推导文件名，请显式提供 filename".into())
             })?;
             UploadSource::from_reader(reader, filename)
+        }
+        ToFileInput::AsyncReader(mut reader) => {
+            let filename = filename.ok_or_else(|| {
+                Error::InvalidConfig("异步读取器输入无法自动推导文件名，请显式提供 filename".into())
+            })?;
+            let mut buffer = Vec::new();
+            reader
+                .read_to_end(&mut buffer)
+                .await
+                .map_err(|error| Error::InvalidConfig(format!("读取异步上传流失败: {error}")))?;
+            Ok(UploadSource::from_bytes(buffer, filename))
         }
         ToFileInput::Response(response) => {
             let mut source = UploadSource::from_response(response).await?;
