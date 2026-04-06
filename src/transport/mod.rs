@@ -404,10 +404,29 @@ fn extract_request_id(headers: &reqwest::header::HeaderMap) -> Option<String> {
 
 fn extract_error_message(raw: &Option<Value>) -> Option<String> {
     raw.as_ref().and_then(|value| {
+        if let Some(error) = value.get("error") {
+            match error {
+                Value::Object(map) => {
+                    if let Some(message) = map
+                        .get("message")
+                        .or_else(|| map.get("error"))
+                        .or_else(|| map.get("msg"))
+                        .or_else(|| map.get("detail"))
+                        .and_then(Value::as_str)
+                    {
+                        return Some(message.to_owned());
+                    }
+                }
+                Value::String(message) => return Some(message.clone()),
+                _ => {}
+            }
+        }
+
         value
-            .get("error")
-            .and_then(|error| error.get("message").or_else(|| error.get("error")))
-            .or_else(|| value.get("message"))
+            .get("message")
+            .or_else(|| value.get("msg"))
+            .or_else(|| value.get("detail"))
+            .or_else(|| value.pointer("/base_resp/status_msg"))
             .and_then(Value::as_str)
             .map(str::to_owned)
     })
@@ -510,7 +529,7 @@ pub fn merge_json_body(
 
 #[cfg(test)]
 mod tests {
-    use super::{flatten_json_to_multipart_fields, merge_json_body};
+    use super::{extract_error_message, flatten_json_to_multipart_fields, merge_json_body};
     use serde_json::json;
     use std::collections::BTreeMap;
 
@@ -556,6 +575,33 @@ mod tests {
         assert_eq!(
             merged["provider_options"]["minimax"]["reasoning_split"],
             true
+        );
+    }
+
+    #[test]
+    fn test_should_extract_top_level_error_string_message() {
+        let raw = Some(json!({
+            "timestamp": "2026-04-06T14:04:49.360+00:00",
+            "status": 404,
+            "error": "Not Found",
+            "path": "/v4/responses"
+        }));
+
+        assert_eq!(extract_error_message(&raw).as_deref(), Some("Not Found"));
+    }
+
+    #[test]
+    fn test_should_extract_minimax_style_status_message() {
+        let raw = Some(json!({
+            "base_resp": {
+                "status_code": 429,
+                "status_msg": "Too many requests"
+            }
+        }));
+
+        assert_eq!(
+            extract_error_message(&raw).as_deref(),
+            Some("Too many requests")
         );
     }
 }

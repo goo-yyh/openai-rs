@@ -315,6 +315,7 @@ async fn test_should_use_custom_reqwest_client_defaults() {
     let mut default_headers = HeaderMap::new();
     default_headers.insert("x-http-client", HeaderValue::from_static("custom"));
     let http_client = reqwest::Client::builder()
+        .no_proxy()
         .default_headers(default_headers)
         .build()
         .unwrap();

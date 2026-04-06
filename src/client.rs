@@ -623,8 +623,12 @@ impl ClientBuilder {
                 reqwest::header::HeaderValue::from_static("openai-rs/0.1.0"),
             );
 
-            reqwest::Client::builder()
-                .default_headers(default_headers)
+            let mut builder = reqwest::Client::builder().default_headers(default_headers);
+            if should_disable_proxy_for_base_url(options.base_url.as_deref()) {
+                builder = builder.no_proxy();
+            }
+
+            builder
                 .build()
                 .map_err(|error| Error::InvalidConfig(format!("创建 HTTP 客户端失败: {error}")))?
         };
@@ -642,4 +646,19 @@ fn read_env(key: &str) -> Option<String> {
         .ok()
         .map(|value| value.trim().to_owned())
         .filter(|value| !value.is_empty())
+}
+
+fn should_disable_proxy_for_base_url(base_url: Option<&str>) -> bool {
+    let Some(base_url) = base_url else {
+        return false;
+    };
+
+    let Ok(url) = url::Url::parse(base_url) else {
+        return false;
+    };
+
+    matches!(
+        url.host_str(),
+        Some("localhost") | Some("127.0.0.1") | Some("[::1]") | Some("::1")
+    )
 }

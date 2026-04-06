@@ -57,7 +57,12 @@ async fn test_should_build_file_from_response_and_infer_filename() {
         .mount(&server)
         .await;
 
-    let response = reqwest::get(format!("{}/assets/audio.mp3", server.uri()))
+    let response = reqwest::Client::builder()
+        .no_proxy()
+        .build()
+        .unwrap()
+        .get(format!("{}/assets/audio.mp3", server.uri()))
+        .send()
         .await
         .unwrap();
     let source = to_file(response, None::<String>).await.unwrap();
