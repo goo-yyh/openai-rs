@@ -95,8 +95,8 @@ pub(crate) async fn execute_sse<T>(inner: &ClientInner, spec: RequestSpec) -> Re
 where
     T: DeserializeOwned + Send + 'static,
 {
-    let response = execute_response(inner, spec).await?;
-    let meta = build_response_meta(&response, inner.provider.kind(), 1);
+    let (response, attempts) = execute_response(inner, spec).await?;
+    let meta = build_response_meta(&response, inner.provider.kind(), attempts);
     Ok(RawSseStream::new(response, meta).into_typed())
 }
 
@@ -107,8 +107,8 @@ pub(crate) async fn execute_raw_sse(
     inner: &ClientInner,
     spec: RequestSpec,
 ) -> Result<RawSseStream> {
-    let response = execute_response(inner, spec).await?;
-    let meta = build_response_meta(&response, inner.provider.kind(), 1);
+    let (response, attempts) = execute_response(inner, spec).await?;
+    let meta = build_response_meta(&response, inner.provider.kind(), attempts);
     Ok(RawSseStream::new(response, meta))
 }
 
@@ -124,8 +124,8 @@ pub(crate) async fn execute_raw_http(
 
 #[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
 async fn execute(inner: &ClientInner, spec: RequestSpec) -> Result<(Bytes, ResponseMeta)> {
-    let response = execute_response(inner, spec).await?;
-    let meta = build_response_meta(&response, inner.provider.kind(), 1);
+    let (response, attempts) = execute_response(inner, spec).await?;
+    let meta = build_response_meta(&response, inner.provider.kind(), attempts);
     let bytes = response
         .bytes()
         .await
@@ -134,7 +134,10 @@ async fn execute(inner: &ClientInner, spec: RequestSpec) -> Result<(Bytes, Respo
 }
 
 #[instrument(skip(inner, spec), fields(endpoint_id = spec.endpoint_id, provider = ?inner.provider.kind()))]
-async fn execute_response(inner: &ClientInner, spec: RequestSpec) -> Result<reqwest::Response> {
+async fn execute_response(
+    inner: &ClientInner,
+    spec: RequestSpec,
+) -> Result<(reqwest::Response, usize)> {
     let max_retries = spec
         .options
         .max_retries
@@ -186,7 +189,7 @@ async fn execute_response(inner: &ClientInner, spec: RequestSpec) -> Result<reqw
         match result {
             Ok(response) => {
                 if response.status().is_success() {
-                    return Ok(response);
+                    return Ok((response, attempt as usize + 1));
                 }
 
                 let status = response.status();

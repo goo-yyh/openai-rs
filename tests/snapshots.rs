@@ -146,6 +146,106 @@ async fn test_should_snapshot_response_stream_aggregation() {
     );
 }
 
+#[tokio::test]
+async fn test_should_snapshot_send_with_meta_response_meta() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("x-request-id", "req_meta_snapshot")
+                .set_body_json(json!({
+                    "id": "resp_meta_snapshot",
+                    "object": "response",
+                    "status": "completed",
+                    "output": [{"type":"output_text","text":"ok"}]
+                })),
+        )
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client
+        .responses()
+        .create()
+        .model("gpt-5.4")
+        .input_text("hello")
+        .send_with_meta()
+        .await
+        .unwrap();
+    let url = url::Url::parse(&response.meta.url).unwrap();
+
+    assert_snapshot!(
+        "send_with_meta_response_meta",
+        serde_json::to_string_pretty(&json!({
+            "id": response.id,
+            "status": response.meta.status.as_u16(),
+            "request_id": response.meta.request_id,
+            "provider": format!("{:?}", response.meta.provider),
+            "attempts": response.meta.attempts,
+            "path": url.path(),
+        }))
+        .unwrap()
+    );
+}
+
+#[cfg(feature = "structured-output")]
+#[tokio::test]
+async fn test_should_snapshot_content_filter_finish_reason_error() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "chatcmpl_content_filter",
+            "object": "chat.completion",
+            "created": 1,
+            "model": "gpt-5.4",
+            "choices": [{
+                "index": 0,
+                "finish_reason": "content_filter",
+                "message": {
+                    "role": "assistant",
+                    "content": "{\"answer\":\"blocked\"}",
+                    "tool_calls": [],
+                    "reasoning_details": []
+                }
+            }]
+        })))
+        .mount(&server)
+        .await;
+
+    #[allow(dead_code)]
+    #[derive(Debug, serde::Deserialize, schemars::JsonSchema)]
+    struct Answer {
+        answer: String,
+    }
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let error = client
+        .chat()
+        .completions()
+        .parse::<Answer>()
+        .model("gpt-5.4")
+        .message_user("return json")
+        .send()
+        .await
+        .unwrap_err();
+
+    assert_debug_snapshot!("content_filter_finish_reason_error", error);
+}
+
 #[cfg(feature = "responses-ws")]
 #[test]
 fn test_should_snapshot_responses_websocket_event_decode() {

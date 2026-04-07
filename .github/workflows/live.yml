@@ -1,0 +1,91 @@
+name: Live Providers
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: Provider to run
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - zhipu
+          - minimax
+          - zenmux
+      tier:
+        description: Live test tier
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - extended
+          - slow
+
+permissions:
+  contents: read
+
+jobs:
+  zhipu:
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'zhipu' }}
+    name: Live Zhipu (${{ inputs.tier }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run live provider tests
+        env:
+          OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
+          ZHIPU_CHAT_MODEL: ${{ vars.ZHIPU_CHAT_MODEL }}
+          ZHIPU_RESPONSES_MODEL: ${{ vars.ZHIPU_RESPONSES_MODEL }}
+        run: cargo test --all-features --test provider_live zhipu -- --ignored --nocapture --test-threads=1
+
+  minimax:
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'minimax' }}
+    name: Live MiniMax (${{ inputs.tier }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run live provider tests
+        env:
+          OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_CHAT_MODEL: ${{ vars.MINIMAX_CHAT_MODEL }}
+          MINIMAX_RESPONSES_MODEL: ${{ vars.MINIMAX_RESPONSES_MODEL }}
+        run: cargo test --all-features --test provider_live minimax -- --ignored --nocapture --test-threads=1
+
+  zenmux:
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'zenmux' }}
+    name: Live ZenMux (${{ inputs.tier }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run live provider tests
+        env:
+          OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          ZENMUX_API_KEY: ${{ secrets.ZENMUX_API_KEY }}
+          ZENMUX_CHAT_MODEL: ${{ vars.ZENMUX_CHAT_MODEL }}
+          ZENMUX_RESPONSES_MODEL: ${{ vars.ZENMUX_RESPONSES_MODEL }}
+        run: cargo test --all-features --test provider_live zenmux -- --ignored --nocapture --test-threads=1

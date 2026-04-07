@@ -1,0 +1,12 @@
+---
+source: tests/snapshots.rs
+expression: "serde_json::to_string_pretty(&json!({\n    \"id\": response.id, \"status\": response.meta.status.as_u16(), \"request_id\":\n    response.meta.request_id, \"provider\":\n    format!(\"{:?}\", response.meta.provider), \"attempts\":\n    response.meta.attempts, \"path\": url.path(),\n})).unwrap()"
+---
+{
+  "attempts": 1,
+  "id": "resp_meta_snapshot",
+  "path": "/responses",
+  "provider": "OpenAI",
+  "request_id": "req_meta_snapshot",
+  "status": 200
+}
