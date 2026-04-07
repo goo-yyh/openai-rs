@@ -35,6 +35,7 @@ async fn test_should_snapshot_chat_completion_request_body() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -79,6 +80,7 @@ async fn test_should_snapshot_api_error_mapping() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .max_retries(0)
         .build()
         .unwrap();
@@ -116,6 +118,7 @@ async fn test_should_snapshot_response_stream_aggregation() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 

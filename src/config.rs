@@ -124,6 +124,8 @@ pub struct ClientOptions {
     pub provider: Provider,
     /// 覆盖默认的基础地址。
     pub base_url: Option<String>,
+    /// 当基础地址指向本机地址时，是否显式关闭系统代理，默认关闭。
+    pub disable_proxy_for_local_base_url: bool,
     /// 每次请求默认超时时间。
     pub timeout: Duration,
     /// 默认最大重试次数。
@@ -147,6 +149,7 @@ impl Default for ClientOptions {
         Self {
             provider: Provider::openai(),
             base_url: None,
+            disable_proxy_for_local_base_url: false,
             timeout: Duration::from_secs(600),
             max_retries: 2,
             default_headers: BTreeMap::new(),

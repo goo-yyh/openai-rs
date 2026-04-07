@@ -582,6 +582,16 @@ impl ChatToolDefinition {
             },
         }
     }
+
+    /// 转换为 Responses API 所需的扁平工具定义格式。
+    fn as_response_tool_value(&self) -> Value {
+        serde_json::json!({
+            "type": self.tool_type,
+            "name": self.function.name,
+            "description": self.function.description,
+            "parameters": self.function.parameters,
+        })
+    }
 }
 
 /// 表示聊天工具函数定义。
@@ -2358,12 +2368,26 @@ impl ResponseCreateRequestBuilder {
 
         self.params.stream = Some(stream);
         let provider_key = client.provider().kind().as_key();
-        let body = merge_json_body(
+        let mut body = merge_json_body(
             Some(value_from(&self.params)?),
             &self.extra_body,
             provider_key,
             &self.provider_options,
         );
+        if !self.params.tools.is_empty()
+            && let Some(object) = body.as_object_mut()
+        {
+            object.insert(
+                "tools".into(),
+                Value::Array(
+                    self.params
+                        .tools
+                        .iter()
+                        .map(ChatToolDefinition::as_response_tool_value)
+                        .collect(),
+                ),
+            );
+        }
         let mut spec = RequestSpec::new(
             if stream {
                 "responses.stream"

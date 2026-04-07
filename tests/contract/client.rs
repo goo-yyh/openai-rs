@@ -97,6 +97,7 @@ async fn test_should_merge_default_headers_and_request_headers() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .default_header("x-default", "1")
         .build()
         .unwrap();
@@ -126,6 +127,7 @@ async fn test_should_remove_header_when_value_is_none() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .default_header("x-remove", "no")
         .default_header("x-keep", "yes")
         .build()
@@ -156,6 +158,7 @@ async fn test_should_merge_default_query_and_request_query() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .default_query("api-version", "2025-01-01")
         .timeout(Duration::from_secs(30))
         .build()
@@ -198,6 +201,7 @@ async fn test_should_build_azure_request_from_endpoint_and_model() {
 
     let client = Client::builder()
         .azure_endpoint(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .azure_api_version("2024-02-15-preview")
         .api_key("azure-key")
         .build()
@@ -235,6 +239,7 @@ async fn test_should_send_azure_bearer_token_when_using_ad_token_provider() {
 
     let client = Client::builder()
         .azure_endpoint(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .azure_api_version("2024-02-15-preview")
         .azure_ad_token_provider(|| async {
             Ok(secrecy::SecretString::new("azure-ad-token".into()))
@@ -281,7 +286,10 @@ async fn test_should_read_openai_base_url_and_api_key_from_env() {
         ("OPENAI_API_KEY", "sk-env"),
     ]);
 
-    let client = Client::builder().build().unwrap();
+    let client = Client::builder()
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
     assert_eq!(client.base_url(), server_uri);
 
     let response = client
@@ -323,6 +331,7 @@ async fn test_should_use_custom_reqwest_client_defaults() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .http_client(http_client)
         .build()
         .unwrap();
@@ -358,6 +367,7 @@ async fn test_should_emit_sdk_logs_to_custom_logger() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .log_level(LogLevel::Debug)
         .logger({
             let records = records.clone();
@@ -409,6 +419,7 @@ async fn test_should_read_log_level_from_env() {
 
     let records = Arc::new(Mutex::new(Vec::<LogRecord>::new()));
     let client = Client::builder()
+        .disable_proxy_for_local_base_url(true)
         .logger({
             let records = records.clone();
             move |record: &LogRecord| {
@@ -429,6 +440,136 @@ async fn test_should_read_log_level_from_env() {
 
     let records = records.lock().unwrap();
     assert!(records.iter().any(|record| record.level == LogLevel::Debug));
+}
+
+#[tokio::test]
+#[serial]
+async fn test_should_keep_proxy_for_local_base_url_by_default() {
+    let target = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_local_target",
+            "object": "response",
+            "status": "completed",
+            "output": [{"type":"output_text","text":"ok"}]
+        })))
+        .mount(&target)
+        .await;
+
+    let proxy = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(502).set_body_json(json!({
+            "error": {
+                "message": "proxied local request"
+            }
+        })))
+        .mount(&proxy)
+        .await;
+
+    let _clear = EnvGuard::remove(&[
+        "NO_PROXY",
+        "no_proxy",
+        "HTTPS_PROXY",
+        "https_proxy",
+        "ALL_PROXY",
+        "all_proxy",
+    ]);
+    let _guard = EnvGuard::set(&[
+        ("HTTP_PROXY", proxy.uri().as_str()),
+        ("http_proxy", proxy.uri().as_str()),
+    ]);
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(target.uri())
+        .max_retries(0)
+        .build()
+        .unwrap();
+
+    let error = client
+        .responses()
+        .create()
+        .model("gpt-5")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap_err();
+
+    match error {
+        openai_rs::Error::Api(error) => {
+            assert_eq!(error.status, 502);
+            assert!(error.message.contains("proxied"));
+        }
+        other => panic!("expected api error, got {other:?}"),
+    }
+
+    let target_requests = target.received_requests().await.unwrap();
+    let proxy_requests = proxy.received_requests().await.unwrap();
+    assert_eq!(target_requests.len(), 0);
+    assert_eq!(proxy_requests.len(), 1);
+}
+
+#[tokio::test]
+#[serial]
+async fn test_should_disable_proxy_for_local_base_url_when_enabled() {
+    let target = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_local_target",
+            "object": "response",
+            "status": "completed",
+            "output": [{"type":"output_text","text":"ok"}]
+        })))
+        .mount(&target)
+        .await;
+
+    let proxy = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(502).set_body_json(json!({
+            "error": {
+                "message": "proxied local request"
+            }
+        })))
+        .mount(&proxy)
+        .await;
+
+    let _clear = EnvGuard::remove(&[
+        "NO_PROXY",
+        "no_proxy",
+        "HTTPS_PROXY",
+        "https_proxy",
+        "ALL_PROXY",
+        "all_proxy",
+    ]);
+    let _guard = EnvGuard::set(&[
+        ("HTTP_PROXY", proxy.uri().as_str()),
+        ("http_proxy", proxy.uri().as_str()),
+    ]);
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(target.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client
+        .responses()
+        .create()
+        .model("gpt-5")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.id, "resp_local_target");
+
+    let target_requests = target.received_requests().await.unwrap();
+    let proxy_requests = proxy.received_requests().await.unwrap();
+    assert_eq!(target_requests.len(), 1);
+    assert_eq!(proxy_requests.len(), 0);
 }
 
 #[test]

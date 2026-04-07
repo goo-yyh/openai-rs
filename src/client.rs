@@ -463,6 +463,14 @@ impl ClientBuilder {
         self
     }
 
+    /// 控制当 `base_url` 指向本机地址时，是否显式关闭系统代理。
+    ///
+    /// 该开关默认关闭。
+    pub fn disable_proxy_for_local_base_url(mut self, disable: bool) -> Self {
+        self.options.disable_proxy_for_local_base_url = disable;
+        self
+    }
+
     /// 设置 Azure 资源级 endpoint。
     ///
     /// 该值应类似 `https://example-resource.openai.azure.com`，
@@ -624,7 +632,9 @@ impl ClientBuilder {
             );
 
             let mut builder = reqwest::Client::builder().default_headers(default_headers);
-            if should_disable_proxy_for_base_url(options.base_url.as_deref()) {
+            if options.disable_proxy_for_local_base_url
+                && should_disable_proxy_for_base_url(options.base_url.as_deref())
+            {
                 builder = builder.no_proxy();
             }
 

@@ -43,6 +43,7 @@ async fn test_should_send_minimal_chat_completion_request() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -97,6 +98,7 @@ async fn test_should_parse_structured_output() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -155,6 +157,7 @@ async fn test_should_parse_tool_arguments_when_chat_content_is_empty() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -205,6 +208,7 @@ async fn test_should_fail_parse_when_finish_reason_is_length() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -275,6 +279,7 @@ async fn test_should_create_response_with_text_input() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -289,6 +294,73 @@ async fn test_should_create_response_with_text_input() {
 
     assert_eq!(response.id, "resp_1");
     assert_eq!(response.output_text().as_deref(), Some("你好"));
+}
+
+#[tokio::test]
+async fn test_should_serialize_responses_tools_as_flat_objects() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .and(body_json(json!({
+            "model": "gpt-5.4",
+            "input": "call tool",
+            "stream": false,
+            "tools": [{
+                "type": "function",
+                "name": "add_numbers",
+                "description": "Add two integers.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "integer"},
+                        "b": {"type": "integer"}
+                    },
+                    "required": ["a", "b"]
+                }
+            }]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_tool_1",
+            "object": "response",
+            "model": "gpt-5.4",
+            "status": "completed",
+            "output": []
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client
+        .responses()
+        .create()
+        .model("gpt-5.4")
+        .input_text("call tool")
+        .tool(openai_rs::resources::ChatToolDefinition {
+            tool_type: "function".into(),
+            function: openai_rs::resources::ChatToolFunction {
+                name: "add_numbers".into(),
+                description: Some("Add two integers.".into()),
+                parameters: json!({
+                    "type": "object",
+                    "properties": {
+                        "a": {"type": "integer"},
+                        "b": {"type": "integer"}
+                    },
+                    "required": ["a", "b"]
+                }),
+            },
+        })
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.id, "resp_tool_1");
 }
 
 #[cfg(feature = "structured-output")]
@@ -317,6 +389,7 @@ async fn test_should_parse_response_output_text() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -363,6 +436,7 @@ async fn test_should_fetch_next_page() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -417,6 +491,7 @@ async fn test_should_retrieve_beta_assistant_as_typed_object() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -450,6 +525,7 @@ async fn test_should_retrieve_vector_store_as_typed_object() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -494,6 +570,7 @@ async fn test_should_continue_response_stream_by_id_and_aggregate_snapshot() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -546,6 +623,7 @@ async fn test_should_create_assistant_stream_and_build_snapshot() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -613,6 +691,7 @@ async fn test_should_poll_beta_run_until_terminal_state() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -659,6 +738,7 @@ async fn test_should_run_tools_with_streaming_runner() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -706,6 +786,7 @@ async fn test_should_encode_dynamic_path_segments() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -734,6 +815,7 @@ async fn test_should_encode_nested_dynamic_path_segments() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -770,6 +852,7 @@ async fn test_should_emit_chat_runtime_events() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -834,6 +917,7 @@ async fn test_should_parse_partial_json_in_chat_runtime_events() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -897,6 +981,7 @@ async fn test_should_emit_response_runtime_events() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -958,6 +1043,7 @@ async fn test_should_stream_audio_transcriptions_over_sse() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -1009,6 +1095,7 @@ async fn test_should_stream_audio_speech_over_sse() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -1062,6 +1149,7 @@ async fn test_should_emit_assistant_runtime_events() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
@@ -1132,6 +1220,7 @@ async fn test_should_collect_streaming_runner_trace() {
     let client = Client::builder()
         .api_key("sk-test")
         .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
         .build()
         .unwrap();
 
