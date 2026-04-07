@@ -2,6 +2,7 @@
 
 mod beta;
 mod chat;
+mod longtail;
 mod responses;
 mod vector_stores;
 
@@ -44,6 +45,19 @@ use crate::websocket::ResponsesSocket;
 use futures_util::StreamExt;
 
 pub use beta::{BetaAssistant, BetaThread, BetaThreadMessage, BetaThreadRun, BetaThreadRunStep};
+pub use longtail::{
+    AudioSpeechCreateParams, AudioSpeechRequestBuilder, AudioTranscription,
+    AudioTranscriptionRequestBuilder, AudioTranslation, AudioTranslationRequestBuilder, Batch,
+    BatchCreateParams, BatchCreateRequestBuilder, Container, ContainerCreateParams, ContainerFile,
+    ContainerFileCreateParams, Conversation, ConversationCreateParams, ConversationItem,
+    ConversationItemCreateParams, ConversationUpdateParams, Eval, EvalCreateParams, EvalOutputItem,
+    EvalRun, EvalRunCreateParams, EvalUpdateParams, FineTuningCheckpoint,
+    FineTuningCheckpointPermission, FineTuningJob, FineTuningJobCreateParams,
+    FineTuningJobCreateRequestBuilder, FineTuningJobEvent, ImageData, ImageGenerateParams,
+    ImageGenerateRequestBuilder, ImageGenerationResponse, Skill, SkillCreateParams,
+    SkillUpdateParams, SkillVersion, SkillVersionCreateParams, Video, VideoCharacter,
+    VideoCharacterCreateParams, VideoCreateParams,
+};
 pub use vector_stores::{
     VectorStore, VectorStoreFile, VectorStoreFileBatch, VectorStoreSearchResponse,
 };
@@ -1008,6 +1022,30 @@ impl BytesRequestBuilder {
     /// 追加查询参数。
     pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.inner = self.inner.extra_query(key, value);
+        self
+    }
+
+    /// 在 provider 对应的 `provider_options` 下追加字段。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.provider_option(key, value);
+        self
+    }
+
+    /// 覆盖请求超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.inner = self.inner.timeout(timeout);
+        self
+    }
+
+    /// 覆盖最大重试次数。
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.inner = self.inner.max_retries(max_retries);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.inner = self.inner.cancellation_token(token);
         self
     }
 
@@ -2779,17 +2817,12 @@ impl FilesResource {
 
 impl ImagesResource {
     /// 创建图像生成请求。
-    pub fn generate(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "images.generate",
-            Method::POST,
-            "/images/generations",
-        )
+    pub fn generate(&self) -> ImageGenerateRequestBuilder {
+        ImageGenerateRequestBuilder::new(self.client.clone())
     }
 
     /// 创建图像编辑请求。
-    pub fn edit(&self) -> JsonRequestBuilder<Value> {
+    pub fn edit(&self) -> JsonRequestBuilder<ImageGenerationResponse> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "images.edit",
@@ -2799,7 +2832,7 @@ impl ImagesResource {
     }
 
     /// 创建图像变体请求。
-    pub fn create_variation(&self) -> JsonRequestBuilder<Value> {
+    pub fn create_variation(&self) -> JsonRequestBuilder<ImageGenerationResponse> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "images.create_variation",
@@ -2828,52 +2861,36 @@ impl AudioResource {
 
 impl AudioSpeechResource {
     /// 创建语音合成请求。
-    pub fn create(&self) -> BytesRequestBuilder {
-        BytesRequestBuilder::new(
-            self.client.clone(),
-            "audio.speech.create",
-            Method::POST,
-            "/audio/speech",
-        )
+    pub fn create(&self) -> AudioSpeechRequestBuilder {
+        AudioSpeechRequestBuilder::new(self.client.clone())
     }
 
     /// 创建 SSE 语音合成请求。
     ///
     /// 该请求会自动在请求体中追加 `stream_format = "sse"`。
-    pub fn stream(&self) -> BytesRequestBuilder {
-        self.create()
-            .extra_body("stream_format", Value::String("sse".into()))
+    pub fn stream(&self) -> AudioSpeechRequestBuilder {
+        AudioSpeechRequestBuilder::stream(self.client.clone())
     }
 }
 
 impl AudioTranscriptionsResource {
     /// 创建转写请求。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "audio.transcriptions.create",
-            Method::POST,
-            "/audio/transcriptions",
-        )
+    pub fn create(&self) -> AudioTranscriptionRequestBuilder {
+        AudioTranscriptionRequestBuilder::new(self.client.clone(), false)
     }
 
     /// 创建流式转写请求。
     ///
     /// 该请求会自动在请求体中追加 `stream = true`。
-    pub fn stream(&self) -> JsonRequestBuilder<Value> {
-        self.create().extra_body("stream", Value::Bool(true))
+    pub fn stream(&self) -> AudioTranscriptionRequestBuilder {
+        AudioTranscriptionRequestBuilder::new(self.client.clone(), true)
     }
 }
 
 impl AudioTranslationsResource {
     /// 创建翻译请求。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "audio.translations.create",
-            Method::POST,
-            "/audio/translations",
-        )
+    pub fn create(&self) -> AudioTranslationRequestBuilder {
+        AudioTranslationRequestBuilder::new(self.client.clone())
     }
 }
 
@@ -2935,17 +2952,12 @@ impl FineTuningResource {
 
 impl FineTuningJobsResource {
     /// 创建 fine-tuning job。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "fine_tuning.jobs.create",
-            Method::POST,
-            "/fine_tuning/jobs",
-        )
+    pub fn create(&self) -> FineTuningJobCreateRequestBuilder {
+        FineTuningJobCreateRequestBuilder::new(self.client.clone())
     }
 
     /// 获取 fine-tuning job。
-    pub fn retrieve(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, job_id: impl Into<String>) -> JsonRequestBuilder<FineTuningJob> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.retrieve",
@@ -2955,7 +2967,7 @@ impl FineTuningJobsResource {
     }
 
     /// 列出 fine-tuning jobs。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
+    pub fn list(&self) -> ListRequestBuilder<FineTuningJob> {
         ListRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.list",
@@ -2964,7 +2976,7 @@ impl FineTuningJobsResource {
     }
 
     /// 取消 fine-tuning job。
-    pub fn cancel(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn cancel(&self, job_id: impl Into<String>) -> JsonRequestBuilder<FineTuningJob> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.cancel",
@@ -2977,7 +2989,7 @@ impl FineTuningJobsResource {
     }
 
     /// 暂停 fine-tuning job。
-    pub fn pause(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn pause(&self, job_id: impl Into<String>) -> JsonRequestBuilder<FineTuningJob> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.pause",
@@ -2990,7 +3002,7 @@ impl FineTuningJobsResource {
     }
 
     /// 恢复 fine-tuning job。
-    pub fn resume(&self, job_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn resume(&self, job_id: impl Into<String>) -> JsonRequestBuilder<FineTuningJob> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.resume",
@@ -3003,7 +3015,7 @@ impl FineTuningJobsResource {
     }
 
     /// 列出事件。
-    pub fn list_events(&self, job_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list_events(&self, job_id: impl Into<String>) -> ListRequestBuilder<FineTuningJobEvent> {
         ListRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.list_events",
@@ -3022,7 +3034,7 @@ impl FineTuningJobsResource {
 
 impl FineTuningJobCheckpointsResource {
     /// 列出某个 job 的 checkpoints。
-    pub fn list(&self, job_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(&self, job_id: impl Into<String>) -> ListRequestBuilder<FineTuningCheckpoint> {
         ListRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.jobs.checkpoints.list",
@@ -3036,7 +3048,10 @@ impl FineTuningJobCheckpointsResource {
 
 impl FineTuningCheckpointPermissionsResource {
     /// 创建 checkpoint permission。
-    pub fn create(&self, checkpoint_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn create(
+        &self,
+        checkpoint_id: impl Into<String>,
+    ) -> JsonRequestBuilder<FineTuningCheckpointPermission> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.checkpoints.permissions.create",
@@ -3053,7 +3068,7 @@ impl FineTuningCheckpointPermissionsResource {
         &self,
         checkpoint_id: impl Into<String>,
         permission_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<FineTuningCheckpointPermission> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.checkpoints.permissions.retrieve",
@@ -3067,7 +3082,10 @@ impl FineTuningCheckpointPermissionsResource {
     }
 
     /// 列出 checkpoint permission。
-    pub fn list(&self, checkpoint_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(
+        &self,
+        checkpoint_id: impl Into<String>,
+    ) -> ListRequestBuilder<FineTuningCheckpointPermission> {
         ListRequestBuilder::new(
             self.client.clone(),
             "fine_tuning.checkpoints.permissions.list",
@@ -3140,17 +3158,12 @@ impl GradersResource {
 
 impl BatchesResource {
     /// 创建 batch。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        JsonRequestBuilder::new(
-            self.client.clone(),
-            "batches.create",
-            Method::POST,
-            "/batches",
-        )
+    pub fn create(&self) -> BatchCreateRequestBuilder {
+        BatchCreateRequestBuilder::new(self.client.clone())
     }
 
     /// 获取 batch。
-    pub fn retrieve(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Batch> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "batches.retrieve",
@@ -3160,12 +3173,12 @@ impl BatchesResource {
     }
 
     /// 列出 batches。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
+    pub fn list(&self) -> ListRequestBuilder<Batch> {
         ListRequestBuilder::new(self.client.clone(), "batches.list", "/batches")
     }
 
     /// 取消 batch。
-    pub fn cancel(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn cancel(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Batch> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "batches.cancel",
@@ -3229,7 +3242,7 @@ impl UploadPartsResource {
 
 impl ConversationsResource {
     /// 创建 conversation。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<Conversation> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "conversations.create",
@@ -3239,7 +3252,7 @@ impl ConversationsResource {
     }
 
     /// 获取 conversation。
-    pub fn retrieve(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Conversation> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "conversations.retrieve",
@@ -3252,7 +3265,7 @@ impl ConversationsResource {
     }
 
     /// 更新 conversation。
-    pub fn update(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn update(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Conversation> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "conversations.update",
@@ -3285,7 +3298,10 @@ impl ConversationsResource {
 
 impl ConversationItemsResource {
     /// 创建 conversation item。
-    pub fn create(&self, conversation_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn create(
+        &self,
+        conversation_id: impl Into<String>,
+    ) -> JsonRequestBuilder<ConversationItem> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "conversations.items.create",
@@ -3302,7 +3318,7 @@ impl ConversationItemsResource {
         &self,
         conversation_id: impl Into<String>,
         item_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<ConversationItem> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "conversations.items.retrieve",
@@ -3316,7 +3332,7 @@ impl ConversationItemsResource {
     }
 
     /// 列出 conversation items。
-    pub fn list(&self, conversation_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(&self, conversation_id: impl Into<String>) -> ListRequestBuilder<ConversationItem> {
         ListRequestBuilder::new(
             self.client.clone(),
             "conversations.items.list",
@@ -3348,12 +3364,12 @@ impl ConversationItemsResource {
 
 impl EvalsResource {
     /// 创建 eval。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<Eval> {
         JsonRequestBuilder::new(self.client.clone(), "evals.create", Method::POST, "/evals")
     }
 
     /// 获取 eval。
-    pub fn retrieve(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Eval> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "evals.retrieve",
@@ -3363,7 +3379,7 @@ impl EvalsResource {
     }
 
     /// 更新 eval。
-    pub fn update(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn update(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Eval> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "evals.update",
@@ -3373,7 +3389,7 @@ impl EvalsResource {
     }
 
     /// 列出 evals。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
+    pub fn list(&self) -> ListRequestBuilder<Eval> {
         ListRequestBuilder::new(self.client.clone(), "evals.list", "/evals")
     }
 
@@ -3395,7 +3411,7 @@ impl EvalsResource {
 
 impl EvalRunsResource {
     /// 创建 eval run。
-    pub fn create(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn create(&self, eval_id: impl Into<String>) -> JsonRequestBuilder<EvalRun> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "evals.runs.create",
@@ -3409,7 +3425,7 @@ impl EvalRunsResource {
         &self,
         eval_id: impl Into<String>,
         run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<EvalRun> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "evals.runs.retrieve",
@@ -3423,7 +3439,7 @@ impl EvalRunsResource {
     }
 
     /// 列出 eval runs。
-    pub fn list(&self, eval_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(&self, eval_id: impl Into<String>) -> ListRequestBuilder<EvalRun> {
         ListRequestBuilder::new(
             self.client.clone(),
             "evals.runs.list",
@@ -3454,7 +3470,7 @@ impl EvalRunsResource {
         &self,
         eval_id: impl Into<String>,
         run_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<EvalRun> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "evals.runs.cancel",
@@ -3480,7 +3496,7 @@ impl EvalRunOutputItemsResource {
         eval_id: impl Into<String>,
         run_id: impl Into<String>,
         item_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<EvalOutputItem> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "evals.runs.output_items.retrieve",
@@ -3499,7 +3515,7 @@ impl EvalRunOutputItemsResource {
         &self,
         eval_id: impl Into<String>,
         run_id: impl Into<String>,
-    ) -> ListRequestBuilder<Value> {
+    ) -> ListRequestBuilder<EvalOutputItem> {
         ListRequestBuilder::new(
             self.client.clone(),
             "evals.runs.output_items.list",
@@ -3514,7 +3530,7 @@ impl EvalRunOutputItemsResource {
 
 impl ContainersResource {
     /// 创建 container。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<Container> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "containers.create",
@@ -3524,7 +3540,7 @@ impl ContainersResource {
     }
 
     /// 获取 container。
-    pub fn retrieve(&self, container_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, container_id: impl Into<String>) -> JsonRequestBuilder<Container> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "containers.retrieve",
@@ -3534,7 +3550,7 @@ impl ContainersResource {
     }
 
     /// 列出 containers。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
+    pub fn list(&self) -> ListRequestBuilder<Container> {
         ListRequestBuilder::new(self.client.clone(), "containers.list", "/containers")
     }
 
@@ -3556,7 +3572,7 @@ impl ContainersResource {
 
 impl ContainerFilesResource {
     /// 创建 container file。
-    pub fn create(&self, container_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn create(&self, container_id: impl Into<String>) -> JsonRequestBuilder<ContainerFile> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "containers.files.create",
@@ -3573,7 +3589,7 @@ impl ContainerFilesResource {
         &self,
         container_id: impl Into<String>,
         file_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<ContainerFile> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "containers.files.retrieve",
@@ -3587,7 +3603,7 @@ impl ContainerFilesResource {
     }
 
     /// 列出 container files。
-    pub fn list(&self, container_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(&self, container_id: impl Into<String>) -> ListRequestBuilder<ContainerFile> {
         ListRequestBuilder::new(
             self.client.clone(),
             "containers.files.list",
@@ -3644,7 +3660,7 @@ impl ContainerFilesContentResource {
 
 impl SkillsResource {
     /// 创建 skill。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<Skill> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "skills.create",
@@ -3654,7 +3670,7 @@ impl SkillsResource {
     }
 
     /// 获取 skill。
-    pub fn retrieve(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Skill> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "skills.retrieve",
@@ -3664,7 +3680,7 @@ impl SkillsResource {
     }
 
     /// 更新 skill。
-    pub fn update(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn update(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Skill> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "skills.update",
@@ -3674,7 +3690,7 @@ impl SkillsResource {
     }
 
     /// 列出 skills。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
+    pub fn list(&self) -> ListRequestBuilder<Skill> {
         ListRequestBuilder::new(self.client.clone(), "skills.list", "/skills")
     }
 
@@ -3713,7 +3729,7 @@ impl SkillsContentResource {
 
 impl SkillVersionsResource {
     /// 创建 skill version。
-    pub fn create(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn create(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<SkillVersion> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "skills.versions.create",
@@ -3727,7 +3743,7 @@ impl SkillVersionsResource {
         &self,
         skill_id: impl Into<String>,
         version_id: impl Into<String>,
-    ) -> JsonRequestBuilder<Value> {
+    ) -> JsonRequestBuilder<SkillVersion> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "skills.versions.retrieve",
@@ -3741,7 +3757,7 @@ impl SkillVersionsResource {
     }
 
     /// 列出 skill versions。
-    pub fn list(&self, skill_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(&self, skill_id: impl Into<String>) -> ListRequestBuilder<SkillVersion> {
         ListRequestBuilder::new(
             self.client.clone(),
             "skills.versions.list",
@@ -3795,7 +3811,7 @@ impl SkillVersionsContentResource {
 
 impl VideosResource {
     /// 创建视频。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<Video> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.create",
@@ -3805,7 +3821,7 @@ impl VideosResource {
     }
 
     /// 获取视频。
-    pub fn retrieve(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn retrieve(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.retrieve",
@@ -3815,7 +3831,7 @@ impl VideosResource {
     }
 
     /// 列出视频。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
+    pub fn list(&self) -> ListRequestBuilder<Video> {
         ListRequestBuilder::new(self.client.clone(), "videos.list", "/videos")
     }
 
@@ -3830,7 +3846,7 @@ impl VideosResource {
     }
 
     /// 编辑视频。
-    pub fn edit(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn edit(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.edit",
@@ -3840,7 +3856,7 @@ impl VideosResource {
     }
 
     /// 扩展视频。
-    pub fn extend(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn extend(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.extend",
@@ -3850,7 +3866,7 @@ impl VideosResource {
     }
 
     /// 创建角色。
-    pub fn create_character(&self) -> JsonRequestBuilder<Value> {
+    pub fn create_character(&self) -> JsonRequestBuilder<VideoCharacter> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.create_character",
@@ -3860,7 +3876,10 @@ impl VideosResource {
     }
 
     /// 获取角色。
-    pub fn get_character(&self, character_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn get_character(
+        &self,
+        character_id: impl Into<String>,
+    ) -> JsonRequestBuilder<VideoCharacter> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.get_character",
@@ -3883,7 +3902,7 @@ impl VideosResource {
     }
 
     /// 混剪视频。
-    pub fn remix(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn remix(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "videos.remix",

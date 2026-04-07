@@ -12,11 +12,9 @@ async fn main() -> ExampleResult {
         .audio()
         .speech()
         .create()
-        .body_value(serde_json::json!({
-            "model": "gpt-4o-mini-tts",
-            "voice": "nova",
-            "input": "Rust makes fearless concurrency practical."
-        }))
+        .model("gpt-4o-mini-tts")
+        .voice("nova")
+        .input("Rust makes fearless concurrency practical.")
         .send()
         .await?;
 

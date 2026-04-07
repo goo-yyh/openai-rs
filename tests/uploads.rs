@@ -141,8 +141,8 @@ async fn test_should_stream_audio_transcriptions_over_sse() {
         .audio()
         .transcriptions()
         .stream()
-        .multipart_text("model", "gpt-4o-mini-transcribe")
-        .multipart_file("file", file)
+        .model("gpt-4o-mini-transcribe")
+        .file(file)
         .send_sse()
         .await
         .unwrap();

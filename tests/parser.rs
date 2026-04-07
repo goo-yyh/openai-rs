@@ -491,11 +491,9 @@ async fn test_should_stream_audio_speech_over_raw_sse() {
         .audio()
         .speech()
         .stream()
-        .body_value(json!({
-            "model": "gpt-4o-mini-tts",
-            "voice": "alloy",
-            "input": "你好"
-        }))
+        .model("gpt-4o-mini-tts")
+        .voice("alloy")
+        .input("你好")
         .send_raw_sse()
         .await
         .unwrap();

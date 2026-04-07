@@ -3,7 +3,7 @@ use serde_json::json;
 use wiremock::matchers::{body_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::Client;
+use openai_rs::{Client, ConversationItem};
 
 #[tokio::test]
 async fn test_should_merge_default_query_and_request_query() {
@@ -107,7 +107,11 @@ async fn test_should_encode_nested_dynamic_path_segments() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "ok": true
+            "id": "item?2=3",
+            "object": "conversation.item",
+            "type": "message",
+            "role": "user",
+            "content": []
         })))
         .mount(&server)
         .await;
@@ -119,7 +123,7 @@ async fn test_should_encode_nested_dynamic_path_segments() {
         .build()
         .unwrap();
 
-    let _: serde_json::Value = client
+    let _: ConversationItem = client
         .conversations()
         .items()
         .retrieve("conv/1", "item?2=3")

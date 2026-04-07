@@ -238,11 +238,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .audio()
         .speech()
         .create()
-        .body_value(serde_json::json!({
-            "model": "gpt-4o-mini-tts",
-            "voice": "nova",
-            "input": "Rust makes fearless concurrency practical."
-        }))
+        .model("gpt-4o-mini-tts")
+        .voice("nova")
+        .input("Rust makes fearless concurrency practical.")
         .send()
         .await?;
 
@@ -256,6 +254,42 @@ Related examples:
 - [examples/audio_roundtrip.rs](./examples/audio_roundtrip.rs)
 - [examples/text_to_speech.rs](./examples/text_to_speech.rs)
 - [examples/speech_to_text.rs](./examples/speech_to_text.rs)
+
+### Typed Long-tail Resources
+
+Phase 3 promotes the main long-tail namespaces away from raw `Value` builders:
+
+- `images`
+- `audio`
+- `fine_tuning`
+- `batches`
+- `conversations`
+- `evals`
+- `containers`
+- `skills`
+- `videos`
+
+For the high-frequency paths, you can now use typed responses plus either dedicated builder methods or typed request structs with `json_body(...)`.
+
+```rust,ignore
+use openai_rs::{Client, ConversationCreateParams};
+
+let client = Client::builder()
+    .api_key(std::env::var("OPENAI_API_KEY")?)
+    .build()?;
+
+let conversation = client
+    .conversations()
+    .create()
+    .json_body(&ConversationCreateParams {
+        name: Some("demo".into()),
+        ..ConversationCreateParams::default()
+    })?
+    .send()
+    .await?;
+
+println!("{}", conversation.id);
+```
 
 ## Webhook Verification
 

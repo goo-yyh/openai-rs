@@ -48,11 +48,19 @@ pub use providers::{
     ProviderKind, ProviderProfile,
 };
 pub use resources::{
+    AudioSpeechCreateParams, AudioTranscription, AudioTranslation, Batch, BatchCreateParams,
     BetaAssistant, BetaThread, BetaThreadMessage, BetaThreadRun, BetaThreadRunStep, ChatCompletion,
     ChatCompletionChunk, ChatCompletionMessage, ChatCompletionToolCall, ChatContentDeltaEvent,
-    ChatLogProbsDeltaEvent, ChatRefusalDeltaEvent, ChatToolArgumentsDeltaEvent, DeleteResponse,
-    EmbeddingResponse, FileObject, Model, Response, UploadObject, VectorStore, VectorStoreFile,
-    VectorStoreFileBatch, VectorStoreSearchResponse,
+    ChatLogProbsDeltaEvent, ChatRefusalDeltaEvent, ChatToolArgumentsDeltaEvent, Container,
+    ContainerCreateParams, ContainerFile, ContainerFileCreateParams, Conversation,
+    ConversationCreateParams, ConversationItem, ConversationItemCreateParams,
+    ConversationUpdateParams, DeleteResponse, EmbeddingResponse, Eval, EvalCreateParams,
+    EvalOutputItem, EvalRun, EvalRunCreateParams, EvalUpdateParams, FileObject,
+    FineTuningCheckpoint, FineTuningCheckpointPermission, FineTuningJob, FineTuningJobCreateParams,
+    FineTuningJobEvent, ImageData, ImageGenerateParams, ImageGenerationResponse, Model, Response,
+    Skill, SkillCreateParams, SkillUpdateParams, SkillVersion, SkillVersionCreateParams,
+    UploadObject, VectorStore, VectorStoreFile, VectorStoreFileBatch, VectorStoreSearchResponse,
+    Video, VideoCharacter, VideoCharacterCreateParams, VideoCreateParams,
 };
 #[cfg(feature = "tool-runner")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]

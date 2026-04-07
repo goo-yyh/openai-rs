@@ -14,13 +14,10 @@ async fn main() -> ExampleResult {
     let mut stream = client
         .images()
         .generate()
-        .body_value(serde_json::json!({
-            "model": "gpt-image-1",
-            "prompt": "A cute baby sea otter",
-            "size": "1024x1024",
-            "stream": true,
-            "partial_images": 3
-        }))
+        .model("gpt-image-1")
+        .prompt("A cute baby sea otter")
+        .size("1024x1024")
+        .partial_images(3)
         .send_sse()
         .await?;
 

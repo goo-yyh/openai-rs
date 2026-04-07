@@ -12,11 +12,9 @@ async fn main() -> ExampleResult {
         .audio()
         .speech()
         .create()
-        .body_value(serde_json::json!({
-            "model": "gpt-4o-mini-tts",
-            "voice": "alloy",
-            "input": "the quick brown fox jumped over the lazy dogs"
-        }))
+        .model("gpt-4o-mini-tts")
+        .voice("alloy")
+        .input("the quick brown fox jumped over the lazy dogs")
         .send()
         .await?;
 
@@ -31,8 +29,8 @@ async fn main() -> ExampleResult {
         .audio()
         .transcriptions()
         .create()
-        .multipart_text("model", "gpt-4o-mini-transcribe")
-        .multipart_file("file", upload.clone())
+        .model("gpt-4o-mini-transcribe")
+        .file(upload.clone())
         .send()
         .await?;
 
@@ -40,8 +38,8 @@ async fn main() -> ExampleResult {
         .audio()
         .translations()
         .create()
-        .multipart_text("model", "gpt-4o-mini-transcribe")
-        .multipart_file("file", upload)
+        .model("gpt-4o-mini-transcribe")
+        .file(upload)
         .send()
         .await?;
 

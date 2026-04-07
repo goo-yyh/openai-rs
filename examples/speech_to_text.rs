@@ -19,8 +19,8 @@ async fn main() -> ExampleResult {
         .audio()
         .transcriptions()
         .create()
-        .multipart_text("model", "gpt-4o-mini-transcribe")
-        .multipart_file("file", audio)
+        .model("gpt-4o-mini-transcribe")
+        .file(audio)
         .send()
         .await?;
 
