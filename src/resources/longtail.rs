@@ -1,102 +1,14 @@
+use std::time::Duration;
+
+use bytes::Bytes;
+use http::Method;
+use tokio_util::sync::CancellationToken;
+
 use super::*;
-
-fn metadata_is_empty(metadata: &BTreeMap<String, String>) -> bool {
-    metadata.is_empty()
-}
-
-#[derive(Debug, Clone)]
-struct TypedJsonRequestState<P> {
-    client: Option<Client>,
-    params: P,
-    body_override: Option<Value>,
-    options: RequestOptions,
-    extra_body: BTreeMap<String, Value>,
-    provider_options: BTreeMap<String, Value>,
-}
-
-impl<P> TypedJsonRequestState<P> {
-    fn new(client: Client, params: P) -> Self {
-        Self {
-            client: Some(client),
-            params,
-            body_override: None,
-            options: RequestOptions::default(),
-            extra_body: BTreeMap::new(),
-            provider_options: BTreeMap::new(),
-        }
-    }
-
-    fn body_value(mut self, body: Value) -> Self {
-        self.body_override = Some(body);
-        self
-    }
-
-    fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.options.insert_header(key, value);
-        self
-    }
-
-    fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.options.insert_query(key, value);
-        self
-    }
-
-    fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.extra_body.insert(key.into(), value);
-        self
-    }
-
-    fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.provider_options.insert(key.into(), value);
-        self
-    }
-
-    fn timeout(mut self, timeout: Duration) -> Self {
-        self.options.timeout = Some(timeout);
-        self
-    }
-
-    fn max_retries(mut self, max_retries: u32) -> Self {
-        self.options.max_retries = Some(max_retries);
-        self
-    }
-
-    fn cancellation_token(mut self, token: CancellationToken) -> Self {
-        self.options.cancellation_token = Some(token);
-        self
-    }
-}
-
-impl<P> TypedJsonRequestState<P>
-where
-    P: Serialize,
-{
-    fn build_spec(
-        mut self,
-        endpoint_id: &'static str,
-        path: &'static str,
-    ) -> Result<(Client, RequestSpec)> {
-        let client = self
-            .client
-            .take()
-            .ok_or_else(|| Error::InvalidConfig("请求构建器缺少客户端".into()))?;
-        let provider_key = client.provider().kind().as_key();
-        let body = merge_json_body(
-            Some(
-                self.body_override
-                    .take()
-                    .unwrap_or(value_from(&self.params)?),
-            ),
-            &self.extra_body,
-            provider_key,
-            &self.provider_options,
-        );
-        let mut spec = RequestSpec::new(endpoint_id, Method::POST, path);
-        spec.body = Some(body);
-        spec.options = self.options;
-        Ok((client, spec))
-    }
-}
+use crate::files::UploadSource;
+use crate::response_meta::ApiResponse;
+use crate::stream::{RawSseStream, SseStream};
+use crate::transport::RequestSpec;
 
 /// 表示单个图像输出。
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
