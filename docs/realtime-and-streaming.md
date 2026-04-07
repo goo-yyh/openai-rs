@@ -6,6 +6,8 @@
 - Realtime WebSocket：`client.realtime().ws()`
 - Responses WebSocket：`client.responses().ws()`
 
+runtime event 的边界语义见 [runtime-event-contract.md](./runtime-event-contract.md)。
+
 ## SSE
 
 SSE 适合标准请求-响应模型下的增量输出。

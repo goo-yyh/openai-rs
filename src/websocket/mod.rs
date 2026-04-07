@@ -585,8 +585,8 @@ mod enabled {
                     Ok(Message::Binary(bytes)) => {
                         handle_server_payload::<T>(&reader_inner, bytes.as_ref());
                     }
-                    Ok(Message::Close(_)) => {
-                        mark_closed(&reader_inner);
+                    Ok(Message::Close(frame)) => {
+                        handle_close_frame(&reader_inner, frame);
                         break;
                     }
                     Ok(Message::Ping(_)) | Ok(Message::Pong(_)) => {}
@@ -669,6 +669,35 @@ mod enabled {
         T: Clone + Send + 'static,
     {
         let _ = inner.events.send(SocketStreamMessage::Error(error));
+    }
+
+    fn handle_close_frame<T>(inner: &Arc<SocketCore<T>>, frame: Option<CloseFrame>)
+    where
+        T: Clone + Send + 'static,
+    {
+        let state = ConnectionState::from_u8(inner.state.load(Ordering::SeqCst));
+        if state != ConnectionState::Closing
+            && let Some(frame) = frame.as_ref()
+            && let Some(error) = map_close_frame_error(frame)
+        {
+            push_error(inner, error);
+        }
+        mark_closed(inner);
+    }
+
+    fn map_close_frame_error(frame: &CloseFrame) -> Option<WebSocketError> {
+        if frame.code == CloseCode::Normal {
+            return None;
+        }
+
+        let code = u16::from(frame.code);
+        let reason = frame.reason.to_string();
+        let message = if reason.is_empty() {
+            format!("WebSocket 连接被关闭: code={code}")
+        } else {
+            format!("WebSocket 连接被关闭: code={code}, reason={reason}")
+        };
+        Some(WebSocketError::protocol(message))
     }
 
     fn mark_closed<T>(inner: &Arc<SocketCore<T>>)
@@ -852,6 +881,26 @@ mod enabled {
         }
 
         #[test]
+        fn test_should_reject_unsupported_websocket_base_scheme() {
+            let error = build_websocket_url("ftp://example.com", "/realtime", &BTreeMap::new())
+                .unwrap_err();
+
+            assert!(matches!(error, Error::InvalidConfig(_)));
+            assert!(error.to_string().contains("ftp"));
+        }
+
+        #[test]
+        fn test_should_reject_invalid_websocket_headers() {
+            let error = build_websocket_request(
+                &Url::parse("ws://example.com/realtime").unwrap(),
+                &BTreeMap::from([("x-test".into(), "bad\nvalue".into())]),
+            )
+            .unwrap_err();
+
+            assert!(matches!(error, Error::InvalidConfig(_)));
+        }
+
+        #[test]
         fn test_should_parse_error_message_from_event() {
             let event = super::super::WebSocketServerEvent {
                 event_type: "error".into(),
@@ -864,6 +913,29 @@ mod enabled {
             };
 
             assert_eq!(event.error_message().as_deref(), Some("bad request"));
+        }
+
+        #[test]
+        fn test_should_map_abnormal_close_frame_to_protocol_error() {
+            let error = map_close_frame_error(&CloseFrame {
+                code: CloseCode::from(1008),
+                reason: Utf8Bytes::from("quota exceeded"),
+            })
+            .unwrap();
+
+            assert_eq!(error.kind, crate::error::WebSocketErrorKind::Protocol);
+            assert!(error.message.contains("1008"));
+            assert!(error.message.contains("quota exceeded"));
+        }
+
+        #[test]
+        fn test_should_ignore_normal_close_frame_for_error_mapping() {
+            let error = map_close_frame_error(&CloseFrame {
+                code: CloseCode::Normal,
+                reason: Utf8Bytes::from("OK"),
+            });
+
+            assert!(error.is_none());
         }
     }
 }

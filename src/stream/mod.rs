@@ -841,7 +841,14 @@ impl Stream for ResponseEventStream {
         match Pin::new(&mut this.inner).poll_next(cx) {
             Poll::Ready(Some(Ok(event))) => {
                 let snapshot = this.inner.snapshot();
-                Poll::Ready(Some(Ok(derive_response_runtime_event(event, snapshot))))
+                let output_text = this.inner.output_text().to_owned();
+                let function_arguments = this.inner.function_arguments().clone();
+                Poll::Ready(Some(Ok(derive_response_runtime_event(
+                    event,
+                    snapshot,
+                    &output_text,
+                    &function_arguments,
+                ))))
             }
             Poll::Ready(Some(Err(error))) => Poll::Ready(Some(Err(error))),
             Poll::Ready(None) => Poll::Ready(None),
@@ -1888,31 +1895,40 @@ impl PartialJsonParser {
             }
 
             let Some(key) = self.parse_string() else {
-                return if object.is_empty() {
-                    None
-                } else {
+                return if self.peek().is_none() {
                     Some(PartialParse {
                         value: Value::Object(object),
                         complete: false,
                     })
+                } else {
+                    None
                 };
             };
 
             self.skip_whitespace();
-            if self.peek() != Some(':') {
-                break;
+            match self.peek() {
+                Some(':') => {
+                    self.index += 1;
+                }
+                None => {
+                    return Some(PartialParse {
+                        value: Value::Object(object),
+                        complete: false,
+                    });
+                }
+                Some(_) => return None,
             }
-            self.index += 1;
 
             self.skip_whitespace();
-            if self.peek().is_none() {
-                object.insert(key.value, Value::Null);
-                break;
-            }
-
             let Some(value) = self.parse_value() else {
-                object.insert(key.value, Value::Null);
-                break;
+                return if self.peek().is_none() {
+                    Some(PartialParse {
+                        value: Value::Object(object),
+                        complete: false,
+                    })
+                } else {
+                    None
+                };
             };
             object.insert(key.value, value.value);
 
@@ -1927,7 +1943,7 @@ impl PartialJsonParser {
                     break;
                 }
                 None => break,
-                _ => break,
+                Some(_) => return None,
             }
         }
 
@@ -1955,7 +1971,14 @@ impl PartialJsonParser {
             }
 
             let Some(value) = self.parse_value() else {
-                break;
+                return if self.peek().is_none() {
+                    Some(PartialParse {
+                        value: Value::Array(values),
+                        complete: false,
+                    })
+                } else {
+                    None
+                };
             };
             values.push(value.value);
 
@@ -1970,7 +1993,7 @@ impl PartialJsonParser {
                     break;
                 }
                 None => break,
-                _ => break,
+                Some(_) => return None,
             }
         }
 
@@ -2311,7 +2334,12 @@ fn emit_chat_tool_call_done(
     state.done_tool_calls.insert(tool_call_index);
 }
 
-fn derive_response_runtime_event(event: Value, snapshot: Option<Response>) -> ResponseRuntimeEvent {
+fn derive_response_runtime_event(
+    event: Value,
+    snapshot: Option<Response>,
+    output_text: &str,
+    function_arguments: &HashMap<String, String>,
+) -> ResponseRuntimeEvent {
     let event_type = event
         .get("type")
         .and_then(Value::as_str)
@@ -2385,7 +2413,14 @@ fn derive_response_runtime_event(event: Value, snapshot: Option<Response>) -> Re
                 .and_then(|response| {
                     response_output_text_snapshot(response, output_index, content_index)
                 })
-                .unwrap_or_else(|| text.clone());
+                .filter(|snapshot_text| !snapshot_text.is_empty())
+                .unwrap_or_else(|| {
+                    if output_text.is_empty() {
+                        text.clone()
+                    } else {
+                        output_text.to_owned()
+                    }
+                });
             let typed_event = ResponseOutputTextEvent {
                 event_type: event_type.clone(),
                 output_index,
@@ -2415,10 +2450,17 @@ fn derive_response_runtime_event(event: Value, snapshot: Option<Response>) -> Re
                 .and_then(Value::as_str)
                 .unwrap_or_default()
                 .to_owned();
+            let fallback_arguments = item_id
+                .as_deref()
+                .and_then(|key| function_arguments.get(key))
+                .cloned()
+                .or_else(|| function_arguments.get("default").cloned())
+                .unwrap_or_else(|| delta.clone());
             let snapshot_arguments = snapshot
                 .as_ref()
                 .and_then(|response| response_function_arguments_snapshot(response, output_index))
-                .unwrap_or_else(|| delta.clone());
+                .filter(|snapshot_arguments| !snapshot_arguments.is_empty())
+                .unwrap_or(fallback_arguments);
             ResponseRuntimeEvent::FunctionCallArgumentsDelta(ResponseFunctionCallArgumentsEvent {
                 output_index,
                 parsed_arguments: parse_optional_json(&snapshot_arguments),
@@ -2490,7 +2532,8 @@ impl ResponseAccumulator {
                     .map(|value| value as usize)
                     .unwrap_or(response.output.len());
                 ensure_vec_len(&mut response.output, index + 1);
-                response.output[index] = item.clone();
+                let existing = response.output[index].clone();
+                response.output[index] = merge_response_output_item(existing, item.clone());
                 self.sync_output_text_from_snapshot();
             }
             "response.content_part.added" => {
@@ -2510,12 +2553,16 @@ impl ResponseAccumulator {
                     .and_then(Value::as_u64)
                     .map(|value| value as usize)
                     .unwrap_or_default();
-                if let Some(output) = response.output.get_mut(output_index) {
-                    let content = ensure_array_field(output, "content");
-                    ensure_vec_len(content, content_index + 1);
-                    content[content_index] = part.clone();
-                    self.sync_output_text_from_snapshot();
+                ensure_vec_len(&mut response.output, output_index + 1);
+                if response.output[output_index].is_null() {
+                    response.output[output_index] = Value::Object(Map::new());
                 }
+                let output = &mut response.output[output_index];
+                let content = ensure_array_field(output, "content");
+                ensure_vec_len(content, content_index + 1);
+                let existing = content[content_index].clone();
+                content[content_index] = merge_response_content_part(existing, part.clone());
+                self.sync_output_text_from_snapshot();
             }
             "response.output_text.delta" => {
                 if let Some(delta) = event.get("delta").and_then(Value::as_str) {
@@ -2673,6 +2720,94 @@ fn ensure_object_field<'a>(value: &'a mut Value, key: &str) -> &'a mut Map<Strin
     ensure_object(field)
 }
 
+fn merge_response_output_item(existing: Value, incoming: Value) -> Value {
+    let (Some(existing_object), Some(mut incoming_object)) =
+        (existing.as_object(), incoming.as_object().cloned())
+    else {
+        return incoming;
+    };
+
+    if let Some(existing_arguments) = existing_object
+        .get("arguments")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+    {
+        let incoming_arguments = incoming_object
+            .get("arguments")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if incoming_arguments.is_empty() {
+            incoming_object.insert(
+                "arguments".into(),
+                Value::String(existing_arguments.to_owned()),
+            );
+        }
+    }
+
+    if let Some(existing_content) = existing_object
+        .get("content")
+        .and_then(Value::as_array)
+        .filter(|value| !value.is_empty())
+        .cloned()
+    {
+        let use_existing_content = incoming_object
+            .get("content")
+            .and_then(Value::as_array)
+            .is_none_or(Vec::is_empty);
+        if use_existing_content {
+            incoming_object.insert("content".into(), Value::Array(existing_content));
+        }
+    }
+
+    Value::Object(incoming_object)
+}
+
+fn merge_response_content_part(existing: Value, incoming: Value) -> Value {
+    let (Some(existing_object), Some(mut incoming_object)) =
+        (existing.as_object(), incoming.as_object().cloned())
+    else {
+        return incoming;
+    };
+
+    if let Some(existing_text) = existing_object
+        .get("text")
+        .and_then(Value::as_str)
+        .filter(|value| !value.is_empty())
+    {
+        let incoming_text = incoming_object
+            .get("text")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if incoming_text.is_empty() {
+            incoming_object.insert("text".into(), Value::String(existing_text.to_owned()));
+        }
+    }
+
+    for key in ["output_text", "reasoning_text"] {
+        let Some(existing_text) = existing_object
+            .get(key)
+            .and_then(|value| value.get("text"))
+            .and_then(Value::as_str)
+            .filter(|value| !value.is_empty())
+        else {
+            continue;
+        };
+        let incoming_value = incoming_object
+            .entry(key.to_owned())
+            .or_insert_with(|| Value::Object(Map::new()));
+        let incoming_nested = ensure_object(incoming_value);
+        let incoming_text = incoming_nested
+            .get("text")
+            .and_then(Value::as_str)
+            .unwrap_or("");
+        if incoming_text.is_empty() {
+            incoming_nested.insert("text".into(), Value::String(existing_text.to_owned()));
+        }
+    }
+
+    Value::Object(incoming_object)
+}
+
 fn empty_assistant_snapshot(id: &str, object: &str) -> Value {
     let mut map = Map::new();
     map.insert("id".into(), Value::String(id.to_owned()));
@@ -2698,9 +2833,11 @@ fn append_response_content_text(
         .unwrap_or_default();
     let delta = event.get("delta").and_then(Value::as_str).unwrap_or("");
 
-    let Some(output) = response.output.get_mut(output_index) else {
-        return;
-    };
+    ensure_vec_len(&mut response.output, output_index + 1);
+    if response.output[output_index].is_null() {
+        response.output[output_index] = Value::Object(Map::new());
+    }
+    let output = &mut response.output[output_index];
     let content = ensure_array_field(output, "content");
     ensure_vec_len(content, content_index + 1);
     if content[content_index].is_null() {
@@ -2763,9 +2900,11 @@ fn set_response_content_text(
         .map(|value| value as usize)
         .unwrap_or_default();
 
-    let Some(output) = response.output.get_mut(output_index) else {
-        return;
-    };
+    ensure_vec_len(&mut response.output, output_index + 1);
+    if response.output[output_index].is_null() {
+        response.output[output_index] = Value::Object(Map::new());
+    }
+    let output = &mut response.output[output_index];
     let content = ensure_array_field(output, "content");
     ensure_vec_len(content, content_index + 1);
     if content[content_index].is_null() {
@@ -2797,9 +2936,11 @@ fn append_function_call_arguments(response: &mut Response, event: &Value, delta:
         .and_then(Value::as_u64)
         .map(|value| value as usize)
         .unwrap_or_default();
-    let Some(output) = response.output.get_mut(output_index) else {
-        return;
-    };
+    ensure_vec_len(&mut response.output, output_index + 1);
+    if response.output[output_index].is_null() {
+        response.output[output_index] = Value::Object(Map::new());
+    }
+    let output = &mut response.output[output_index];
     let object = ensure_object(output);
     object
         .entry("type")
@@ -2927,7 +3068,16 @@ fn apply_run_step_delta(run_step: &mut Value, event: &Value) {
 
 fn merge_tool_call_delta(target: &mut Value, delta: &Value) {
     let target_object = ensure_object(target);
-    merge_object(target_object, delta);
+    if let Some(delta_object) = delta.as_object() {
+        for (key, value) in delta_object {
+            if matches!(key.as_str(), "function" | "code_interpreter")
+                || matches!(value, Value::Null)
+            {
+                continue;
+            }
+            target_object.insert(key.clone(), value.clone());
+        }
+    }
     if let Some(function_delta) = delta.get("function") {
         let function_target = target_object
             .entry("function")
@@ -2994,7 +3144,10 @@ fn merge_object(target: &mut Map<String, Value>, delta: &Value) {
 
 #[cfg(test)]
 mod tests {
-    use super::{LineDecoder, parse_optional_json};
+    use super::{
+        AssistantStreamEvent, AssistantStreamSnapshot, LineDecoder, PendingSseEvent,
+        ResponseAccumulator, parse_optional_json,
+    };
     use serde_json::json;
 
     #[test]
@@ -3028,6 +3181,18 @@ mod tests {
     }
 
     #[test]
+    fn test_should_parse_empty_and_multiline_sse_data_fields() {
+        let mut pending = PendingSseEvent::default();
+        assert_eq!(pending.push_line("event: message").unwrap(), None);
+        assert_eq!(pending.push_line("data:").unwrap(), None);
+        assert_eq!(pending.push_line("data: hello").unwrap(), None);
+
+        let event = pending.push_line("").unwrap().unwrap();
+        assert_eq!(event.event.as_deref(), Some("message"));
+        assert_eq!(event.data, "\nhello");
+    }
+
+    #[test]
     fn test_should_parse_partial_json_object_snapshot() {
         assert_eq!(
             parse_optional_json("{\"city\":\"Sha"),
@@ -3037,6 +3202,185 @@ mod tests {
             parse_optional_json("{\"items\":[1,2,"),
             Some(json!({"items":[1,2]}))
         );
+        assert_eq!(parse_optional_json("{\"city\":}"), None);
+        assert_eq!(parse_optional_json("{\"items\":[1,,2]}"), None);
         assert_eq!(parse_optional_json("hello"), None);
+    }
+
+    #[test]
+    fn test_should_keep_response_snapshot_consistent_for_out_of_order_events() {
+        let mut accumulator = ResponseAccumulator::default();
+        for event in [
+            json!({
+                "type": "response.created",
+                "response": {
+                    "id": "resp_1",
+                    "object": "response",
+                    "status": "in_progress",
+                    "output": []
+                }
+            }),
+            json!({
+                "type": "response.output_text.delta",
+                "output_index": 0,
+                "content_index": 0,
+                "delta": "hel"
+            }),
+            json!({
+                "type": "response.output_item.added",
+                "output_index": 0,
+                "item": {
+                    "id": "msg_1",
+                    "type": "message",
+                    "role": "assistant",
+                    "content": []
+                }
+            }),
+            json!({
+                "type": "response.content_part.added",
+                "output_index": 0,
+                "content_index": 0,
+                "part": {
+                    "type": "output_text",
+                    "text": ""
+                }
+            }),
+            json!({
+                "type": "response.output_text.delta",
+                "output_index": 0,
+                "content_index": 0,
+                "delta": "lo"
+            }),
+            json!({
+                "type": "response.function_call_arguments.delta",
+                "output_index": 1,
+                "item_id": "fc_1",
+                "delta": "{\"city\":\"Sha"
+            }),
+            json!({
+                "type": "response.output_item.added",
+                "output_index": 1,
+                "item": {
+                    "id": "fc_1",
+                    "type": "function_call",
+                    "arguments": ""
+                }
+            }),
+            json!({
+                "type": "response.function_call_arguments.delta",
+                "output_index": 1,
+                "item_id": "fc_1",
+                "delta": "nghai\"}"
+            }),
+        ] {
+            accumulator.apply(&event);
+        }
+
+        let response = accumulator.response.clone().unwrap();
+        assert_eq!(accumulator.output_text, "hello");
+        assert_eq!(response.output_text().as_deref(), Some("hello"));
+        assert_eq!(
+            response.output[1]
+                .get("arguments")
+                .and_then(serde_json::Value::as_str),
+            Some("{\"city\":\"Shanghai\"}"),
+        );
+    }
+
+    #[test]
+    fn test_should_merge_assistant_deltas_into_snapshot_before_created_events() {
+        let mut snapshot = AssistantStreamSnapshot::default();
+
+        snapshot.apply(&AssistantStreamEvent {
+            event: "thread.message.delta".into(),
+            data: json!({
+                "id": "msg_1",
+                "object": "thread.message.delta",
+                "delta": {
+                    "content": [{
+                        "index": 0,
+                        "type": "text",
+                        "text": { "value": "hel" }
+                    }]
+                }
+            }),
+        });
+        snapshot.apply(&AssistantStreamEvent {
+            event: "thread.message.delta".into(),
+            data: json!({
+                "id": "msg_1",
+                "object": "thread.message.delta",
+                "delta": {
+                    "content": [{
+                        "index": 0,
+                        "type": "text",
+                        "text": { "value": "lo" }
+                    }]
+                }
+            }),
+        });
+        snapshot.apply(&AssistantStreamEvent {
+            event: "thread.run.step.delta".into(),
+            data: json!({
+                "id": "step_1",
+                "object": "thread.run.step.delta",
+                "delta": {
+                    "step_details": {
+                        "type": "tool_calls",
+                        "tool_calls": [{
+                            "index": 0,
+                            "type": "function",
+                            "function": {
+                                "name": "lookup_weather",
+                                "arguments": "{\"city\":\"Sha"
+                            }
+                        }]
+                    }
+                }
+            }),
+        });
+        snapshot.apply(&AssistantStreamEvent {
+            event: "thread.run.step.delta".into(),
+            data: json!({
+                "id": "step_1",
+                "object": "thread.run.step.delta",
+                "delta": {
+                    "step_details": {
+                        "type": "tool_calls",
+                        "tool_calls": [{
+                            "index": 0,
+                            "type": "function",
+                            "function": {
+                                "arguments": "nghai\"}"
+                            }
+                        }]
+                    }
+                }
+            }),
+        });
+
+        assert_eq!(
+            snapshot
+                .message_raw("msg_1")
+                .and_then(|message| message.get("content"))
+                .and_then(serde_json::Value::as_array)
+                .and_then(|content| content.first())
+                .and_then(|part| part.get("text"))
+                .and_then(|text| text.get("value"))
+                .and_then(serde_json::Value::as_str),
+            Some("hello"),
+        );
+        assert_eq!(
+            snapshot
+                .run_step_raw("step_1")
+                .and_then(|step| step.get("step_details"))
+                .and_then(|details| details.get("tool_calls"))
+                .and_then(serde_json::Value::as_array)
+                .and_then(|tool_calls| tool_calls.first())
+                .and_then(|tool_call| tool_call.get("function"))
+                .and_then(|function| function.get("arguments"))
+                .and_then(serde_json::Value::as_str),
+            Some("{\"city\":\"Shanghai\"}"),
+        );
     }
 }

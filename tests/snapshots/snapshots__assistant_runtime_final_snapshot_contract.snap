@@ -1,0 +1,32 @@
+---
+source: tests/snapshots.rs
+expression: "serde_json::to_string_pretty(&json!({\n    \"event_kinds\": event_kinds, \"event_stream_message_text\":\n    event_stream_snapshot.latest_message_raw().and_then(|message|\n    message.get(\"content\")).and_then(serde_json::Value::as_array).and_then(|content|\n    content.first()).and_then(|part|\n    part.get(\"text\")).and_then(|text|\n    text.get(\"value\")).and_then(serde_json::Value::as_str),\n    \"plain_stream_message_text\":\n    plain_stream_snapshot.latest_message_raw().and_then(|message|\n    message.get(\"content\")).and_then(serde_json::Value::as_array).and_then(|content|\n    content.first()).and_then(|part|\n    part.get(\"text\")).and_then(|text|\n    text.get(\"value\")).and_then(serde_json::Value::as_str),\n    \"event_stream_tool_arguments\":\n    event_stream_snapshot.latest_run_step_raw().and_then(|step|\n    step.get(\"step_details\")).and_then(|details|\n    details.get(\"tool_calls\")).and_then(serde_json::Value::as_array).and_then(|tool_calls|\n    tool_calls.first()).and_then(|tool_call|\n    tool_call.get(\"function\")).and_then(|function|\n    function.get(\"arguments\")).and_then(serde_json::Value::as_str),\n    \"plain_stream_tool_arguments\":\n    plain_stream_snapshot.latest_run_step_raw().and_then(|step|\n    step.get(\"step_details\")).and_then(|details|\n    details.get(\"tool_calls\")).and_then(serde_json::Value::as_array).and_then(|tool_calls|\n    tool_calls.first()).and_then(|tool_call|\n    tool_call.get(\"function\")).and_then(|function|\n    function.get(\"arguments\")).and_then(serde_json::Value::as_str),\n    \"event_stream_run_status\":\n    event_stream_snapshot.latest_run_raw().and_then(|run|\n    run.get(\"status\")).and_then(serde_json::Value::as_str),\n    \"plain_stream_run_status\":\n    plain_stream_snapshot.latest_run_raw().and_then(|run|\n    run.get(\"status\")).and_then(serde_json::Value::as_str),\n})).unwrap()"
+---
+{
+  "event_kinds": [
+    "event:thread.message.delta",
+    "runtime:message_delta",
+    "runtime:text_created",
+    "runtime:text_delta",
+    "event:thread.run.step.delta",
+    "runtime:run_step_delta",
+    "runtime:tool_call_created",
+    "runtime:tool_call_delta",
+    "event:thread.run.step.delta",
+    "runtime:run_step_delta",
+    "runtime:tool_call_delta",
+    "event:thread.message.completed",
+    "runtime:message_done",
+    "runtime:text_done",
+    "event:thread.run.step.completed",
+    "runtime:run_step_done",
+    "runtime:tool_call_done",
+    "event:thread.run.completed"
+  ],
+  "event_stream_message_text": "hello",
+  "event_stream_run_status": "completed",
+  "event_stream_tool_arguments": "{\"city\":\"Shanghai\"}",
+  "plain_stream_message_text": "hello",
+  "plain_stream_run_status": "completed",
+  "plain_stream_tool_arguments": "{\"city\":\"Shanghai\"}"
+}

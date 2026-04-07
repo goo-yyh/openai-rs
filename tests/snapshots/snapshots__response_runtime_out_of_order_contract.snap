@@ -1,0 +1,70 @@
+---
+source: tests/snapshots.rs
+expression: "serde_json::to_string_pretty(&json!({\n    \"events\": events, \"completed_count\": completed_count,\n    \"event_stream_output_text\": event_stream_final.output_text(),\n    \"plain_stream_output_text\": plain_stream_final.output_text(),\n    \"event_stream_function_arguments\":\n    event_stream_final.output[1][\"arguments\"],\n    \"plain_stream_function_arguments\":\n    plain_stream_final.output[1][\"arguments\"],\n})).unwrap()"
+---
+{
+  "completed_count": 2,
+  "event_stream_function_arguments": "{\"city\":\"Shanghai\"}",
+  "event_stream_output_text": "hello",
+  "events": [
+    {
+      "snapshot": "hel",
+      "text": "hel",
+      "type": "response.output_text.delta"
+    },
+    {
+      "output_index": 0,
+      "output_text": "hel",
+      "type": "response.output_item.added"
+    },
+    {
+      "content_index": 0,
+      "output_index": 0,
+      "output_text": "hel",
+      "type": "response.content_part.added"
+    },
+    {
+      "snapshot": "hello",
+      "text": "lo",
+      "type": "response.output_text.delta"
+    },
+    {
+      "output_index": 1,
+      "output_text": "hello",
+      "type": "response.output_item.added"
+    },
+    {
+      "delta": "{\"city\":\"Sha",
+      "item_id": "fc_1",
+      "parsed_arguments": {
+        "city": "Sha"
+      },
+      "snapshot": "{\"city\":\"Sha",
+      "type": "response.function_call_arguments.delta"
+    },
+    {
+      "delta": "nghai\"}",
+      "item_id": "fc_1",
+      "parsed_arguments": {
+        "city": "Shanghai"
+      },
+      "snapshot": "{\"city\":\"Shanghai\"}",
+      "type": "response.function_call_arguments.delta"
+    },
+    {
+      "snapshot": "hello",
+      "text": "hello",
+      "type": "response.output_text.done"
+    },
+    {
+      "output_text": "hello",
+      "type": "response.completed"
+    },
+    {
+      "output_text": "hello",
+      "type": "response.completed"
+    }
+  ],
+  "plain_stream_function_arguments": "{\"city\":\"Shanghai\"}",
+  "plain_stream_output_text": "hello"
+}
