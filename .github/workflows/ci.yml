@@ -30,6 +30,9 @@ jobs:
         with:
           tool: cargo-public-api
 
+      - name: Install nightly for cargo-public-api
+        run: rustup toolchain install nightly --profile minimal
+
       - name: Format
         run: cargo fmt --all -- --check
 
