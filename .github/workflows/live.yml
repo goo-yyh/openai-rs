@@ -10,6 +10,7 @@ on:
         type: choice
         options:
           - all
+          - openai
           - zhipu
           - minimax
           - zenmux
@@ -27,6 +28,27 @@ permissions:
   contents: read
 
 jobs:
+  openai:
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'openai' }}
+    name: Live OpenAI (${{ inputs.tier }})
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.94.1
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run live provider tests
+        env:
+          OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_CHAT_MODEL: ${{ vars.OPENAI_CHAT_MODEL }}
+          OPENAI_RESPONSES_MODEL: ${{ vars.OPENAI_RESPONSES_MODEL }}
+        run: cargo test --all-features --test provider_live openai -- --ignored --nocapture --test-threads=1
+
   zhipu:
     if: ${{ inputs.provider == 'all' || inputs.provider == 'zhipu' }}
     name: Live Zhipu (${{ inputs.tier }})

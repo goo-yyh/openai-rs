@@ -1,6 +1,9 @@
 #[path = "provider_live/common.rs"]
 mod common;
 
+#[path = "provider_live/openai.rs"]
+mod openai;
+
 #[path = "provider_live/zhipu.rs"]
 mod zhipu;
 

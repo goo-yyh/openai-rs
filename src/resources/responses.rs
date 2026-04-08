@@ -1,6 +1,7 @@
 //! Responses and Realtime namespace implementations and builders.
 
 use std::collections::BTreeMap;
+#[cfg(feature = "structured-output")]
 use std::marker::PhantomData;
 use std::time::Duration;
 

@@ -1,6 +1,7 @@
 //! Chat namespace implementations, builders, and tool-runner helpers.
 
 use std::collections::BTreeMap;
+#[cfg(feature = "structured-output")]
 use std::marker::PhantomData;
 use std::time::Duration;
 
@@ -8,7 +9,9 @@ use bytes::Bytes;
 use http::Method;
 #[cfg(feature = "structured-output")]
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+#[cfg(feature = "tool-runner")]
+use serde::Deserialize;
+use serde::Serialize;
 use serde_json::Value;
 use tokio_util::sync::CancellationToken;
 
@@ -29,11 +32,12 @@ use crate::transport::{RequestSpec, merge_json_body};
 #[cfg(feature = "tool-runner")]
 use futures_util::StreamExt;
 
+#[cfg(feature = "tool-runner")]
+use super::ChatCompletionToolCall;
 use super::{
     ChatCompletion, ChatCompletionCreateParams, ChatCompletionMessage,
-    ChatCompletionMessagesResource, ChatCompletionToolCall, ChatCompletionsResource, ChatResource,
-    ChatToolDefinition, DeleteResponse, JsonRequestBuilder, ListRequestBuilder,
-    encode_path_segment, value_from,
+    ChatCompletionMessagesResource, ChatCompletionsResource, ChatResource, ChatToolDefinition,
+    DeleteResponse, JsonRequestBuilder, ListRequestBuilder, encode_path_segment, value_from,
 };
 
 impl ChatResource {

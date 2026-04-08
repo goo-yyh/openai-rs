@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   quality:
     runs-on: ubuntu-latest
@@ -17,7 +20,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.94.1
+          toolchain: stable
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
@@ -45,43 +48,75 @@ jobs:
       - name: Examples
         run: cargo check --examples --all-features
 
-      - name: Docs
-        run: cargo doc --all-features --no-deps
+      - name: Docs.rs-style docs build
+        env:
+          RUSTDOCFLAGS: --cfg docsrs
+        run: cargo +nightly doc --all-features --no-deps
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-  feature-matrix:
-    runs-on: ubuntu-latest
+  cargo-check:
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: default
+          - os: ubuntu-latest
+            toolchain: stable
+            profile: default
             args: ""
-          - name: no-default-features
+          - os: ubuntu-latest
+            toolchain: stable
+            profile: no-default-features
             args: "--no-default-features"
-          - name: stream-only
-            args: "--no-default-features --features stream"
-          - name: realtime
-            args: "--no-default-features --features realtime"
-          - name: responses-ws
-            args: "--no-default-features --features responses-ws"
-          - name: structured-output
-            args: "--no-default-features --features structured-output"
-          - name: tool-runner
-            args: "--no-default-features --features tool-runner"
-          - name: websocket
-            args: "--no-default-features --features realtime,responses-ws"
-          - name: all-features
+          - os: ubuntu-latest
+            toolchain: stable
+            profile: all-features
             args: "--all-features"
-    name: Feature Matrix (${{ matrix.name }})
+          - os: macos-latest
+            toolchain: stable
+            profile: default
+            args: ""
+          - os: macos-latest
+            toolchain: stable
+            profile: no-default-features
+            args: "--no-default-features"
+          - os: macos-latest
+            toolchain: stable
+            profile: all-features
+            args: "--all-features"
+          - os: windows-latest
+            toolchain: stable
+            profile: default
+            args: ""
+          - os: windows-latest
+            toolchain: stable
+            profile: no-default-features
+            args: "--no-default-features"
+          - os: windows-latest
+            toolchain: stable
+            profile: all-features
+            args: "--all-features"
+          - os: ubuntu-latest
+            toolchain: 1.94.1
+            profile: default
+            args: ""
+          - os: ubuntu-latest
+            toolchain: 1.94.1
+            profile: no-default-features
+            args: "--no-default-features"
+          - os: ubuntu-latest
+            toolchain: 1.94.1
+            profile: all-features
+            args: "--all-features"
+    name: Cargo Check (${{ matrix.os }} / ${{ matrix.toolchain }} / ${{ matrix.profile }})
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.94.1
+          toolchain: ${{ matrix.toolchain }}
 
       - uses: Swatinem/rust-cache@v2
 
@@ -89,24 +124,58 @@ jobs:
         run: cargo check ${{ matrix.args }}
 
   tests:
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: default
+          - os: ubuntu-latest
+            toolchain: stable
+            profile: default
             args: ""
-          - name: no-default-features
+          - os: ubuntu-latest
+            toolchain: stable
+            profile: no-default-features
             args: "--no-default-features"
-          - name: all-features
+          - os: ubuntu-latest
+            toolchain: stable
+            profile: all-features
             args: "--all-features"
-    name: Tests (${{ matrix.name }})
+          - os: macos-latest
+            toolchain: stable
+            profile: default
+            args: ""
+          - os: macos-latest
+            toolchain: stable
+            profile: all-features
+            args: "--all-features"
+          - os: windows-latest
+            toolchain: stable
+            profile: default
+            args: ""
+          - os: windows-latest
+            toolchain: stable
+            profile: all-features
+            args: "--all-features"
+          - os: ubuntu-latest
+            toolchain: 1.94.1
+            profile: default
+            args: ""
+          - os: ubuntu-latest
+            toolchain: 1.94.1
+            profile: no-default-features
+            args: "--no-default-features"
+          - os: ubuntu-latest
+            toolchain: 1.94.1
+            profile: all-features
+            args: "--all-features"
+    name: Tests (${{ matrix.os }} / ${{ matrix.toolchain }} / ${{ matrix.profile }})
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.94.1
+          toolchain: ${{ matrix.toolchain }}
 
       - uses: Swatinem/rust-cache@v2
 

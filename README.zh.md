@@ -621,14 +621,22 @@ let tool = ToolDefinition::new(
 
 ```bash
 cargo run --example openai_responses
+cargo run --example chat_params_types
 cargo run --example chat_stream
 cargo run --example raw_response
 cargo run --example pagination
+cargo run --example stream_to_client_sse
+cargo run --example stream_to_client_ndjson
 cargo run --example tool_runner --features tool-runner
 cargo run --example parsing --features structured-output
+cargo run --example ui_generation --features structured-output
+cargo run --example parsing_tools --features structured-output
 cargo run --example realtime_ws --features realtime
+cargo run --example azure_realtime_ws --features realtime
 cargo run --example responses_websocket --features responses-ws
 ```
+
+完整索引见 [docs/examples.md](./docs/examples.md)。
 
 ### `openai-node/examples` 覆盖映射
 
@@ -636,15 +644,19 @@ cargo run --example responses_websocket --features responses-ws
 
 | `openai-node` 示例 | `openai-rs` 对应示例 |
 | --- | --- |
-| `demo.ts`, `chat-params-types.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
+| `demo.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
+| `chat-params-types.ts` | [examples/chat_params_types.rs](./examples/chat_params_types.rs) |
 | `stream.ts` | [examples/chat_stream.rs](./examples/chat_stream.rs) |
 | `logprobs.ts` | [examples/logprobs.rs](./examples/logprobs.rs) |
 | `function-call.ts`, `function-call-diy.ts` | [examples/function_call.rs](./examples/function_call.rs) |
 | `function-call-stream.ts` | [examples/function_call_stream.rs](./examples/function_call_stream.rs) |
 | `function-call-stream-raw.ts`, `tool-calls-stream.ts` | [examples/function_call_stream_raw.rs](./examples/function_call_stream_raw.rs), [examples/function_call_stream.rs](./examples/function_call_stream.rs) |
 | `tool-call-helpers.ts`, `tool-call-helpers-zod.ts`, `parsing-run-tools.ts` | [examples/tool_runner.rs](./examples/tool_runner.rs) |
-| `parsing.ts`, `parsing-tools.ts`, `ui-generation.ts` | [examples/parsing.rs](./examples/parsing.rs) |
-| `parsing-stream.ts`, `parsing-tools-stream.ts` | [examples/parsing_stream.rs](./examples/parsing_stream.rs), [examples/function_call_stream.rs](./examples/function_call_stream.rs) |
+| `parsing.ts` | [examples/parsing.rs](./examples/parsing.rs) |
+| `parsing-tools.ts` | [examples/parsing_tools.rs](./examples/parsing_tools.rs) |
+| `ui-generation.ts` | [examples/ui_generation.rs](./examples/ui_generation.rs) |
+| `parsing-stream.ts` | [examples/parsing_stream.rs](./examples/parsing_stream.rs) |
+| `parsing-tools-stream.ts` | [examples/parsing_tools_stream.rs](./examples/parsing_tools_stream.rs) |
 | `assistants.ts` | [examples/assistants_poll.rs](./examples/assistants_poll.rs) |
 | `assistant-stream.ts` | [examples/assistants_stream.rs](./examples/assistants_stream.rs) |
 | `assistant-stream-raw.ts` | [examples/assistants_stream_raw.rs](./examples/assistants_stream_raw.rs) |
@@ -656,6 +668,7 @@ cargo run --example responses_websocket --features responses-ws
 | `raw-response.ts` | [examples/raw_response.rs](./examples/raw_response.rs) |
 | `fine-tuning.ts` | [examples/fine_tuning.rs](./examples/fine_tuning.rs) |
 | `azure/chat.ts` | [examples/azure_chat.rs](./examples/azure_chat.rs) |
+| `azure/realtime.ts` | [examples/azure_realtime_ws.rs](./examples/azure_realtime_ws.rs) |
 | `realtime/websocket.ts`, `realtime/ws.ts` | [examples/realtime_ws.rs](./examples/realtime_ws.rs) |
 | `responses/stream.ts` | [examples/responses_stream.rs](./examples/responses_stream.rs) |
 | `responses/stream_background.ts` | [examples/responses_stream_background.rs](./examples/responses_stream_background.rs) |
@@ -663,7 +676,8 @@ cargo run --example responses_websocket --features responses-ws
 | `responses/structured-outputs.ts` | [examples/responses_structured_outputs.rs](./examples/responses_structured_outputs.rs) |
 | `responses/structured-outputs-tools.ts` | [examples/responses_structured_outputs_tools.rs](./examples/responses_structured_outputs_tools.rs) |
 | `responses/websocket.ts` | [examples/responses_websocket.rs](./examples/responses_websocket.rs) |
-| `stream-to-client-browser.ts`, `stream-to-client-express.ts`, `stream-to-client-next.ts`, `stream-to-client-raw.ts` | [examples/stream_to_client_raw.rs](./examples/stream_to_client_raw.rs) |
+| `stream-to-client-browser.ts`, `stream-to-client-express.ts`, `stream-to-client-next.ts` | [examples/stream_to_client_sse.rs](./examples/stream_to_client_sse.rs), [examples/stream_to_client_ndjson.rs](./examples/stream_to_client_ndjson.rs) |
+| `stream-to-client-raw.ts` | [examples/stream_to_client_raw.rs](./examples/stream_to_client_raw.rs) |
 
 补充说明：
 
@@ -682,13 +696,19 @@ cargo run --example responses_websocket --features responses-ws
 | ZenMux | 兼容支持 | 通过兼容层适配，行为以 provider 实际实现为准 |
 | Custom Provider | 扩展支持 | SDK 提供稳定入口，具体兼容行为由接入方自行保证 |
 
+更细的说明见 [docs/provider-capability-matrix.md](./docs/provider-capability-matrix.md)。
+
 ## 专题文档
 
 - [Azure OpenAI 接入](./docs/azure.md)
+- [Examples 索引](./docs/examples.md)
+- [FAQ](./docs/faq.md)
 - [流式与 Realtime](./docs/realtime-and-streaming.md)
 - [Structured Output 与 Tool Runner](./docs/structured-output-and-tools.md)
 - [迁移说明](./docs/migration.md)
 - [可观测性说明](./docs/observability.md)
+- [Provider 能力矩阵](./docs/provider-capability-matrix.md)
+- [public API 维护说明](./docs/public-api.md)
 - [发布检查清单](./docs/release-checklist.md)
 - [ADR: codegen 策略](./docs/adr/0001_codegen_strategy.md)
 
@@ -712,6 +732,17 @@ bash ./scripts/check-public-api.sh
 
 - `tests/provider_live/` 下的 live smoke tests 默认 `#[ignore]`
 - 若缺少对应环境变量，这些 live tests 会自动跳过
+
+## FAQ
+
+简版结论：
+
+- `openai-rs` 是社区维护 SDK，不是官方 SDK
+- 默认 feature 故意保持精简，`realtime`、`responses-ws`、`structured-output` 都按需开启
+- 做旧代码迁移时优先用 `chat().completions()`，希望靠近新接口时优先评估 `responses()`
+- live provider tests 默认手动执行，因为它们依赖真实凭据并可能产生成本
+
+更完整说明见 [docs/faq.md](./docs/faq.md)。
 
 ## 项目状态
 

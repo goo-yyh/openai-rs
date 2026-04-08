@@ -655,14 +655,22 @@ More background: [docs/structured-output-and-tools.md](./docs/structured-output-
 
 ```bash
 cargo run --example openai_responses
+cargo run --example chat_params_types
 cargo run --example chat_stream
 cargo run --example raw_response
 cargo run --example pagination
+cargo run --example stream_to_client_sse
+cargo run --example stream_to_client_ndjson
 cargo run --example tool_runner --features tool-runner
 cargo run --example parsing --features structured-output
+cargo run --example ui_generation --features structured-output
+cargo run --example parsing_tools --features structured-output
 cargo run --example realtime_ws --features realtime
+cargo run --example azure_realtime_ws --features realtime
 cargo run --example responses_websocket --features responses-ws
 ```
+
+Full index: [docs/examples.md](./docs/examples.md)
 
 ### Coverage Mapping Against `openai-node/examples`
 
@@ -670,15 +678,19 @@ The table below maps `openai-node/examples` topics to their Rust equivalents. Th
 
 | `openai-node` example | `openai-rs` example(s) |
 | --- | --- |
-| `demo.ts`, `chat-params-types.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
+| `demo.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
+| `chat-params-types.ts` | [examples/chat_params_types.rs](./examples/chat_params_types.rs) |
 | `stream.ts` | [examples/chat_stream.rs](./examples/chat_stream.rs) |
 | `logprobs.ts` | [examples/logprobs.rs](./examples/logprobs.rs) |
 | `function-call.ts`, `function-call-diy.ts` | [examples/function_call.rs](./examples/function_call.rs) |
 | `function-call-stream.ts` | [examples/function_call_stream.rs](./examples/function_call_stream.rs) |
 | `function-call-stream-raw.ts`, `tool-calls-stream.ts` | [examples/function_call_stream_raw.rs](./examples/function_call_stream_raw.rs), [examples/function_call_stream.rs](./examples/function_call_stream.rs) |
 | `tool-call-helpers.ts`, `tool-call-helpers-zod.ts`, `parsing-run-tools.ts` | [examples/tool_runner.rs](./examples/tool_runner.rs) |
-| `parsing.ts`, `parsing-tools.ts`, `ui-generation.ts` | [examples/parsing.rs](./examples/parsing.rs) |
-| `parsing-stream.ts`, `parsing-tools-stream.ts` | [examples/parsing_stream.rs](./examples/parsing_stream.rs), [examples/function_call_stream.rs](./examples/function_call_stream.rs) |
+| `parsing.ts` | [examples/parsing.rs](./examples/parsing.rs) |
+| `parsing-tools.ts` | [examples/parsing_tools.rs](./examples/parsing_tools.rs) |
+| `ui-generation.ts` | [examples/ui_generation.rs](./examples/ui_generation.rs) |
+| `parsing-stream.ts` | [examples/parsing_stream.rs](./examples/parsing_stream.rs) |
+| `parsing-tools-stream.ts` | [examples/parsing_tools_stream.rs](./examples/parsing_tools_stream.rs) |
 | `assistants.ts` | [examples/assistants_poll.rs](./examples/assistants_poll.rs) |
 | `assistant-stream.ts` | [examples/assistants_stream.rs](./examples/assistants_stream.rs) |
 | `assistant-stream-raw.ts` | [examples/assistants_stream_raw.rs](./examples/assistants_stream_raw.rs) |
@@ -690,6 +702,7 @@ The table below maps `openai-node/examples` topics to their Rust equivalents. Th
 | `raw-response.ts` | [examples/raw_response.rs](./examples/raw_response.rs) |
 | `fine-tuning.ts` | [examples/fine_tuning.rs](./examples/fine_tuning.rs) |
 | `azure/chat.ts` | [examples/azure_chat.rs](./examples/azure_chat.rs) |
+| `azure/realtime.ts` | [examples/azure_realtime_ws.rs](./examples/azure_realtime_ws.rs) |
 | `realtime/websocket.ts`, `realtime/ws.ts` | [examples/realtime_ws.rs](./examples/realtime_ws.rs) |
 | `responses/stream.ts` | [examples/responses_stream.rs](./examples/responses_stream.rs) |
 | `responses/stream_background.ts` | [examples/responses_stream_background.rs](./examples/responses_stream_background.rs) |
@@ -697,7 +710,8 @@ The table below maps `openai-node/examples` topics to their Rust equivalents. Th
 | `responses/structured-outputs.ts` | [examples/responses_structured_outputs.rs](./examples/responses_structured_outputs.rs) |
 | `responses/structured-outputs-tools.ts` | [examples/responses_structured_outputs_tools.rs](./examples/responses_structured_outputs_tools.rs) |
 | `responses/websocket.ts` | [examples/responses_websocket.rs](./examples/responses_websocket.rs) |
-| `stream-to-client-browser.ts`, `stream-to-client-express.ts`, `stream-to-client-next.ts`, `stream-to-client-raw.ts` | [examples/stream_to_client_raw.rs](./examples/stream_to_client_raw.rs) |
+| `stream-to-client-browser.ts`, `stream-to-client-express.ts`, `stream-to-client-next.ts` | [examples/stream_to_client_sse.rs](./examples/stream_to_client_sse.rs), [examples/stream_to_client_ndjson.rs](./examples/stream_to_client_ndjson.rs) |
+| `stream-to-client-raw.ts` | [examples/stream_to_client_raw.rs](./examples/stream_to_client_raw.rs) |
 
 Notes:
 
@@ -716,13 +730,19 @@ Notes:
 | ZenMux | Compatibility | Routed through the compatibility layer; real behavior depends on the provider |
 | Custom providers | Extensible | The SDK exposes stable integration points; final compatibility depends on the integrator |
 
+More detail: [docs/provider-capability-matrix.md](./docs/provider-capability-matrix.md)
+
 ## Topic Guides
 
 - [Azure integration](./docs/azure.md)
+- [Examples index](./docs/examples.md)
+- [FAQ](./docs/faq.md)
 - [Streaming and Realtime](./docs/realtime-and-streaming.md)
 - [Structured output and tools](./docs/structured-output-and-tools.md)
 - [Migration notes](./docs/migration.md)
 - [Observability](./docs/observability.md)
+- [Provider capability matrix](./docs/provider-capability-matrix.md)
+- [Public API maintenance](./docs/public-api.md)
 - [Release checklist](./docs/release-checklist.md)
 - [ADR: codegen strategy](./docs/adr/0001_codegen_strategy.md)
 
@@ -746,6 +766,17 @@ Additional notes:
 
 - live smoke tests under `tests/provider_live/` are `#[ignore]` by default
 - when required environment variables are missing, those live tests auto-skip
+
+## FAQ
+
+The short version:
+
+- `openai-rs` is a community SDK, not an official OpenAI SDK
+- default features are intentionally small; realtime / responses-ws / structured-output stay opt-in
+- use `chat().completions()` for legacy-compatible migrations, and `responses()` when you want the newer API surface
+- live provider tests are manual by design because they consume real credentials and may incur cost
+
+More detail: [docs/faq.md](./docs/faq.md)
 
 ## Project Status
 
