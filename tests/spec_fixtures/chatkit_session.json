@@ -1,0 +1,9 @@
+{
+  "id": "cksess_spec_1",
+  "object": "chatkit.session",
+  "client_secret": "ck_spec_secret",
+  "expires_at": 1700000000,
+  "max_requests_per_1_minute": 10,
+  "status": "active",
+  "user": "fixture-user"
+}

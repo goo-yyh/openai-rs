@@ -8,12 +8,14 @@ use std::time::Duration;
 use http::Method;
 #[cfg(feature = "structured-output")]
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio_util::sync::CancellationToken;
 
 use crate::Client;
 use crate::config::RequestOptions;
 use crate::error::{Error, Result};
+use crate::generated::endpoints;
 #[cfg(feature = "structured-output")]
 use crate::helpers::{ParsedResponse, parse_json_payload};
 use crate::response_meta::ApiResponse;
@@ -25,11 +27,52 @@ use crate::websocket::RealtimeSocket;
 use crate::websocket::ResponsesSocket;
 
 use super::{
-    ChatToolDefinition, DeleteResponse, InputTokenCount, JsonRequestBuilder, ListRequestBuilder,
-    RealtimeCallsResource, RealtimeClientSecretsResource, RealtimeResource, Response,
-    ResponseCreateParams, ResponseInputItemsResource, ResponseInputTokensResource,
-    ResponsesResource, encode_path_segment, value_from,
+    ChatToolDefinition, ConversationItem, DeleteResponse, InputTokenCount, JsonRequestBuilder,
+    ListRequestBuilder, NoContentRequestBuilder, RealtimeCallsResource,
+    RealtimeClientSecretsResource, RealtimeResource, Response, ResponseCreateParams,
+    ResponseInputItemsResource, ResponseInputTokensResource, ResponsesResource,
+    encode_path_segment, value_from,
 };
+
+/// Realtime API 返回的临时 client secret。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct RealtimeSessionClientSecret {
+    /// 过期时间。
+    pub expires_at: u64,
+    /// 可下发给前端的临时密钥。
+    #[serde(default)]
+    pub value: String,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// `realtime.client_secrets.create` 的返回值。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct RealtimeClientSecretCreateResponse {
+    /// 新版结构化 client secret。
+    pub client_secret: Option<RealtimeSessionClientSecret>,
+    /// 某些兼容 Provider 返回的扁平 secret 字段。
+    pub secret: Option<String>,
+    /// 会话配置类型。
+    #[serde(rename = "type")]
+    pub session_type: Option<String>,
+    /// 生效后的会话配置。
+    pub session: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+impl RealtimeClientSecretCreateResponse {
+    /// 返回兼容不同 Provider 形态的 secret 值。
+    pub fn secret_value(&self) -> Option<&str> {
+        self.client_secret
+            .as_ref()
+            .map(|secret| secret.value.as_str())
+            .or(self.secret.as_deref())
+    }
+}
 
 impl ResponsesResource {
     /// 创建 responses 请求构建器。
@@ -120,14 +163,12 @@ impl ResponsesResource {
 
 impl ResponseInputItemsResource {
     /// 列出 response 输入项。
-    pub fn list(&self, response_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(&self, response_id: impl Into<String>) -> ListRequestBuilder<ConversationItem> {
+        let endpoint = endpoints::responses::RESPONSES_INPUT_ITEMS_LIST;
         ListRequestBuilder::new(
             self.client.clone(),
-            "responses.input_items.list",
-            format!(
-                "/responses/{}/input_items",
-                encode_path_segment(response_id.into())
-            ),
+            endpoint.id,
+            endpoint.render(&[("response_id", &encode_path_segment(response_id.into()))]),
         )
     }
 }
@@ -165,74 +206,67 @@ impl RealtimeResource {
 
 impl RealtimeClientSecretsResource {
     /// 创建 client secret。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<RealtimeClientSecretCreateResponse> {
+        let endpoint = endpoints::responses::REALTIME_CLIENT_SECRETS_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "realtime.client_secrets.create",
+            endpoint.id,
             Method::POST,
-            "/realtime/client_secrets",
+            endpoint.template,
         )
     }
 }
 
 impl RealtimeCallsResource {
     /// 接听通话。
-    pub fn accept(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn accept(&self, call_id: impl Into<String>) -> NoContentRequestBuilder {
         realtime_call_action(
             self.client.clone(),
-            "realtime.calls.accept",
+            endpoints::responses::REALTIME_CALLS_ACCEPT,
             call_id,
-            "accept",
         )
     }
 
     /// 挂断通话。
-    pub fn hangup(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn hangup(&self, call_id: impl Into<String>) -> NoContentRequestBuilder {
         realtime_call_action(
             self.client.clone(),
-            "realtime.calls.hangup",
+            endpoints::responses::REALTIME_CALLS_HANGUP,
             call_id,
-            "hangup",
         )
     }
 
     /// 转接通话。
-    pub fn refer(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn refer(&self, call_id: impl Into<String>) -> NoContentRequestBuilder {
         realtime_call_action(
             self.client.clone(),
-            "realtime.calls.refer",
+            endpoints::responses::REALTIME_CALLS_REFER,
             call_id,
-            "refer",
         )
     }
 
     /// 拒绝通话。
-    pub fn reject(&self, call_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn reject(&self, call_id: impl Into<String>) -> NoContentRequestBuilder {
         realtime_call_action(
             self.client.clone(),
-            "realtime.calls.reject",
+            endpoints::responses::REALTIME_CALLS_REJECT,
             call_id,
-            "reject",
         )
     }
 }
 
 fn realtime_call_action(
     client: Client,
-    endpoint_id: &'static str,
+    endpoint: endpoints::PathTemplateEndpoint,
     call_id: impl Into<String>,
-    action: &str,
-) -> JsonRequestBuilder<Value> {
-    JsonRequestBuilder::new(
+) -> NoContentRequestBuilder {
+    NoContentRequestBuilder::new(
         client,
-        endpoint_id,
+        endpoint.id,
         Method::POST,
-        format!(
-            "/realtime/calls/{}/{}",
-            encode_path_segment(call_id.into()),
-            action
-        ),
+        endpoint.render(&[("call_id", &encode_path_segment(call_id.into()))]),
     )
+    .extra_header("accept", "*/*")
 }
 
 /// 表示 Responses 创建构建器。

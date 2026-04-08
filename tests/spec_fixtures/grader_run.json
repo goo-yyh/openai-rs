@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "name": "score-model",
+    "type": "score_model",
+    "execution_time": 0.12,
+    "scores": {
+      "overall": 0.75
+    },
+    "token_usage": 22,
+    "errors": {
+      "formula_parse_error": false,
+      "invalid_variable_error": false,
+      "model_grader_parse_error": false,
+      "model_grader_refusal_error": false,
+      "model_grader_server_error": false,
+      "other_error": false,
+      "python_grader_runtime_error": false,
+      "python_grader_server_error": false,
+      "sample_parse_error": false,
+      "truncated_observation_error": false,
+      "unresponsive_reward_error": false
+    }
+  },
+  "reward": 0.75,
+  "sub_rewards": {
+    "overall": 0.75
+  },
+  "model_grader_token_usage_per_model": {}
+}

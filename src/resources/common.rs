@@ -338,6 +338,12 @@ pub struct BytesRequestBuilder {
     pub(crate) inner: JsonRequestBuilder<Bytes>,
 }
 
+/// 表示不关心响应体的请求构建器。
+#[derive(Debug, Clone)]
+pub struct NoContentRequestBuilder {
+    pub(crate) inner: JsonRequestBuilder<Bytes>,
+}
+
 impl BytesRequestBuilder {
     pub(crate) fn new(
         client: Client,
@@ -484,6 +490,117 @@ impl BytesRequestBuilder {
     }
 }
 
+impl NoContentRequestBuilder {
+    pub(crate) fn new(
+        client: Client,
+        endpoint_id: &'static str,
+        method: Method,
+        path: impl Into<String>,
+    ) -> Self {
+        Self {
+            inner: JsonRequestBuilder::new(client, endpoint_id, method, path),
+        }
+    }
+
+    /// 设置 JSON 请求体。
+    pub fn body_value(mut self, body: Value) -> Self {
+        self.inner = self.inner.body_value(body);
+        self
+    }
+
+    /// 设置可序列化请求体。
+    ///
+    /// # Errors
+    ///
+    /// 当序列化失败时返回错误。
+    pub fn json_body<U>(mut self, body: &U) -> Result<Self>
+    where
+        U: Serialize,
+    {
+        self.inner = self.inner.json_body(body)?;
+        Ok(self)
+    }
+
+    /// 追加请求头。
+    pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_header(key, value);
+        self
+    }
+
+    /// 删除一个默认请求头。
+    pub fn remove_header(mut self, key: impl Into<String>) -> Self {
+        self.inner = self.inner.remove_header(key);
+        self
+    }
+
+    /// 追加查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_query(key, value);
+        self
+    }
+
+    /// 在 JSON 根对象中追加字段。
+    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.extra_body(key, value);
+        self
+    }
+
+    /// 在 provider 对应的 `provider_options` 下追加字段。
+    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+        self.inner = self.inner.provider_option(key, value);
+        self
+    }
+
+    /// 覆盖请求超时时间。
+    pub fn timeout(mut self, timeout: Duration) -> Self {
+        self.inner = self.inner.timeout(timeout);
+        self
+    }
+
+    /// 覆盖最大重试次数。
+    pub fn max_retries(mut self, max_retries: u32) -> Self {
+        self.inner = self.inner.max_retries(max_retries);
+        self
+    }
+
+    /// 设置取消令牌。
+    pub fn cancellation_token(mut self, token: CancellationToken) -> Self {
+        self.inner = self.inner.cancellation_token(token);
+        self
+    }
+
+    /// 发送请求并忽略响应体。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send(self) -> Result<()> {
+        self.send_with_meta().await.map(|_| ())
+    }
+
+    /// 发送请求并保留响应元信息。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_with_meta(self) -> Result<ApiResponse<()>> {
+        let client = self.inner.client.clone();
+        let response = client.execute_bytes(self.inner.into_spec()).await?;
+        let (_, meta) = response.into_parts();
+        Ok(ApiResponse::new((), meta))
+    }
+
+    /// 发送请求并返回原始 HTTP 响应。
+    ///
+    /// # Errors
+    ///
+    /// 当请求失败时返回错误。
+    pub async fn send_raw(self) -> Result<http::Response<Bytes>> {
+        let client = self.inner.client.clone();
+        client.execute_raw_http(self.inner.into_spec()).await
+    }
+}
+
 /// 表示列表请求构建器。
 #[derive(Debug, Clone)]
 pub struct ListRequestBuilder<T> {
@@ -575,5 +692,22 @@ where
         } else {
             None
         }))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use percent_encoding::percent_decode_str;
+    use proptest::prelude::*;
+
+    use super::encode_path_segment;
+
+    proptest! {
+        #[test]
+        fn encoded_path_segment_roundtrips_through_percent_decode(segment in any::<String>()) {
+            let encoded = encode_path_segment(&segment);
+            let decoded = percent_decode_str(&encoded).decode_utf8().unwrap();
+            prop_assert_eq!(decoded, segment);
+        }
     }
 }

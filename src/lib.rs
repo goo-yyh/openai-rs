@@ -12,6 +12,7 @@ pub mod client;
 pub mod config;
 pub mod error;
 pub mod files;
+mod generated;
 #[cfg(feature = "structured-output")]
 #[cfg_attr(docsrs, doc(cfg(feature = "structured-output")))]
 pub mod helpers;
@@ -49,17 +50,26 @@ pub use providers::{
 };
 pub use resources::{
     AudioSpeechCreateParams, AudioTranscription, AudioTranslation, Batch, BatchCreateParams,
-    BetaAssistant, BetaThread, BetaThreadMessage, BetaThreadRun, BetaThreadRunStep, ChatCompletion,
-    ChatCompletionChunk, ChatCompletionMessage, ChatCompletionToolCall, ChatContentDeltaEvent,
-    ChatLogProbsDeltaEvent, ChatRefusalDeltaEvent, ChatToolArgumentsDeltaEvent, Container,
-    ContainerCreateParams, ContainerFile, ContainerFileCreateParams, Conversation,
-    ConversationCreateParams, ConversationItem, ConversationItemCreateParams,
-    ConversationUpdateParams, DeleteResponse, EmbeddingResponse, Eval, EvalCreateParams,
-    EvalOutputItem, EvalRun, EvalRunCreateParams, EvalUpdateParams, FileObject,
-    FineTuningCheckpoint, FineTuningCheckpointPermission, FineTuningJob, FineTuningJobCreateParams,
-    FineTuningJobEvent, ImageData, ImageGenerateParams, ImageGenerationResponse, Model, Response,
+    BetaAssistant, BetaRealtimeSession, BetaRealtimeTranscriptionSession, BetaThread,
+    BetaThreadMessage, BetaThreadRun, BetaThreadRunStep, ChatCompletion, ChatCompletionChunk,
+    ChatCompletionMessage, ChatCompletionStoreMessage, ChatCompletionToolCall,
+    ChatContentDeltaEvent, ChatKitSession, ChatKitThread, ChatKitThreadItem, ChatKitThreadStatus,
+    ChatLogProbsDeltaEvent, ChatRefusalDeltaEvent, ChatToolArgumentsDeltaEvent, Completion,
+    CompletionChoice, CompletionLogProbs, CompletionUsage, Container, ContainerCreateParams,
+    ContainerFile, ContainerFileCreateParams, Conversation, ConversationCreateParams,
+    ConversationItem, ConversationItemCreateParams, ConversationUpdateParams, DeleteResponse,
+    EmbeddingResponse, Eval, EvalCreateParams, EvalOutputItem, EvalRun, EvalRunCreateParams,
+    EvalUpdateParams, FileObject, FineTuningCheckpoint, FineTuningCheckpointPermission,
+    FineTuningJob, FineTuningJobCreateParams, FineTuningJobEvent, GraderModel, GraderModelCatalog,
+    GraderRunErrors, GraderRunMetadata, GraderRunResponse, GraderValidateResponse, ImageData,
+    ImageGenerateParams, ImageGenerationResponse, Model, ModerationCreateResponse,
+    ModerationResult, RealtimeClientSecretCreateResponse, RealtimeSessionClientSecret, Response,
     Skill, SkillCreateParams, SkillUpdateParams, SkillVersion, SkillVersionCreateParams,
-    UploadObject, VectorStore, VectorStoreFile, VectorStoreFileBatch, VectorStoreSearchResponse,
+    UploadObject, UploadPart, VectorStore, VectorStoreAttributeValue, VectorStoreAttributes,
+    VectorStoreExpiresAfter, VectorStoreFile, VectorStoreFileBatch,
+    VectorStoreFileChunkingStrategy, VectorStoreFileContent, VectorStoreFileCounts,
+    VectorStoreFileLastError, VectorStoreMetadata, VectorStoreSearchContent,
+    VectorStoreSearchResponse, VectorStoreSearchResult, VectorStoreStaticFileChunkingStrategy,
     Video, VideoCharacter, VideoCharacterCreateParams, VideoCreateParams,
 };
 #[cfg(feature = "tool-runner")]

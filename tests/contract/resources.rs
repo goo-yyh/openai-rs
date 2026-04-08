@@ -318,12 +318,23 @@ async fn test_should_retrieve_vector_store_as_typed_object() {
     let server = MockServer::start().await;
     Mock::given(method("GET"))
         .and(path("/vector_stores/vs_1"))
+        .and(header("openai-beta", "assistants=v2"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "vs_1",
             "object": "vector_store",
             "name": "kb",
             "status": "completed",
-            "usage_bytes": 1024
+            "usage_bytes": 1024,
+            "file_counts": {
+                "completed": 1,
+                "failed": 0,
+                "in_progress": 0,
+                "cancelled": 0,
+                "total": 1
+            },
+            "metadata": {
+                "scope": "contract"
+            }
         })))
         .mount(&server)
         .await;
@@ -345,6 +356,15 @@ async fn test_should_retrieve_vector_store_as_typed_object() {
     assert_eq!(vector_store.id, "vs_1");
     assert_eq!(vector_store.name.as_deref(), Some("kb"));
     assert_eq!(vector_store.usage_bytes, Some(1024));
+    assert_eq!(vector_store.file_counts.unwrap().completed, Some(1));
+    assert_eq!(
+        vector_store
+            .metadata
+            .unwrap()
+            .get("scope")
+            .map(String::as_str),
+        Some("contract")
+    );
 }
 
 #[tokio::test]

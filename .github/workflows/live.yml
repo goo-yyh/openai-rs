@@ -23,14 +23,16 @@ on:
           - smoke
           - extended
           - slow
+  schedule:
+    - cron: "0 2 * * 1"
 
 permissions:
   contents: read
 
 jobs:
   openai:
-    if: ${{ inputs.provider == 'all' || inputs.provider == 'openai' }}
-    name: Live OpenAI (${{ inputs.tier }})
+    if: ${{ github.event_name == 'schedule' || inputs.provider == 'all' || inputs.provider == 'openai' }}
+    name: Live OpenAI (${{ github.event_name == 'schedule' && 'smoke' || inputs.tier }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -43,14 +45,14 @@ jobs:
 
       - name: Run live provider tests
         env:
-          OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_RS_LIVE_TIER: ${{ github.event_name == 'schedule' && 'smoke' || inputs.tier }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_CHAT_MODEL: ${{ vars.OPENAI_CHAT_MODEL }}
           OPENAI_RESPONSES_MODEL: ${{ vars.OPENAI_RESPONSES_MODEL }}
         run: cargo test --all-features --test provider_live openai -- --ignored --nocapture --test-threads=1
 
   zhipu:
-    if: ${{ inputs.provider == 'all' || inputs.provider == 'zhipu' }}
+    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'zhipu') }}
     name: Live Zhipu (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
@@ -71,7 +73,7 @@ jobs:
         run: cargo test --all-features --test provider_live zhipu -- --ignored --nocapture --test-threads=1
 
   minimax:
-    if: ${{ inputs.provider == 'all' || inputs.provider == 'minimax' }}
+    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'minimax') }}
     name: Live MiniMax (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
@@ -92,7 +94,7 @@ jobs:
         run: cargo test --all-features --test provider_live minimax -- --ignored --nocapture --test-threads=1
 
   zenmux:
-    if: ${{ inputs.provider == 'all' || inputs.provider == 'zenmux' }}
+    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'zenmux') }}
     name: Live ZenMux (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:

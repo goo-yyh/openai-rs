@@ -1100,6 +1100,48 @@ pub fn openai_rs::providers::CustomProfile::kind(&self) -> openai_rs::providers:
 pub fn openai_rs::providers::CustomProfile::prepare_request(&self, _ctx: &mut openai_rs::providers::RequestContext) -> openai_rs::error::Result<()>
 pub fn openai_rs::providers::CustomProfile::validate_request(&self, _endpoint_id: &'static str, _body: core::option::Option<&serde_json::value::Value>, _mode: openai_rs::providers::CompatibilityMode) -> openai_rs::error::Result<()>
 pub mod openai_rs::resources
+pub enum openai_rs::resources::VectorStoreAttributeValue
+pub openai_rs::resources::VectorStoreAttributeValue::Bool(bool)
+pub openai_rs::resources::VectorStoreAttributeValue::Number(serde_json::number::Number)
+pub openai_rs::resources::VectorStoreAttributeValue::String(alloc::string::String)
+impl core::clone::Clone for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::clone(&self) -> openai_rs::VectorStoreAttributeValue
+impl core::cmp::PartialEq for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::eq(&self, other: &openai_rs::VectorStoreAttributeValue) -> bool
+impl core::fmt::Debug for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for openai_rs::VectorStoreAttributeValue
+impl serde_core::ser::Serialize for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreAttributeValue
+impl core::marker::Send for openai_rs::VectorStoreAttributeValue
+impl core::marker::Sync for openai_rs::VectorStoreAttributeValue
+impl core::marker::Unpin for openai_rs::VectorStoreAttributeValue
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreAttributeValue
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreAttributeValue
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreAttributeValue
+pub enum openai_rs::resources::VectorStoreFileChunkingStrategy
+pub openai_rs::resources::VectorStoreFileChunkingStrategy::Other
+pub openai_rs::resources::VectorStoreFileChunkingStrategy::Static
+pub openai_rs::resources::VectorStoreFileChunkingStrategy::Static::configuration: openai_rs::VectorStoreStaticFileChunkingStrategy
+pub openai_rs::resources::VectorStoreFileChunkingStrategy::Unknown
+impl core::clone::Clone for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::clone(&self) -> openai_rs::VectorStoreFileChunkingStrategy
+impl core::fmt::Debug for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::Send for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::Sync for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::Unpin for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileChunkingStrategy
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileChunkingStrategy
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileChunkingStrategy
 pub struct openai_rs::resources::AssistantStreamRequestBuilder
 impl openai_rs::resources::AssistantStreamRequestBuilder
 pub fn openai_rs::resources::AssistantStreamRequestBuilder::body_value(self, body: serde_json::value::Value) -> Self
@@ -1522,8 +1564,8 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::BetaChat
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::BetaChatkitResource
 pub struct openai_rs::resources::BetaChatkitSessionsResource
 impl openai_rs::resources::BetaChatkitSessionsResource
-pub fn openai_rs::resources::BetaChatkitSessionsResource::cancel(&self, session_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::BetaChatkitSessionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::BetaChatkitSessionsResource::cancel(&self, session_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::ChatKitSession>
+pub fn openai_rs::resources::BetaChatkitSessionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::ChatKitSession>
 impl core::clone::Clone for openai_rs::resources::BetaChatkitSessionsResource
 pub fn openai_rs::resources::BetaChatkitSessionsResource::clone(&self) -> openai_rs::resources::BetaChatkitSessionsResource
 impl core::fmt::Debug for openai_rs::resources::BetaChatkitSessionsResource
@@ -1538,9 +1580,9 @@ impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::BetaChatkit
 pub struct openai_rs::resources::BetaChatkitThreadsResource
 impl openai_rs::resources::BetaChatkitThreadsResource
 pub fn openai_rs::resources::BetaChatkitThreadsResource::delete(&self, thread_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::DeleteResponse>
-pub fn openai_rs::resources::BetaChatkitThreadsResource::list(&self) -> openai_rs::resources::ListRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::BetaChatkitThreadsResource::list_items(&self, thread_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::BetaChatkitThreadsResource::retrieve(&self, thread_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::BetaChatkitThreadsResource::list(&self) -> openai_rs::resources::ListRequestBuilder<openai_rs::ChatKitThread>
+pub fn openai_rs::resources::BetaChatkitThreadsResource::list_items(&self, thread_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<openai_rs::ChatKitThreadItem>
+pub fn openai_rs::resources::BetaChatkitThreadsResource::retrieve(&self, thread_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::ChatKitThread>
 impl core::clone::Clone for openai_rs::resources::BetaChatkitThreadsResource
 pub fn openai_rs::resources::BetaChatkitThreadsResource::clone(&self) -> openai_rs::resources::BetaChatkitThreadsResource
 impl core::fmt::Debug for openai_rs::resources::BetaChatkitThreadsResource
@@ -1568,9 +1610,33 @@ impl core::marker::Unpin for openai_rs::resources::BetaRealtimeResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::BetaRealtimeResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::BetaRealtimeResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::BetaRealtimeResource
+pub struct openai_rs::resources::BetaRealtimeSession
+pub openai_rs::resources::BetaRealtimeSession::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::resources::BetaRealtimeSession::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::BetaRealtimeSession::id: core::option::Option<alloc::string::String>
+pub openai_rs::resources::BetaRealtimeSession::modalities: alloc::vec::Vec<alloc::string::String>
+pub openai_rs::resources::BetaRealtimeSession::model: core::option::Option<alloc::string::String>
+pub openai_rs::resources::BetaRealtimeSession::session_type: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::clone(&self) -> openai_rs::BetaRealtimeSession
+impl core::default::Default for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::default() -> openai_rs::BetaRealtimeSession
+impl core::fmt::Debug for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::BetaRealtimeSession
+impl core::marker::Send for openai_rs::BetaRealtimeSession
+impl core::marker::Sync for openai_rs::BetaRealtimeSession
+impl core::marker::Unpin for openai_rs::BetaRealtimeSession
+impl core::marker::UnsafeUnpin for openai_rs::BetaRealtimeSession
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::BetaRealtimeSession
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::BetaRealtimeSession
 pub struct openai_rs::resources::BetaRealtimeSessionsResource
 impl openai_rs::resources::BetaRealtimeSessionsResource
-pub fn openai_rs::resources::BetaRealtimeSessionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::BetaRealtimeSessionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::BetaRealtimeSession>
 impl core::clone::Clone for openai_rs::resources::BetaRealtimeSessionsResource
 pub fn openai_rs::resources::BetaRealtimeSessionsResource::clone(&self) -> openai_rs::resources::BetaRealtimeSessionsResource
 impl core::fmt::Debug for openai_rs::resources::BetaRealtimeSessionsResource
@@ -1582,9 +1648,31 @@ impl core::marker::Unpin for openai_rs::resources::BetaRealtimeSessionsResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::BetaRealtimeSessionsResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::BetaRealtimeSessionsResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::BetaRealtimeSessionsResource
+pub struct openai_rs::resources::BetaRealtimeTranscriptionSession
+pub openai_rs::resources::BetaRealtimeTranscriptionSession::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::resources::BetaRealtimeTranscriptionSession::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::BetaRealtimeTranscriptionSession::input_audio_format: core::option::Option<alloc::string::String>
+pub openai_rs::resources::BetaRealtimeTranscriptionSession::modalities: alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::clone(&self) -> openai_rs::BetaRealtimeTranscriptionSession
+impl core::default::Default for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::default() -> openai_rs::BetaRealtimeTranscriptionSession
+impl core::fmt::Debug for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::Send for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::Sync for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::Unpin for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::UnsafeUnpin for openai_rs::BetaRealtimeTranscriptionSession
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::BetaRealtimeTranscriptionSession
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::BetaRealtimeTranscriptionSession
 pub struct openai_rs::resources::BetaRealtimeTranscriptionSessionsResource
 impl openai_rs::resources::BetaRealtimeTranscriptionSessionsResource
-pub fn openai_rs::resources::BetaRealtimeTranscriptionSessionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::BetaRealtimeTranscriptionSessionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::BetaRealtimeTranscriptionSession>
 impl core::clone::Clone for openai_rs::resources::BetaRealtimeTranscriptionSessionsResource
 pub fn openai_rs::resources::BetaRealtimeTranscriptionSessionsResource::clone(&self) -> openai_rs::resources::BetaRealtimeTranscriptionSessionsResource
 impl core::fmt::Debug for openai_rs::resources::BetaRealtimeTranscriptionSessionsResource
@@ -2097,7 +2185,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ChatCompl
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ChatCompletionMessage
 pub struct openai_rs::resources::ChatCompletionMessagesResource
 impl openai_rs::resources::ChatCompletionMessagesResource
-pub fn openai_rs::resources::ChatCompletionMessagesResource::list(&self, completion_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::ChatCompletionMessagesResource::list(&self, completion_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<openai_rs::ChatCompletionStoreMessage>
 impl core::clone::Clone for openai_rs::resources::ChatCompletionMessagesResource
 pub fn openai_rs::resources::ChatCompletionMessagesResource::clone(&self) -> openai_rs::resources::ChatCompletionMessagesResource
 impl core::fmt::Debug for openai_rs::resources::ChatCompletionMessagesResource
@@ -2174,6 +2262,30 @@ impl core::marker::Unpin for openai_rs::ChatCompletionRunner
 impl core::marker::UnsafeUnpin for openai_rs::ChatCompletionRunner
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatCompletionRunner
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatCompletionRunner
+pub struct openai_rs::resources::ChatCompletionStoreMessage
+pub openai_rs::resources::ChatCompletionStoreMessage::content: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatCompletionStoreMessage::content_parts: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::resources::ChatCompletionStoreMessage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ChatCompletionStoreMessage::id: alloc::string::String
+pub openai_rs::resources::ChatCompletionStoreMessage::role: alloc::string::String
+pub openai_rs::resources::ChatCompletionStoreMessage::tool_calls: alloc::vec::Vec<openai_rs::resources::ChatCompletionToolCall>
+impl core::clone::Clone for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::clone(&self) -> openai_rs::ChatCompletionStoreMessage
+impl core::default::Default for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::default() -> openai_rs::ChatCompletionStoreMessage
+impl core::fmt::Debug for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatCompletionStoreMessage
+impl core::marker::Send for openai_rs::ChatCompletionStoreMessage
+impl core::marker::Sync for openai_rs::ChatCompletionStoreMessage
+impl core::marker::Unpin for openai_rs::ChatCompletionStoreMessage
+impl core::marker::UnsafeUnpin for openai_rs::ChatCompletionStoreMessage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatCompletionStoreMessage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatCompletionStoreMessage
 pub struct openai_rs::resources::ChatCompletionStreamRequestBuilder
 impl openai_rs::resources::ChatCompletionStreamRequestBuilder
 pub fn openai_rs::resources::ChatCompletionStreamRequestBuilder::extra_body(self, key: impl core::convert::Into<alloc::string::String>, value: serde_json::value::Value) -> Self
@@ -2330,6 +2442,109 @@ impl core::marker::Unpin for openai_rs::resources::ChatContentDeltaEvent
 impl core::marker::UnsafeUnpin for openai_rs::resources::ChatContentDeltaEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ChatContentDeltaEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ChatContentDeltaEvent
+pub struct openai_rs::resources::ChatKitSession
+pub openai_rs::resources::ChatKitSession::chatkit_configuration: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::ChatKitSession::client_secret: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitSession::expires_at: core::option::Option<u64>
+pub openai_rs::resources::ChatKitSession::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ChatKitSession::id: alloc::string::String
+pub openai_rs::resources::ChatKitSession::max_requests_per_1_minute: core::option::Option<u64>
+pub openai_rs::resources::ChatKitSession::object: alloc::string::String
+pub openai_rs::resources::ChatKitSession::rate_limits: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::ChatKitSession::status: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitSession::user: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitSession::workflow: core::option::Option<serde_json::value::Value>
+impl core::clone::Clone for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::clone(&self) -> openai_rs::ChatKitSession
+impl core::default::Default for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::default() -> openai_rs::ChatKitSession
+impl core::fmt::Debug for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitSession
+impl core::marker::Send for openai_rs::ChatKitSession
+impl core::marker::Sync for openai_rs::ChatKitSession
+impl core::marker::Unpin for openai_rs::ChatKitSession
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitSession
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitSession
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitSession
+pub struct openai_rs::resources::ChatKitThread
+pub openai_rs::resources::ChatKitThread::created_at: core::option::Option<u64>
+pub openai_rs::resources::ChatKitThread::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ChatKitThread::id: alloc::string::String
+pub openai_rs::resources::ChatKitThread::object: alloc::string::String
+pub openai_rs::resources::ChatKitThread::status: core::option::Option<openai_rs::ChatKitThreadStatus>
+pub openai_rs::resources::ChatKitThread::title: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitThread::user: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::clone(&self) -> openai_rs::ChatKitThread
+impl core::default::Default for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::default() -> openai_rs::ChatKitThread
+impl core::fmt::Debug for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitThread
+impl core::marker::Send for openai_rs::ChatKitThread
+impl core::marker::Sync for openai_rs::ChatKitThread
+impl core::marker::Unpin for openai_rs::ChatKitThread
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitThread
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitThread
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitThread
+pub struct openai_rs::resources::ChatKitThreadItem
+pub openai_rs::resources::ChatKitThreadItem::arguments: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitThreadItem::call_id: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitThreadItem::content: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::resources::ChatKitThreadItem::created_at: core::option::Option<u64>
+pub openai_rs::resources::ChatKitThreadItem::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ChatKitThreadItem::id: alloc::string::String
+pub openai_rs::resources::ChatKitThreadItem::item_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitThreadItem::name: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitThreadItem::object: alloc::string::String
+pub openai_rs::resources::ChatKitThreadItem::thread_id: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::clone(&self) -> openai_rs::ChatKitThreadItem
+impl core::default::Default for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::default() -> openai_rs::ChatKitThreadItem
+impl core::fmt::Debug for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitThreadItem
+impl core::marker::Send for openai_rs::ChatKitThreadItem
+impl core::marker::Sync for openai_rs::ChatKitThreadItem
+impl core::marker::Unpin for openai_rs::ChatKitThreadItem
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitThreadItem
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitThreadItem
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitThreadItem
+pub struct openai_rs::resources::ChatKitThreadStatus
+pub openai_rs::resources::ChatKitThreadStatus::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ChatKitThreadStatus::reason: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ChatKitThreadStatus::status_type: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::clone(&self) -> openai_rs::ChatKitThreadStatus
+impl core::default::Default for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::default() -> openai_rs::ChatKitThreadStatus
+impl core::fmt::Debug for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitThreadStatus
+impl core::marker::Send for openai_rs::ChatKitThreadStatus
+impl core::marker::Sync for openai_rs::ChatKitThreadStatus
+impl core::marker::Unpin for openai_rs::ChatKitThreadStatus
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitThreadStatus
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitThreadStatus
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitThreadStatus
 pub struct openai_rs::resources::ChatLogProbsDeltaEvent
 pub openai_rs::resources::ChatLogProbsDeltaEvent::choice_index: u32
 pub openai_rs::resources::ChatLogProbsDeltaEvent::values: alloc::vec::Vec<serde_json::value::Value>
@@ -2448,9 +2663,105 @@ impl core::marker::Unpin for openai_rs::resources::ChatToolFunction
 impl core::marker::UnsafeUnpin for openai_rs::resources::ChatToolFunction
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ChatToolFunction
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ChatToolFunction
+pub struct openai_rs::resources::Completion
+pub openai_rs::resources::Completion::choices: alloc::vec::Vec<openai_rs::CompletionChoice>
+pub openai_rs::resources::Completion::created: core::option::Option<i64>
+pub openai_rs::resources::Completion::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::Completion::id: alloc::string::String
+pub openai_rs::resources::Completion::model: alloc::string::String
+pub openai_rs::resources::Completion::object: alloc::string::String
+pub openai_rs::resources::Completion::system_fingerprint: core::option::Option<alloc::string::String>
+pub openai_rs::resources::Completion::usage: core::option::Option<openai_rs::CompletionUsage>
+impl core::clone::Clone for openai_rs::Completion
+pub fn openai_rs::Completion::clone(&self) -> openai_rs::Completion
+impl core::default::Default for openai_rs::Completion
+pub fn openai_rs::Completion::default() -> openai_rs::Completion
+impl core::fmt::Debug for openai_rs::Completion
+pub fn openai_rs::Completion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::Completion
+pub fn openai_rs::Completion::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::Completion
+pub fn openai_rs::Completion::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::Completion
+impl core::marker::Send for openai_rs::Completion
+impl core::marker::Sync for openai_rs::Completion
+impl core::marker::Unpin for openai_rs::Completion
+impl core::marker::UnsafeUnpin for openai_rs::Completion
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::Completion
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::Completion
+pub struct openai_rs::resources::CompletionChoice
+pub openai_rs::resources::CompletionChoice::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::CompletionChoice::finish_reason: core::option::Option<alloc::string::String>
+pub openai_rs::resources::CompletionChoice::index: u32
+pub openai_rs::resources::CompletionChoice::logprobs: core::option::Option<openai_rs::CompletionLogProbs>
+pub openai_rs::resources::CompletionChoice::text: alloc::string::String
+impl core::clone::Clone for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::clone(&self) -> openai_rs::CompletionChoice
+impl core::default::Default for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::default() -> openai_rs::CompletionChoice
+impl core::fmt::Debug for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::CompletionChoice
+impl core::marker::Send for openai_rs::CompletionChoice
+impl core::marker::Sync for openai_rs::CompletionChoice
+impl core::marker::Unpin for openai_rs::CompletionChoice
+impl core::marker::UnsafeUnpin for openai_rs::CompletionChoice
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::CompletionChoice
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::CompletionChoice
+pub struct openai_rs::resources::CompletionLogProbs
+pub openai_rs::resources::CompletionLogProbs::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::CompletionLogProbs::text_offset: alloc::vec::Vec<i64>
+pub openai_rs::resources::CompletionLogProbs::token_logprobs: alloc::vec::Vec<f64>
+pub openai_rs::resources::CompletionLogProbs::tokens: alloc::vec::Vec<alloc::string::String>
+pub openai_rs::resources::CompletionLogProbs::top_logprobs: alloc::vec::Vec<alloc::collections::btree::map::BTreeMap<alloc::string::String, f64>>
+impl core::clone::Clone for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::clone(&self) -> openai_rs::CompletionLogProbs
+impl core::default::Default for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::default() -> openai_rs::CompletionLogProbs
+impl core::fmt::Debug for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::CompletionLogProbs
+impl core::marker::Send for openai_rs::CompletionLogProbs
+impl core::marker::Sync for openai_rs::CompletionLogProbs
+impl core::marker::Unpin for openai_rs::CompletionLogProbs
+impl core::marker::UnsafeUnpin for openai_rs::CompletionLogProbs
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::CompletionLogProbs
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::CompletionLogProbs
+pub struct openai_rs::resources::CompletionUsage
+pub openai_rs::resources::CompletionUsage::completion_tokens: u64
+pub openai_rs::resources::CompletionUsage::completion_tokens_details: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::CompletionUsage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::CompletionUsage::prompt_tokens: u64
+pub openai_rs::resources::CompletionUsage::prompt_tokens_details: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::CompletionUsage::total_tokens: u64
+impl core::clone::Clone for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::clone(&self) -> openai_rs::CompletionUsage
+impl core::default::Default for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::default() -> openai_rs::CompletionUsage
+impl core::fmt::Debug for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::CompletionUsage
+impl core::marker::Send for openai_rs::CompletionUsage
+impl core::marker::Sync for openai_rs::CompletionUsage
+impl core::marker::Unpin for openai_rs::CompletionUsage
+impl core::marker::UnsafeUnpin for openai_rs::CompletionUsage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::CompletionUsage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::CompletionUsage
 pub struct openai_rs::resources::CompletionsResource
 impl openai_rs::resources::CompletionsResource
-pub fn openai_rs::resources::CompletionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::CompletionsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::Completion>
 impl core::clone::Clone for openai_rs::resources::CompletionsResource
 pub fn openai_rs::resources::CompletionsResource::clone(&self) -> openai_rs::resources::CompletionsResource
 impl core::fmt::Debug for openai_rs::resources::CompletionsResource
@@ -3054,8 +3365,8 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::FilesRes
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::FilesResource
 pub struct openai_rs::resources::FineTuningAlphaGradersResource
 impl openai_rs::resources::FineTuningAlphaGradersResource
-pub fn openai_rs::resources::FineTuningAlphaGradersResource::run(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::FineTuningAlphaGradersResource::validate(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::FineTuningAlphaGradersResource::run(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::GraderRunResponse>
+pub fn openai_rs::resources::FineTuningAlphaGradersResource::validate(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::GraderValidateResponse>
 impl core::clone::Clone for openai_rs::resources::FineTuningAlphaGradersResource
 pub fn openai_rs::resources::FineTuningAlphaGradersResource::clone(&self) -> openai_rs::resources::FineTuningAlphaGradersResource
 impl core::fmt::Debug for openai_rs::resources::FineTuningAlphaGradersResource
@@ -3319,9 +3630,154 @@ impl core::marker::Unpin for openai_rs::resources::FineTuningResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::FineTuningResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::FineTuningResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::FineTuningResource
+pub struct openai_rs::resources::GraderModel
+pub openai_rs::resources::GraderModel::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderModel::grader_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderModel::id: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderModel::name: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::clone(&self) -> openai_rs::GraderModel
+impl core::default::Default for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::default() -> openai_rs::GraderModel
+impl core::fmt::Debug for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderModel
+impl core::marker::Send for openai_rs::GraderModel
+impl core::marker::Sync for openai_rs::GraderModel
+impl core::marker::Unpin for openai_rs::GraderModel
+impl core::marker::UnsafeUnpin for openai_rs::GraderModel
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderModel
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderModel
+pub struct openai_rs::resources::GraderModelCatalog
+pub openai_rs::resources::GraderModelCatalog::data: alloc::vec::Vec<openai_rs::GraderModel>
+pub openai_rs::resources::GraderModelCatalog::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderModelCatalog::object: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::clone(&self) -> openai_rs::GraderModelCatalog
+impl core::default::Default for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::default() -> openai_rs::GraderModelCatalog
+impl core::fmt::Debug for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderModelCatalog
+impl core::marker::Send for openai_rs::GraderModelCatalog
+impl core::marker::Sync for openai_rs::GraderModelCatalog
+impl core::marker::Unpin for openai_rs::GraderModelCatalog
+impl core::marker::UnsafeUnpin for openai_rs::GraderModelCatalog
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderModelCatalog
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderModelCatalog
+pub struct openai_rs::resources::GraderRunErrors
+pub openai_rs::resources::GraderRunErrors::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderRunErrors::formula_parse_error: bool
+pub openai_rs::resources::GraderRunErrors::invalid_variable_error: bool
+pub openai_rs::resources::GraderRunErrors::model_grader_parse_error: bool
+pub openai_rs::resources::GraderRunErrors::model_grader_refusal_error: bool
+pub openai_rs::resources::GraderRunErrors::model_grader_server_error: bool
+pub openai_rs::resources::GraderRunErrors::model_grader_server_error_details: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderRunErrors::other_error: bool
+pub openai_rs::resources::GraderRunErrors::python_grader_runtime_error: bool
+pub openai_rs::resources::GraderRunErrors::python_grader_runtime_error_details: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderRunErrors::python_grader_server_error: bool
+pub openai_rs::resources::GraderRunErrors::python_grader_server_error_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderRunErrors::sample_parse_error: bool
+pub openai_rs::resources::GraderRunErrors::truncated_observation_error: bool
+pub openai_rs::resources::GraderRunErrors::unresponsive_reward_error: bool
+impl core::clone::Clone for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::clone(&self) -> openai_rs::GraderRunErrors
+impl core::default::Default for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::default() -> openai_rs::GraderRunErrors
+impl core::fmt::Debug for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderRunErrors
+impl core::marker::Send for openai_rs::GraderRunErrors
+impl core::marker::Sync for openai_rs::GraderRunErrors
+impl core::marker::Unpin for openai_rs::GraderRunErrors
+impl core::marker::UnsafeUnpin for openai_rs::GraderRunErrors
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderRunErrors
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderRunErrors
+pub struct openai_rs::resources::GraderRunMetadata
+pub openai_rs::resources::GraderRunMetadata::errors: core::option::Option<openai_rs::GraderRunErrors>
+pub openai_rs::resources::GraderRunMetadata::execution_time: core::option::Option<f64>
+pub openai_rs::resources::GraderRunMetadata::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderRunMetadata::grader_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderRunMetadata::name: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderRunMetadata::sampled_model_name: core::option::Option<alloc::string::String>
+pub openai_rs::resources::GraderRunMetadata::scores: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderRunMetadata::token_usage: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::clone(&self) -> openai_rs::GraderRunMetadata
+impl core::default::Default for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::default() -> openai_rs::GraderRunMetadata
+impl core::fmt::Debug for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderRunMetadata
+impl core::marker::Send for openai_rs::GraderRunMetadata
+impl core::marker::Sync for openai_rs::GraderRunMetadata
+impl core::marker::Unpin for openai_rs::GraderRunMetadata
+impl core::marker::UnsafeUnpin for openai_rs::GraderRunMetadata
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderRunMetadata
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderRunMetadata
+pub struct openai_rs::resources::GraderRunResponse
+pub openai_rs::resources::GraderRunResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderRunResponse::metadata: core::option::Option<openai_rs::GraderRunMetadata>
+pub openai_rs::resources::GraderRunResponse::model_grader_token_usage_per_model: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderRunResponse::reward: core::option::Option<f64>
+pub openai_rs::resources::GraderRunResponse::sub_rewards: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+impl core::clone::Clone for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::clone(&self) -> openai_rs::GraderRunResponse
+impl core::default::Default for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::default() -> openai_rs::GraderRunResponse
+impl core::fmt::Debug for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderRunResponse
+impl core::marker::Send for openai_rs::GraderRunResponse
+impl core::marker::Sync for openai_rs::GraderRunResponse
+impl core::marker::Unpin for openai_rs::GraderRunResponse
+impl core::marker::UnsafeUnpin for openai_rs::GraderRunResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderRunResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderRunResponse
+pub struct openai_rs::resources::GraderValidateResponse
+pub openai_rs::resources::GraderValidateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::GraderValidateResponse::grader: core::option::Option<serde_json::value::Value>
+impl core::clone::Clone for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::clone(&self) -> openai_rs::GraderValidateResponse
+impl core::default::Default for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::default() -> openai_rs::GraderValidateResponse
+impl core::fmt::Debug for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderValidateResponse
+impl core::marker::Send for openai_rs::GraderValidateResponse
+impl core::marker::Sync for openai_rs::GraderValidateResponse
+impl core::marker::Unpin for openai_rs::GraderValidateResponse
+impl core::marker::UnsafeUnpin for openai_rs::GraderValidateResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderValidateResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderValidateResponse
 pub struct openai_rs::resources::GradersResource
 impl openai_rs::resources::GradersResource
-pub fn openai_rs::resources::GradersResource::grader_models(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::GradersResource::grader_models(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::GraderModelCatalog>
 impl core::clone::Clone for openai_rs::resources::GradersResource
 pub fn openai_rs::resources::GradersResource::clone(&self) -> openai_rs::resources::GradersResource
 impl core::fmt::Debug for openai_rs::resources::GradersResource
@@ -3575,9 +4031,54 @@ impl core::marker::Unpin for openai_rs::resources::ModelsResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::ModelsResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ModelsResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ModelsResource
+pub struct openai_rs::resources::ModerationCreateResponse
+pub openai_rs::resources::ModerationCreateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ModerationCreateResponse::id: alloc::string::String
+pub openai_rs::resources::ModerationCreateResponse::model: alloc::string::String
+pub openai_rs::resources::ModerationCreateResponse::results: alloc::vec::Vec<openai_rs::ModerationResult>
+impl core::clone::Clone for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::clone(&self) -> openai_rs::ModerationCreateResponse
+impl core::default::Default for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::default() -> openai_rs::ModerationCreateResponse
+impl core::fmt::Debug for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ModerationCreateResponse
+impl core::marker::Send for openai_rs::ModerationCreateResponse
+impl core::marker::Sync for openai_rs::ModerationCreateResponse
+impl core::marker::Unpin for openai_rs::ModerationCreateResponse
+impl core::marker::UnsafeUnpin for openai_rs::ModerationCreateResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ModerationCreateResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ModerationCreateResponse
+pub struct openai_rs::resources::ModerationResult
+pub openai_rs::resources::ModerationResult::categories: alloc::collections::btree::map::BTreeMap<alloc::string::String, bool>
+pub openai_rs::resources::ModerationResult::category_applied_input_types: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<alloc::string::String>>
+pub openai_rs::resources::ModerationResult::category_scores: alloc::collections::btree::map::BTreeMap<alloc::string::String, f64>
+pub openai_rs::resources::ModerationResult::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ModerationResult::flagged: bool
+impl core::clone::Clone for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::clone(&self) -> openai_rs::ModerationResult
+impl core::default::Default for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::default() -> openai_rs::ModerationResult
+impl core::fmt::Debug for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ModerationResult
+impl core::marker::Send for openai_rs::ModerationResult
+impl core::marker::Sync for openai_rs::ModerationResult
+impl core::marker::Unpin for openai_rs::ModerationResult
+impl core::marker::UnsafeUnpin for openai_rs::ModerationResult
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ModerationResult
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ModerationResult
 pub struct openai_rs::resources::ModerationsResource
 impl openai_rs::resources::ModerationsResource
-pub fn openai_rs::resources::ModerationsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::ModerationsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::ModerationCreateResponse>
 impl core::clone::Clone for openai_rs::resources::ModerationsResource
 pub fn openai_rs::resources::ModerationsResource::clone(&self) -> openai_rs::resources::ModerationsResource
 impl core::fmt::Debug for openai_rs::resources::ModerationsResource
@@ -3589,12 +4090,38 @@ impl core::marker::Unpin for openai_rs::resources::ModerationsResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::ModerationsResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ModerationsResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ModerationsResource
+pub struct openai_rs::resources::NoContentRequestBuilder
+impl openai_rs::resources::NoContentRequestBuilder
+pub fn openai_rs::resources::NoContentRequestBuilder::body_value(self, body: serde_json::value::Value) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::cancellation_token(self, token: tokio_util::sync::cancellation_token::CancellationToken) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::extra_body(self, key: impl core::convert::Into<alloc::string::String>, value: serde_json::value::Value) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::extra_header(self, key: impl core::convert::Into<alloc::string::String>, value: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::extra_query(self, key: impl core::convert::Into<alloc::string::String>, value: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::json_body<U>(self, body: &U) -> openai_rs::error::Result<Self> where U: serde_core::ser::Serialize
+pub fn openai_rs::resources::NoContentRequestBuilder::max_retries(self, max_retries: u32) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::provider_option(self, key: impl core::convert::Into<alloc::string::String>, value: serde_json::value::Value) -> Self
+pub fn openai_rs::resources::NoContentRequestBuilder::remove_header(self, key: impl core::convert::Into<alloc::string::String>) -> Self
+pub async fn openai_rs::resources::NoContentRequestBuilder::send(self) -> openai_rs::error::Result<()>
+pub async fn openai_rs::resources::NoContentRequestBuilder::send_raw(self) -> openai_rs::error::Result<http::response::Response<bytes::bytes::Bytes>>
+pub async fn openai_rs::resources::NoContentRequestBuilder::send_with_meta(self) -> openai_rs::error::Result<openai_rs::ApiResponse<()>>
+pub fn openai_rs::resources::NoContentRequestBuilder::timeout(self, timeout: core::time::Duration) -> Self
+impl core::clone::Clone for openai_rs::resources::NoContentRequestBuilder
+pub fn openai_rs::resources::NoContentRequestBuilder::clone(&self) -> openai_rs::resources::NoContentRequestBuilder
+impl core::fmt::Debug for openai_rs::resources::NoContentRequestBuilder
+pub fn openai_rs::resources::NoContentRequestBuilder::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_rs::resources::NoContentRequestBuilder
+impl core::marker::Send for openai_rs::resources::NoContentRequestBuilder
+impl core::marker::Sync for openai_rs::resources::NoContentRequestBuilder
+impl core::marker::Unpin for openai_rs::resources::NoContentRequestBuilder
+impl core::marker::UnsafeUnpin for openai_rs::resources::NoContentRequestBuilder
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::NoContentRequestBuilder
+impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::NoContentRequestBuilder
 pub struct openai_rs::resources::RealtimeCallsResource
 impl openai_rs::resources::RealtimeCallsResource
-pub fn openai_rs::resources::RealtimeCallsResource::accept(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::RealtimeCallsResource::hangup(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::RealtimeCallsResource::refer(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
-pub fn openai_rs::resources::RealtimeCallsResource::reject(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::RealtimeCallsResource::accept(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::NoContentRequestBuilder
+pub fn openai_rs::resources::RealtimeCallsResource::hangup(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::NoContentRequestBuilder
+pub fn openai_rs::resources::RealtimeCallsResource::refer(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::NoContentRequestBuilder
+pub fn openai_rs::resources::RealtimeCallsResource::reject(&self, call_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::NoContentRequestBuilder
 impl core::clone::Clone for openai_rs::resources::RealtimeCallsResource
 pub fn openai_rs::resources::RealtimeCallsResource::clone(&self) -> openai_rs::resources::RealtimeCallsResource
 impl core::fmt::Debug for openai_rs::resources::RealtimeCallsResource
@@ -3606,9 +4133,34 @@ impl core::marker::Unpin for openai_rs::resources::RealtimeCallsResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::RealtimeCallsResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::RealtimeCallsResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::RealtimeCallsResource
+pub struct openai_rs::resources::RealtimeClientSecretCreateResponse
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::secret: core::option::Option<alloc::string::String>
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::session: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::session_type: core::option::Option<alloc::string::String>
+impl openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::secret_value(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::clone(&self) -> openai_rs::RealtimeClientSecretCreateResponse
+impl core::default::Default for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::default() -> openai_rs::RealtimeClientSecretCreateResponse
+impl core::fmt::Debug for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::Send for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::Sync for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::Unpin for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::UnsafeUnpin for openai_rs::RealtimeClientSecretCreateResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::RealtimeClientSecretCreateResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::RealtimeClientSecretCreateResponse
 pub struct openai_rs::resources::RealtimeClientSecretsResource
 impl openai_rs::resources::RealtimeClientSecretsResource
-pub fn openai_rs::resources::RealtimeClientSecretsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::RealtimeClientSecretsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::RealtimeClientSecretCreateResponse>
 impl core::clone::Clone for openai_rs::resources::RealtimeClientSecretsResource
 pub fn openai_rs::resources::RealtimeClientSecretsResource::clone(&self) -> openai_rs::resources::RealtimeClientSecretsResource
 impl core::fmt::Debug for openai_rs::resources::RealtimeClientSecretsResource
@@ -3636,6 +4188,27 @@ impl core::marker::Unpin for openai_rs::resources::RealtimeResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::RealtimeResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::RealtimeResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::RealtimeResource
+pub struct openai_rs::resources::RealtimeSessionClientSecret
+pub openai_rs::resources::RealtimeSessionClientSecret::expires_at: u64
+pub openai_rs::resources::RealtimeSessionClientSecret::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::RealtimeSessionClientSecret::value: alloc::string::String
+impl core::clone::Clone for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::clone(&self) -> openai_rs::RealtimeSessionClientSecret
+impl core::default::Default for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::default() -> openai_rs::RealtimeSessionClientSecret
+impl core::fmt::Debug for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::RealtimeSessionClientSecret
+impl core::marker::Send for openai_rs::RealtimeSessionClientSecret
+impl core::marker::Sync for openai_rs::RealtimeSessionClientSecret
+impl core::marker::Unpin for openai_rs::RealtimeSessionClientSecret
+impl core::marker::UnsafeUnpin for openai_rs::RealtimeSessionClientSecret
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::RealtimeSessionClientSecret
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::RealtimeSessionClientSecret
 pub struct openai_rs::resources::RealtimeSocketRequestBuilder
 impl openai_rs::resources::RealtimeSocketRequestBuilder
 pub async fn openai_rs::resources::RealtimeSocketRequestBuilder::connect(self) -> openai_rs::error::Result<openai_rs::RealtimeSocket>
@@ -3735,7 +4308,7 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::Response
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseCreateRequestBuilder
 pub struct openai_rs::resources::ResponseInputItemsResource
 impl openai_rs::resources::ResponseInputItemsResource
-pub fn openai_rs::resources::ResponseInputItemsResource::list(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::ResponseInputItemsResource::list(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<openai_rs::ConversationItem>
 impl core::clone::Clone for openai_rs::resources::ResponseInputItemsResource
 pub fn openai_rs::resources::ResponseInputItemsResource::clone(&self) -> openai_rs::resources::ResponseInputItemsResource
 impl core::fmt::Debug for openai_rs::resources::ResponseInputItemsResource
@@ -4057,9 +4630,32 @@ impl core::marker::Unpin for openai_rs::resources::UploadObject
 impl core::marker::UnsafeUnpin for openai_rs::resources::UploadObject
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::UploadObject
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::UploadObject
+pub struct openai_rs::resources::UploadPart
+pub openai_rs::resources::UploadPart::created_at: core::option::Option<u64>
+pub openai_rs::resources::UploadPart::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::UploadPart::id: alloc::string::String
+pub openai_rs::resources::UploadPart::object: alloc::string::String
+pub openai_rs::resources::UploadPart::upload_id: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::clone(&self) -> openai_rs::UploadPart
+impl core::default::Default for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::default() -> openai_rs::UploadPart
+impl core::fmt::Debug for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::UploadPart
+impl core::marker::Send for openai_rs::UploadPart
+impl core::marker::Sync for openai_rs::UploadPart
+impl core::marker::Unpin for openai_rs::UploadPart
+impl core::marker::UnsafeUnpin for openai_rs::UploadPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::UploadPart
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::UploadPart
 pub struct openai_rs::resources::UploadPartsResource
 impl openai_rs::resources::UploadPartsResource
-pub fn openai_rs::resources::UploadPartsResource::create(&self, upload_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_rs::resources::UploadPartsResource::create(&self, upload_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::UploadPart>
 impl core::clone::Clone for openai_rs::resources::UploadPartsResource
 pub fn openai_rs::resources::UploadPartsResource::clone(&self) -> openai_rs::resources::UploadPartsResource
 impl core::fmt::Debug for openai_rs::resources::UploadPartsResource
@@ -4089,10 +4685,15 @@ impl core::marker::UnsafeUnpin for openai_rs::resources::UploadsResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::UploadsResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::UploadsResource
 pub struct openai_rs::resources::VectorStore
+pub openai_rs::resources::VectorStore::created_at: core::option::Option<u64>
+pub openai_rs::resources::VectorStore::description: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStore::expires_after: core::option::Option<openai_rs::VectorStoreExpiresAfter>
+pub openai_rs::resources::VectorStore::expires_at: core::option::Option<u64>
 pub openai_rs::resources::VectorStore::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
-pub openai_rs::resources::VectorStore::file_counts: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::VectorStore::file_counts: core::option::Option<openai_rs::VectorStoreFileCounts>
 pub openai_rs::resources::VectorStore::id: alloc::string::String
-pub openai_rs::resources::VectorStore::metadata: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::VectorStore::last_active_at: core::option::Option<u64>
+pub openai_rs::resources::VectorStore::metadata: core::option::Option<openai_rs::VectorStoreMetadata>
 pub openai_rs::resources::VectorStore::name: core::option::Option<alloc::string::String>
 pub openai_rs::resources::VectorStore::object: alloc::string::String
 pub openai_rs::resources::VectorStore::status: core::option::Option<alloc::string::String>
@@ -4114,11 +4715,34 @@ impl core::marker::Unpin for openai_rs::VectorStore
 impl core::marker::UnsafeUnpin for openai_rs::VectorStore
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStore
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStore
+pub struct openai_rs::resources::VectorStoreExpiresAfter
+pub openai_rs::resources::VectorStoreExpiresAfter::anchor: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStoreExpiresAfter::days: core::option::Option<u64>
+pub openai_rs::resources::VectorStoreExpiresAfter::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+impl core::clone::Clone for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::clone(&self) -> openai_rs::VectorStoreExpiresAfter
+impl core::default::Default for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::default() -> openai_rs::VectorStoreExpiresAfter
+impl core::fmt::Debug for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreExpiresAfter
+impl core::marker::Send for openai_rs::VectorStoreExpiresAfter
+impl core::marker::Sync for openai_rs::VectorStoreExpiresAfter
+impl core::marker::Unpin for openai_rs::VectorStoreExpiresAfter
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreExpiresAfter
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreExpiresAfter
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreExpiresAfter
 pub struct openai_rs::resources::VectorStoreFile
-pub openai_rs::resources::VectorStoreFile::attributes: core::option::Option<serde_json::value::Value>
-pub openai_rs::resources::VectorStoreFile::chunking_strategy: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::VectorStoreFile::attributes: core::option::Option<openai_rs::VectorStoreAttributes>
+pub openai_rs::resources::VectorStoreFile::chunking_strategy: core::option::Option<openai_rs::VectorStoreFileChunkingStrategy>
+pub openai_rs::resources::VectorStoreFile::created_at: core::option::Option<u64>
 pub openai_rs::resources::VectorStoreFile::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::resources::VectorStoreFile::id: alloc::string::String
+pub openai_rs::resources::VectorStoreFile::last_error: core::option::Option<openai_rs::VectorStoreFileLastError>
 pub openai_rs::resources::VectorStoreFile::object: alloc::string::String
 pub openai_rs::resources::VectorStoreFile::status: core::option::Option<alloc::string::String>
 pub openai_rs::resources::VectorStoreFile::usage_bytes: core::option::Option<u64>
@@ -4141,8 +4765,9 @@ impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFile
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFile
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFile
 pub struct openai_rs::resources::VectorStoreFileBatch
+pub openai_rs::resources::VectorStoreFileBatch::created_at: core::option::Option<u64>
 pub openai_rs::resources::VectorStoreFileBatch::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
-pub openai_rs::resources::VectorStoreFileBatch::file_counts: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::VectorStoreFileBatch::file_counts: core::option::Option<openai_rs::VectorStoreFileCounts>
 pub openai_rs::resources::VectorStoreFileBatch::id: alloc::string::String
 pub openai_rs::resources::VectorStoreFileBatch::object: alloc::string::String
 pub openai_rs::resources::VectorStoreFileBatch::status: core::option::Option<alloc::string::String>
@@ -4181,9 +4806,75 @@ impl core::marker::Unpin for openai_rs::resources::VectorStoreFileBatchesResourc
 impl core::marker::UnsafeUnpin for openai_rs::resources::VectorStoreFileBatchesResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::VectorStoreFileBatchesResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::VectorStoreFileBatchesResource
+pub struct openai_rs::resources::VectorStoreFileContent
+pub openai_rs::resources::VectorStoreFileContent::content_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStoreFileContent::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::VectorStoreFileContent::text: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::clone(&self) -> openai_rs::VectorStoreFileContent
+impl core::default::Default for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::default() -> openai_rs::VectorStoreFileContent
+impl core::fmt::Debug for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileContent
+impl core::marker::Send for openai_rs::VectorStoreFileContent
+impl core::marker::Sync for openai_rs::VectorStoreFileContent
+impl core::marker::Unpin for openai_rs::VectorStoreFileContent
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileContent
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileContent
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileContent
+pub struct openai_rs::resources::VectorStoreFileCounts
+pub openai_rs::resources::VectorStoreFileCounts::cancelled: core::option::Option<u64>
+pub openai_rs::resources::VectorStoreFileCounts::completed: core::option::Option<u64>
+pub openai_rs::resources::VectorStoreFileCounts::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::VectorStoreFileCounts::failed: core::option::Option<u64>
+pub openai_rs::resources::VectorStoreFileCounts::in_progress: core::option::Option<u64>
+pub openai_rs::resources::VectorStoreFileCounts::total: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::clone(&self) -> openai_rs::VectorStoreFileCounts
+impl core::default::Default for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::default() -> openai_rs::VectorStoreFileCounts
+impl core::fmt::Debug for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileCounts
+impl core::marker::Send for openai_rs::VectorStoreFileCounts
+impl core::marker::Sync for openai_rs::VectorStoreFileCounts
+impl core::marker::Unpin for openai_rs::VectorStoreFileCounts
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileCounts
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileCounts
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileCounts
+pub struct openai_rs::resources::VectorStoreFileLastError
+pub openai_rs::resources::VectorStoreFileLastError::code: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStoreFileLastError::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::VectorStoreFileLastError::message: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::clone(&self) -> openai_rs::VectorStoreFileLastError
+impl core::default::Default for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::default() -> openai_rs::VectorStoreFileLastError
+impl core::fmt::Debug for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileLastError
+impl core::marker::Send for openai_rs::VectorStoreFileLastError
+impl core::marker::Sync for openai_rs::VectorStoreFileLastError
+impl core::marker::Unpin for openai_rs::VectorStoreFileLastError
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileLastError
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileLastError
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileLastError
 pub struct openai_rs::resources::VectorStoreFilesResource
 impl openai_rs::resources::VectorStoreFilesResource
-pub fn openai_rs::resources::VectorStoreFilesResource::content(&self, vector_store_id: impl core::convert::Into<alloc::string::String>, file_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::BytesRequestBuilder
+pub fn openai_rs::resources::VectorStoreFilesResource::content(&self, vector_store_id: impl core::convert::Into<alloc::string::String>, file_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::pagination::Page<openai_rs::VectorStoreFileContent>>
 pub fn openai_rs::resources::VectorStoreFilesResource::create(&self, vector_store_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::VectorStoreFile>
 pub fn openai_rs::resources::VectorStoreFilesResource::delete(&self, vector_store_id: impl core::convert::Into<alloc::string::String>, file_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::DeleteResponse>
 pub fn openai_rs::resources::VectorStoreFilesResource::list(&self, vector_store_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<openai_rs::VectorStoreFile>
@@ -4200,8 +4891,29 @@ impl core::marker::Unpin for openai_rs::resources::VectorStoreFilesResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::VectorStoreFilesResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::VectorStoreFilesResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::VectorStoreFilesResource
+pub struct openai_rs::resources::VectorStoreSearchContent
+pub openai_rs::resources::VectorStoreSearchContent::content_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStoreSearchContent::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::VectorStoreSearchContent::text: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::clone(&self) -> openai_rs::VectorStoreSearchContent
+impl core::default::Default for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::default() -> openai_rs::VectorStoreSearchContent
+impl core::fmt::Debug for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreSearchContent
+impl core::marker::Send for openai_rs::VectorStoreSearchContent
+impl core::marker::Sync for openai_rs::VectorStoreSearchContent
+impl core::marker::Unpin for openai_rs::VectorStoreSearchContent
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreSearchContent
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreSearchContent
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreSearchContent
 pub struct openai_rs::resources::VectorStoreSearchResponse
-pub openai_rs::resources::VectorStoreSearchResponse::data: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::resources::VectorStoreSearchResponse::data: alloc::vec::Vec<openai_rs::VectorStoreSearchResult>
 pub openai_rs::resources::VectorStoreSearchResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::resources::VectorStoreSearchResponse::object: alloc::string::String
 pub openai_rs::resources::VectorStoreSearchResponse::search_query: core::option::Option<alloc::string::String>
@@ -4222,6 +4934,51 @@ impl core::marker::Unpin for openai_rs::VectorStoreSearchResponse
 impl core::marker::UnsafeUnpin for openai_rs::VectorStoreSearchResponse
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreSearchResponse
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreSearchResponse
+pub struct openai_rs::resources::VectorStoreSearchResult
+pub openai_rs::resources::VectorStoreSearchResult::attributes: core::option::Option<openai_rs::VectorStoreAttributes>
+pub openai_rs::resources::VectorStoreSearchResult::content: alloc::vec::Vec<openai_rs::VectorStoreSearchContent>
+pub openai_rs::resources::VectorStoreSearchResult::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::VectorStoreSearchResult::file_id: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStoreSearchResult::filename: core::option::Option<alloc::string::String>
+pub openai_rs::resources::VectorStoreSearchResult::score: core::option::Option<f64>
+impl core::clone::Clone for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::clone(&self) -> openai_rs::VectorStoreSearchResult
+impl core::default::Default for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::default() -> openai_rs::VectorStoreSearchResult
+impl core::fmt::Debug for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreSearchResult
+impl core::marker::Send for openai_rs::VectorStoreSearchResult
+impl core::marker::Sync for openai_rs::VectorStoreSearchResult
+impl core::marker::Unpin for openai_rs::VectorStoreSearchResult
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreSearchResult
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreSearchResult
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreSearchResult
+pub struct openai_rs::resources::VectorStoreStaticFileChunkingStrategy
+pub openai_rs::resources::VectorStoreStaticFileChunkingStrategy::chunk_overlap_tokens: core::option::Option<u64>
+pub openai_rs::resources::VectorStoreStaticFileChunkingStrategy::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::VectorStoreStaticFileChunkingStrategy::max_chunk_size_tokens: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::clone(&self) -> openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::default::Default for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::default() -> openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::fmt::Debug for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::Send for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::Sync for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::Unpin for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreStaticFileChunkingStrategy
 pub struct openai_rs::resources::VectorStoresResource
 impl openai_rs::resources::VectorStoresResource
 pub fn openai_rs::resources::VectorStoresResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::VectorStore>
@@ -4378,6 +5135,8 @@ impl core::marker::Unpin for openai_rs::resources::WebhooksResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::WebhooksResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::WebhooksResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::WebhooksResource
+pub type openai_rs::resources::VectorStoreAttributes = alloc::collections::btree::map::BTreeMap<alloc::string::String, openai_rs::VectorStoreAttributeValue>
+pub type openai_rs::resources::VectorStoreMetadata = alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>
 pub mod openai_rs::stream
 pub enum openai_rs::stream::AssistantRuntimeEvent
 pub openai_rs::stream::AssistantRuntimeEvent::Event(openai_rs::AssistantStreamEvent)
@@ -6024,6 +6783,48 @@ impl core::marker::Unpin for openai_rs::files::UploadSource
 impl core::marker::UnsafeUnpin for openai_rs::files::UploadSource
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::files::UploadSource
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::files::UploadSource
+pub enum openai_rs::VectorStoreAttributeValue
+pub openai_rs::VectorStoreAttributeValue::Bool(bool)
+pub openai_rs::VectorStoreAttributeValue::Number(serde_json::number::Number)
+pub openai_rs::VectorStoreAttributeValue::String(alloc::string::String)
+impl core::clone::Clone for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::clone(&self) -> openai_rs::VectorStoreAttributeValue
+impl core::cmp::PartialEq for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::eq(&self, other: &openai_rs::VectorStoreAttributeValue) -> bool
+impl core::fmt::Debug for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for openai_rs::VectorStoreAttributeValue
+impl serde_core::ser::Serialize for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreAttributeValue
+pub fn openai_rs::VectorStoreAttributeValue::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreAttributeValue
+impl core::marker::Send for openai_rs::VectorStoreAttributeValue
+impl core::marker::Sync for openai_rs::VectorStoreAttributeValue
+impl core::marker::Unpin for openai_rs::VectorStoreAttributeValue
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreAttributeValue
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreAttributeValue
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreAttributeValue
+pub enum openai_rs::VectorStoreFileChunkingStrategy
+pub openai_rs::VectorStoreFileChunkingStrategy::Other
+pub openai_rs::VectorStoreFileChunkingStrategy::Static
+pub openai_rs::VectorStoreFileChunkingStrategy::Static::configuration: openai_rs::VectorStoreStaticFileChunkingStrategy
+pub openai_rs::VectorStoreFileChunkingStrategy::Unknown
+impl core::clone::Clone for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::clone(&self) -> openai_rs::VectorStoreFileChunkingStrategy
+impl core::fmt::Debug for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileChunkingStrategy
+pub fn openai_rs::VectorStoreFileChunkingStrategy::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::Send for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::Sync for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::Unpin for openai_rs::VectorStoreFileChunkingStrategy
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileChunkingStrategy
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileChunkingStrategy
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileChunkingStrategy
 pub enum openai_rs::WebSocketErrorKind
 pub openai_rs::WebSocketErrorKind::Protocol
 pub openai_rs::WebSocketErrorKind::Server
@@ -6653,6 +7454,52 @@ impl core::marker::Unpin for openai_rs::BetaAssistant
 impl core::marker::UnsafeUnpin for openai_rs::BetaAssistant
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::BetaAssistant
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::BetaAssistant
+pub struct openai_rs::BetaRealtimeSession
+pub openai_rs::BetaRealtimeSession::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::BetaRealtimeSession::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::BetaRealtimeSession::id: core::option::Option<alloc::string::String>
+pub openai_rs::BetaRealtimeSession::modalities: alloc::vec::Vec<alloc::string::String>
+pub openai_rs::BetaRealtimeSession::model: core::option::Option<alloc::string::String>
+pub openai_rs::BetaRealtimeSession::session_type: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::clone(&self) -> openai_rs::BetaRealtimeSession
+impl core::default::Default for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::default() -> openai_rs::BetaRealtimeSession
+impl core::fmt::Debug for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::BetaRealtimeSession
+pub fn openai_rs::BetaRealtimeSession::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::BetaRealtimeSession
+impl core::marker::Send for openai_rs::BetaRealtimeSession
+impl core::marker::Sync for openai_rs::BetaRealtimeSession
+impl core::marker::Unpin for openai_rs::BetaRealtimeSession
+impl core::marker::UnsafeUnpin for openai_rs::BetaRealtimeSession
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::BetaRealtimeSession
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::BetaRealtimeSession
+pub struct openai_rs::BetaRealtimeTranscriptionSession
+pub openai_rs::BetaRealtimeTranscriptionSession::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::BetaRealtimeTranscriptionSession::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::BetaRealtimeTranscriptionSession::input_audio_format: core::option::Option<alloc::string::String>
+pub openai_rs::BetaRealtimeTranscriptionSession::modalities: alloc::vec::Vec<alloc::string::String>
+impl core::clone::Clone for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::clone(&self) -> openai_rs::BetaRealtimeTranscriptionSession
+impl core::default::Default for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::default() -> openai_rs::BetaRealtimeTranscriptionSession
+impl core::fmt::Debug for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::BetaRealtimeTranscriptionSession
+pub fn openai_rs::BetaRealtimeTranscriptionSession::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::Send for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::Sync for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::Unpin for openai_rs::BetaRealtimeTranscriptionSession
+impl core::marker::UnsafeUnpin for openai_rs::BetaRealtimeTranscriptionSession
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::BetaRealtimeTranscriptionSession
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::BetaRealtimeTranscriptionSession
 pub struct openai_rs::BetaThread
 pub openai_rs::BetaThread::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::BetaThread::id: alloc::string::String
@@ -6922,6 +7769,30 @@ impl core::marker::Unpin for openai_rs::ChatCompletionRunner
 impl core::marker::UnsafeUnpin for openai_rs::ChatCompletionRunner
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatCompletionRunner
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatCompletionRunner
+pub struct openai_rs::ChatCompletionStoreMessage
+pub openai_rs::ChatCompletionStoreMessage::content: core::option::Option<alloc::string::String>
+pub openai_rs::ChatCompletionStoreMessage::content_parts: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::ChatCompletionStoreMessage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ChatCompletionStoreMessage::id: alloc::string::String
+pub openai_rs::ChatCompletionStoreMessage::role: alloc::string::String
+pub openai_rs::ChatCompletionStoreMessage::tool_calls: alloc::vec::Vec<openai_rs::resources::ChatCompletionToolCall>
+impl core::clone::Clone for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::clone(&self) -> openai_rs::ChatCompletionStoreMessage
+impl core::default::Default for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::default() -> openai_rs::ChatCompletionStoreMessage
+impl core::fmt::Debug for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatCompletionStoreMessage
+pub fn openai_rs::ChatCompletionStoreMessage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatCompletionStoreMessage
+impl core::marker::Send for openai_rs::ChatCompletionStoreMessage
+impl core::marker::Sync for openai_rs::ChatCompletionStoreMessage
+impl core::marker::Unpin for openai_rs::ChatCompletionStoreMessage
+impl core::marker::UnsafeUnpin for openai_rs::ChatCompletionStoreMessage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatCompletionStoreMessage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatCompletionStoreMessage
 pub struct openai_rs::ChatCompletionStream
 impl openai_rs::ChatCompletionStream
 pub fn openai_rs::ChatCompletionStream::events(self) -> openai_rs::ChatCompletionEventStream
@@ -7078,6 +7949,109 @@ impl core::marker::Unpin for openai_rs::ChatContentSnapshotEvent
 impl core::marker::UnsafeUnpin for openai_rs::ChatContentSnapshotEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatContentSnapshotEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatContentSnapshotEvent
+pub struct openai_rs::ChatKitSession
+pub openai_rs::ChatKitSession::chatkit_configuration: core::option::Option<serde_json::value::Value>
+pub openai_rs::ChatKitSession::client_secret: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitSession::expires_at: core::option::Option<u64>
+pub openai_rs::ChatKitSession::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ChatKitSession::id: alloc::string::String
+pub openai_rs::ChatKitSession::max_requests_per_1_minute: core::option::Option<u64>
+pub openai_rs::ChatKitSession::object: alloc::string::String
+pub openai_rs::ChatKitSession::rate_limits: core::option::Option<serde_json::value::Value>
+pub openai_rs::ChatKitSession::status: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitSession::user: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitSession::workflow: core::option::Option<serde_json::value::Value>
+impl core::clone::Clone for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::clone(&self) -> openai_rs::ChatKitSession
+impl core::default::Default for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::default() -> openai_rs::ChatKitSession
+impl core::fmt::Debug for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitSession
+pub fn openai_rs::ChatKitSession::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitSession
+impl core::marker::Send for openai_rs::ChatKitSession
+impl core::marker::Sync for openai_rs::ChatKitSession
+impl core::marker::Unpin for openai_rs::ChatKitSession
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitSession
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitSession
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitSession
+pub struct openai_rs::ChatKitThread
+pub openai_rs::ChatKitThread::created_at: core::option::Option<u64>
+pub openai_rs::ChatKitThread::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ChatKitThread::id: alloc::string::String
+pub openai_rs::ChatKitThread::object: alloc::string::String
+pub openai_rs::ChatKitThread::status: core::option::Option<openai_rs::ChatKitThreadStatus>
+pub openai_rs::ChatKitThread::title: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitThread::user: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::clone(&self) -> openai_rs::ChatKitThread
+impl core::default::Default for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::default() -> openai_rs::ChatKitThread
+impl core::fmt::Debug for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitThread
+pub fn openai_rs::ChatKitThread::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitThread
+impl core::marker::Send for openai_rs::ChatKitThread
+impl core::marker::Sync for openai_rs::ChatKitThread
+impl core::marker::Unpin for openai_rs::ChatKitThread
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitThread
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitThread
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitThread
+pub struct openai_rs::ChatKitThreadItem
+pub openai_rs::ChatKitThreadItem::arguments: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitThreadItem::call_id: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitThreadItem::content: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::ChatKitThreadItem::created_at: core::option::Option<u64>
+pub openai_rs::ChatKitThreadItem::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ChatKitThreadItem::id: alloc::string::String
+pub openai_rs::ChatKitThreadItem::item_type: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitThreadItem::name: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitThreadItem::object: alloc::string::String
+pub openai_rs::ChatKitThreadItem::thread_id: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::clone(&self) -> openai_rs::ChatKitThreadItem
+impl core::default::Default for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::default() -> openai_rs::ChatKitThreadItem
+impl core::fmt::Debug for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitThreadItem
+pub fn openai_rs::ChatKitThreadItem::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitThreadItem
+impl core::marker::Send for openai_rs::ChatKitThreadItem
+impl core::marker::Sync for openai_rs::ChatKitThreadItem
+impl core::marker::Unpin for openai_rs::ChatKitThreadItem
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitThreadItem
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitThreadItem
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitThreadItem
+pub struct openai_rs::ChatKitThreadStatus
+pub openai_rs::ChatKitThreadStatus::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ChatKitThreadStatus::reason: core::option::Option<alloc::string::String>
+pub openai_rs::ChatKitThreadStatus::status_type: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::clone(&self) -> openai_rs::ChatKitThreadStatus
+impl core::default::Default for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::default() -> openai_rs::ChatKitThreadStatus
+impl core::fmt::Debug for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ChatKitThreadStatus
+pub fn openai_rs::ChatKitThreadStatus::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ChatKitThreadStatus
+impl core::marker::Send for openai_rs::ChatKitThreadStatus
+impl core::marker::Sync for openai_rs::ChatKitThreadStatus
+impl core::marker::Unpin for openai_rs::ChatKitThreadStatus
+impl core::marker::UnsafeUnpin for openai_rs::ChatKitThreadStatus
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ChatKitThreadStatus
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ChatKitThreadStatus
 pub struct openai_rs::ChatLogProbsDeltaEvent
 pub openai_rs::ChatLogProbsDeltaEvent::choice_index: u32
 pub openai_rs::ChatLogProbsDeltaEvent::values: alloc::vec::Vec<serde_json::value::Value>
@@ -7386,6 +8360,102 @@ impl core::marker::Unpin for openai_rs::config::ClientOptions
 impl core::marker::UnsafeUnpin for openai_rs::config::ClientOptions
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::config::ClientOptions
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::config::ClientOptions
+pub struct openai_rs::Completion
+pub openai_rs::Completion::choices: alloc::vec::Vec<openai_rs::CompletionChoice>
+pub openai_rs::Completion::created: core::option::Option<i64>
+pub openai_rs::Completion::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::Completion::id: alloc::string::String
+pub openai_rs::Completion::model: alloc::string::String
+pub openai_rs::Completion::object: alloc::string::String
+pub openai_rs::Completion::system_fingerprint: core::option::Option<alloc::string::String>
+pub openai_rs::Completion::usage: core::option::Option<openai_rs::CompletionUsage>
+impl core::clone::Clone for openai_rs::Completion
+pub fn openai_rs::Completion::clone(&self) -> openai_rs::Completion
+impl core::default::Default for openai_rs::Completion
+pub fn openai_rs::Completion::default() -> openai_rs::Completion
+impl core::fmt::Debug for openai_rs::Completion
+pub fn openai_rs::Completion::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::Completion
+pub fn openai_rs::Completion::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::Completion
+pub fn openai_rs::Completion::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::Completion
+impl core::marker::Send for openai_rs::Completion
+impl core::marker::Sync for openai_rs::Completion
+impl core::marker::Unpin for openai_rs::Completion
+impl core::marker::UnsafeUnpin for openai_rs::Completion
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::Completion
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::Completion
+pub struct openai_rs::CompletionChoice
+pub openai_rs::CompletionChoice::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::CompletionChoice::finish_reason: core::option::Option<alloc::string::String>
+pub openai_rs::CompletionChoice::index: u32
+pub openai_rs::CompletionChoice::logprobs: core::option::Option<openai_rs::CompletionLogProbs>
+pub openai_rs::CompletionChoice::text: alloc::string::String
+impl core::clone::Clone for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::clone(&self) -> openai_rs::CompletionChoice
+impl core::default::Default for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::default() -> openai_rs::CompletionChoice
+impl core::fmt::Debug for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::CompletionChoice
+pub fn openai_rs::CompletionChoice::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::CompletionChoice
+impl core::marker::Send for openai_rs::CompletionChoice
+impl core::marker::Sync for openai_rs::CompletionChoice
+impl core::marker::Unpin for openai_rs::CompletionChoice
+impl core::marker::UnsafeUnpin for openai_rs::CompletionChoice
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::CompletionChoice
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::CompletionChoice
+pub struct openai_rs::CompletionLogProbs
+pub openai_rs::CompletionLogProbs::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::CompletionLogProbs::text_offset: alloc::vec::Vec<i64>
+pub openai_rs::CompletionLogProbs::token_logprobs: alloc::vec::Vec<f64>
+pub openai_rs::CompletionLogProbs::tokens: alloc::vec::Vec<alloc::string::String>
+pub openai_rs::CompletionLogProbs::top_logprobs: alloc::vec::Vec<alloc::collections::btree::map::BTreeMap<alloc::string::String, f64>>
+impl core::clone::Clone for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::clone(&self) -> openai_rs::CompletionLogProbs
+impl core::default::Default for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::default() -> openai_rs::CompletionLogProbs
+impl core::fmt::Debug for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::CompletionLogProbs
+pub fn openai_rs::CompletionLogProbs::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::CompletionLogProbs
+impl core::marker::Send for openai_rs::CompletionLogProbs
+impl core::marker::Sync for openai_rs::CompletionLogProbs
+impl core::marker::Unpin for openai_rs::CompletionLogProbs
+impl core::marker::UnsafeUnpin for openai_rs::CompletionLogProbs
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::CompletionLogProbs
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::CompletionLogProbs
+pub struct openai_rs::CompletionUsage
+pub openai_rs::CompletionUsage::completion_tokens: u64
+pub openai_rs::CompletionUsage::completion_tokens_details: core::option::Option<serde_json::value::Value>
+pub openai_rs::CompletionUsage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::CompletionUsage::prompt_tokens: u64
+pub openai_rs::CompletionUsage::prompt_tokens_details: core::option::Option<serde_json::value::Value>
+pub openai_rs::CompletionUsage::total_tokens: u64
+impl core::clone::Clone for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::clone(&self) -> openai_rs::CompletionUsage
+impl core::default::Default for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::default() -> openai_rs::CompletionUsage
+impl core::fmt::Debug for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::CompletionUsage
+pub fn openai_rs::CompletionUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::CompletionUsage
+impl core::marker::Send for openai_rs::CompletionUsage
+impl core::marker::Sync for openai_rs::CompletionUsage
+impl core::marker::Unpin for openai_rs::CompletionUsage
+impl core::marker::UnsafeUnpin for openai_rs::CompletionUsage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::CompletionUsage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::CompletionUsage
 pub struct openai_rs::ConnectionError
 pub openai_rs::ConnectionError::message: alloc::string::String
 impl openai_rs::error::ConnectionError
@@ -8010,6 +9080,151 @@ impl core::marker::Unpin for openai_rs::FineTuningJobEvent
 impl core::marker::UnsafeUnpin for openai_rs::FineTuningJobEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::FineTuningJobEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::FineTuningJobEvent
+pub struct openai_rs::GraderModel
+pub openai_rs::GraderModel::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderModel::grader_type: core::option::Option<alloc::string::String>
+pub openai_rs::GraderModel::id: core::option::Option<alloc::string::String>
+pub openai_rs::GraderModel::name: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::clone(&self) -> openai_rs::GraderModel
+impl core::default::Default for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::default() -> openai_rs::GraderModel
+impl core::fmt::Debug for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderModel
+pub fn openai_rs::GraderModel::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderModel
+impl core::marker::Send for openai_rs::GraderModel
+impl core::marker::Sync for openai_rs::GraderModel
+impl core::marker::Unpin for openai_rs::GraderModel
+impl core::marker::UnsafeUnpin for openai_rs::GraderModel
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderModel
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderModel
+pub struct openai_rs::GraderModelCatalog
+pub openai_rs::GraderModelCatalog::data: alloc::vec::Vec<openai_rs::GraderModel>
+pub openai_rs::GraderModelCatalog::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderModelCatalog::object: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::clone(&self) -> openai_rs::GraderModelCatalog
+impl core::default::Default for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::default() -> openai_rs::GraderModelCatalog
+impl core::fmt::Debug for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderModelCatalog
+pub fn openai_rs::GraderModelCatalog::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderModelCatalog
+impl core::marker::Send for openai_rs::GraderModelCatalog
+impl core::marker::Sync for openai_rs::GraderModelCatalog
+impl core::marker::Unpin for openai_rs::GraderModelCatalog
+impl core::marker::UnsafeUnpin for openai_rs::GraderModelCatalog
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderModelCatalog
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderModelCatalog
+pub struct openai_rs::GraderRunErrors
+pub openai_rs::GraderRunErrors::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderRunErrors::formula_parse_error: bool
+pub openai_rs::GraderRunErrors::invalid_variable_error: bool
+pub openai_rs::GraderRunErrors::model_grader_parse_error: bool
+pub openai_rs::GraderRunErrors::model_grader_refusal_error: bool
+pub openai_rs::GraderRunErrors::model_grader_server_error: bool
+pub openai_rs::GraderRunErrors::model_grader_server_error_details: core::option::Option<alloc::string::String>
+pub openai_rs::GraderRunErrors::other_error: bool
+pub openai_rs::GraderRunErrors::python_grader_runtime_error: bool
+pub openai_rs::GraderRunErrors::python_grader_runtime_error_details: core::option::Option<alloc::string::String>
+pub openai_rs::GraderRunErrors::python_grader_server_error: bool
+pub openai_rs::GraderRunErrors::python_grader_server_error_type: core::option::Option<alloc::string::String>
+pub openai_rs::GraderRunErrors::sample_parse_error: bool
+pub openai_rs::GraderRunErrors::truncated_observation_error: bool
+pub openai_rs::GraderRunErrors::unresponsive_reward_error: bool
+impl core::clone::Clone for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::clone(&self) -> openai_rs::GraderRunErrors
+impl core::default::Default for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::default() -> openai_rs::GraderRunErrors
+impl core::fmt::Debug for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderRunErrors
+pub fn openai_rs::GraderRunErrors::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderRunErrors
+impl core::marker::Send for openai_rs::GraderRunErrors
+impl core::marker::Sync for openai_rs::GraderRunErrors
+impl core::marker::Unpin for openai_rs::GraderRunErrors
+impl core::marker::UnsafeUnpin for openai_rs::GraderRunErrors
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderRunErrors
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderRunErrors
+pub struct openai_rs::GraderRunMetadata
+pub openai_rs::GraderRunMetadata::errors: core::option::Option<openai_rs::GraderRunErrors>
+pub openai_rs::GraderRunMetadata::execution_time: core::option::Option<f64>
+pub openai_rs::GraderRunMetadata::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderRunMetadata::grader_type: core::option::Option<alloc::string::String>
+pub openai_rs::GraderRunMetadata::name: core::option::Option<alloc::string::String>
+pub openai_rs::GraderRunMetadata::sampled_model_name: core::option::Option<alloc::string::String>
+pub openai_rs::GraderRunMetadata::scores: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderRunMetadata::token_usage: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::clone(&self) -> openai_rs::GraderRunMetadata
+impl core::default::Default for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::default() -> openai_rs::GraderRunMetadata
+impl core::fmt::Debug for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderRunMetadata
+pub fn openai_rs::GraderRunMetadata::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderRunMetadata
+impl core::marker::Send for openai_rs::GraderRunMetadata
+impl core::marker::Sync for openai_rs::GraderRunMetadata
+impl core::marker::Unpin for openai_rs::GraderRunMetadata
+impl core::marker::UnsafeUnpin for openai_rs::GraderRunMetadata
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderRunMetadata
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderRunMetadata
+pub struct openai_rs::GraderRunResponse
+pub openai_rs::GraderRunResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderRunResponse::metadata: core::option::Option<openai_rs::GraderRunMetadata>
+pub openai_rs::GraderRunResponse::model_grader_token_usage_per_model: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderRunResponse::reward: core::option::Option<f64>
+pub openai_rs::GraderRunResponse::sub_rewards: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+impl core::clone::Clone for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::clone(&self) -> openai_rs::GraderRunResponse
+impl core::default::Default for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::default() -> openai_rs::GraderRunResponse
+impl core::fmt::Debug for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderRunResponse
+pub fn openai_rs::GraderRunResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderRunResponse
+impl core::marker::Send for openai_rs::GraderRunResponse
+impl core::marker::Sync for openai_rs::GraderRunResponse
+impl core::marker::Unpin for openai_rs::GraderRunResponse
+impl core::marker::UnsafeUnpin for openai_rs::GraderRunResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderRunResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderRunResponse
+pub struct openai_rs::GraderValidateResponse
+pub openai_rs::GraderValidateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::GraderValidateResponse::grader: core::option::Option<serde_json::value::Value>
+impl core::clone::Clone for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::clone(&self) -> openai_rs::GraderValidateResponse
+impl core::default::Default for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::default() -> openai_rs::GraderValidateResponse
+impl core::fmt::Debug for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::GraderValidateResponse
+pub fn openai_rs::GraderValidateResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::GraderValidateResponse
+impl core::marker::Send for openai_rs::GraderValidateResponse
+impl core::marker::Sync for openai_rs::GraderValidateResponse
+impl core::marker::Unpin for openai_rs::GraderValidateResponse
+impl core::marker::UnsafeUnpin for openai_rs::GraderValidateResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::GraderValidateResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::GraderValidateResponse
 pub struct openai_rs::ImageData
 pub openai_rs::ImageData::b64_json: core::option::Option<alloc::string::String>
 pub openai_rs::ImageData::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
@@ -8200,6 +9415,51 @@ impl core::marker::Unpin for openai_rs::resources::Model
 impl core::marker::UnsafeUnpin for openai_rs::resources::Model
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::Model
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::Model
+pub struct openai_rs::ModerationCreateResponse
+pub openai_rs::ModerationCreateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ModerationCreateResponse::id: alloc::string::String
+pub openai_rs::ModerationCreateResponse::model: alloc::string::String
+pub openai_rs::ModerationCreateResponse::results: alloc::vec::Vec<openai_rs::ModerationResult>
+impl core::clone::Clone for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::clone(&self) -> openai_rs::ModerationCreateResponse
+impl core::default::Default for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::default() -> openai_rs::ModerationCreateResponse
+impl core::fmt::Debug for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ModerationCreateResponse
+pub fn openai_rs::ModerationCreateResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ModerationCreateResponse
+impl core::marker::Send for openai_rs::ModerationCreateResponse
+impl core::marker::Sync for openai_rs::ModerationCreateResponse
+impl core::marker::Unpin for openai_rs::ModerationCreateResponse
+impl core::marker::UnsafeUnpin for openai_rs::ModerationCreateResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ModerationCreateResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ModerationCreateResponse
+pub struct openai_rs::ModerationResult
+pub openai_rs::ModerationResult::categories: alloc::collections::btree::map::BTreeMap<alloc::string::String, bool>
+pub openai_rs::ModerationResult::category_applied_input_types: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::vec::Vec<alloc::string::String>>
+pub openai_rs::ModerationResult::category_scores: alloc::collections::btree::map::BTreeMap<alloc::string::String, f64>
+pub openai_rs::ModerationResult::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ModerationResult::flagged: bool
+impl core::clone::Clone for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::clone(&self) -> openai_rs::ModerationResult
+impl core::default::Default for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::default() -> openai_rs::ModerationResult
+impl core::fmt::Debug for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::ModerationResult
+pub fn openai_rs::ModerationResult::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::ModerationResult
+impl core::marker::Send for openai_rs::ModerationResult
+impl core::marker::Sync for openai_rs::ModerationResult
+impl core::marker::Unpin for openai_rs::ModerationResult
+impl core::marker::UnsafeUnpin for openai_rs::ModerationResult
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ModerationResult
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::ModerationResult
 pub struct openai_rs::MultipartField
 pub openai_rs::MultipartField::name: alloc::string::String
 pub openai_rs::MultipartField::value: alloc::string::String
@@ -8360,6 +9620,52 @@ impl core::marker::Unpin for openai_rs::RawSseStream
 impl core::marker::UnsafeUnpin for openai_rs::RawSseStream
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::RawSseStream
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::RawSseStream
+pub struct openai_rs::RealtimeClientSecretCreateResponse
+pub openai_rs::RealtimeClientSecretCreateResponse::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::RealtimeClientSecretCreateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::RealtimeClientSecretCreateResponse::secret: core::option::Option<alloc::string::String>
+pub openai_rs::RealtimeClientSecretCreateResponse::session: core::option::Option<serde_json::value::Value>
+pub openai_rs::RealtimeClientSecretCreateResponse::session_type: core::option::Option<alloc::string::String>
+impl openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::secret_value(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::clone(&self) -> openai_rs::RealtimeClientSecretCreateResponse
+impl core::default::Default for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::default() -> openai_rs::RealtimeClientSecretCreateResponse
+impl core::fmt::Debug for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::RealtimeClientSecretCreateResponse
+pub fn openai_rs::RealtimeClientSecretCreateResponse::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::Send for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::Sync for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::Unpin for openai_rs::RealtimeClientSecretCreateResponse
+impl core::marker::UnsafeUnpin for openai_rs::RealtimeClientSecretCreateResponse
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::RealtimeClientSecretCreateResponse
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::RealtimeClientSecretCreateResponse
+pub struct openai_rs::RealtimeSessionClientSecret
+pub openai_rs::RealtimeSessionClientSecret::expires_at: u64
+pub openai_rs::RealtimeSessionClientSecret::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::RealtimeSessionClientSecret::value: alloc::string::String
+impl core::clone::Clone for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::clone(&self) -> openai_rs::RealtimeSessionClientSecret
+impl core::default::Default for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::default() -> openai_rs::RealtimeSessionClientSecret
+impl core::fmt::Debug for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::RealtimeSessionClientSecret
+pub fn openai_rs::RealtimeSessionClientSecret::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::RealtimeSessionClientSecret
+impl core::marker::Send for openai_rs::RealtimeSessionClientSecret
+impl core::marker::Sync for openai_rs::RealtimeSessionClientSecret
+impl core::marker::Unpin for openai_rs::RealtimeSessionClientSecret
+impl core::marker::UnsafeUnpin for openai_rs::RealtimeSessionClientSecret
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::RealtimeSessionClientSecret
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::RealtimeSessionClientSecret
 pub struct openai_rs::RealtimeSocket
 impl openai_rs::RealtimeSocket
 pub async fn openai_rs::RealtimeSocket::close(&self, options: openai_rs::websocket::SocketCloseOptions) -> openai_rs::error::Result<()>
@@ -8847,11 +10153,39 @@ impl core::marker::Unpin for openai_rs::resources::UploadObject
 impl core::marker::UnsafeUnpin for openai_rs::resources::UploadObject
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::UploadObject
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::UploadObject
+pub struct openai_rs::UploadPart
+pub openai_rs::UploadPart::created_at: core::option::Option<u64>
+pub openai_rs::UploadPart::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::UploadPart::id: alloc::string::String
+pub openai_rs::UploadPart::object: alloc::string::String
+pub openai_rs::UploadPart::upload_id: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::clone(&self) -> openai_rs::UploadPart
+impl core::default::Default for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::default() -> openai_rs::UploadPart
+impl core::fmt::Debug for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::UploadPart
+pub fn openai_rs::UploadPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::UploadPart
+impl core::marker::Send for openai_rs::UploadPart
+impl core::marker::Sync for openai_rs::UploadPart
+impl core::marker::Unpin for openai_rs::UploadPart
+impl core::marker::UnsafeUnpin for openai_rs::UploadPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::UploadPart
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::UploadPart
 pub struct openai_rs::VectorStore
+pub openai_rs::VectorStore::created_at: core::option::Option<u64>
+pub openai_rs::VectorStore::description: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStore::expires_after: core::option::Option<openai_rs::VectorStoreExpiresAfter>
+pub openai_rs::VectorStore::expires_at: core::option::Option<u64>
 pub openai_rs::VectorStore::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
-pub openai_rs::VectorStore::file_counts: core::option::Option<serde_json::value::Value>
+pub openai_rs::VectorStore::file_counts: core::option::Option<openai_rs::VectorStoreFileCounts>
 pub openai_rs::VectorStore::id: alloc::string::String
-pub openai_rs::VectorStore::metadata: core::option::Option<serde_json::value::Value>
+pub openai_rs::VectorStore::last_active_at: core::option::Option<u64>
+pub openai_rs::VectorStore::metadata: core::option::Option<openai_rs::VectorStoreMetadata>
 pub openai_rs::VectorStore::name: core::option::Option<alloc::string::String>
 pub openai_rs::VectorStore::object: alloc::string::String
 pub openai_rs::VectorStore::status: core::option::Option<alloc::string::String>
@@ -8873,11 +10207,34 @@ impl core::marker::Unpin for openai_rs::VectorStore
 impl core::marker::UnsafeUnpin for openai_rs::VectorStore
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStore
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStore
+pub struct openai_rs::VectorStoreExpiresAfter
+pub openai_rs::VectorStoreExpiresAfter::anchor: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStoreExpiresAfter::days: core::option::Option<u64>
+pub openai_rs::VectorStoreExpiresAfter::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+impl core::clone::Clone for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::clone(&self) -> openai_rs::VectorStoreExpiresAfter
+impl core::default::Default for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::default() -> openai_rs::VectorStoreExpiresAfter
+impl core::fmt::Debug for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreExpiresAfter
+pub fn openai_rs::VectorStoreExpiresAfter::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreExpiresAfter
+impl core::marker::Send for openai_rs::VectorStoreExpiresAfter
+impl core::marker::Sync for openai_rs::VectorStoreExpiresAfter
+impl core::marker::Unpin for openai_rs::VectorStoreExpiresAfter
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreExpiresAfter
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreExpiresAfter
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreExpiresAfter
 pub struct openai_rs::VectorStoreFile
-pub openai_rs::VectorStoreFile::attributes: core::option::Option<serde_json::value::Value>
-pub openai_rs::VectorStoreFile::chunking_strategy: core::option::Option<serde_json::value::Value>
+pub openai_rs::VectorStoreFile::attributes: core::option::Option<openai_rs::VectorStoreAttributes>
+pub openai_rs::VectorStoreFile::chunking_strategy: core::option::Option<openai_rs::VectorStoreFileChunkingStrategy>
+pub openai_rs::VectorStoreFile::created_at: core::option::Option<u64>
 pub openai_rs::VectorStoreFile::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::VectorStoreFile::id: alloc::string::String
+pub openai_rs::VectorStoreFile::last_error: core::option::Option<openai_rs::VectorStoreFileLastError>
 pub openai_rs::VectorStoreFile::object: alloc::string::String
 pub openai_rs::VectorStoreFile::status: core::option::Option<alloc::string::String>
 pub openai_rs::VectorStoreFile::usage_bytes: core::option::Option<u64>
@@ -8900,8 +10257,9 @@ impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFile
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFile
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFile
 pub struct openai_rs::VectorStoreFileBatch
+pub openai_rs::VectorStoreFileBatch::created_at: core::option::Option<u64>
 pub openai_rs::VectorStoreFileBatch::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
-pub openai_rs::VectorStoreFileBatch::file_counts: core::option::Option<serde_json::value::Value>
+pub openai_rs::VectorStoreFileBatch::file_counts: core::option::Option<openai_rs::VectorStoreFileCounts>
 pub openai_rs::VectorStoreFileBatch::id: alloc::string::String
 pub openai_rs::VectorStoreFileBatch::object: alloc::string::String
 pub openai_rs::VectorStoreFileBatch::status: core::option::Option<alloc::string::String>
@@ -8923,8 +10281,95 @@ impl core::marker::Unpin for openai_rs::VectorStoreFileBatch
 impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileBatch
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileBatch
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileBatch
+pub struct openai_rs::VectorStoreFileContent
+pub openai_rs::VectorStoreFileContent::content_type: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStoreFileContent::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::VectorStoreFileContent::text: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::clone(&self) -> openai_rs::VectorStoreFileContent
+impl core::default::Default for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::default() -> openai_rs::VectorStoreFileContent
+impl core::fmt::Debug for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileContent
+pub fn openai_rs::VectorStoreFileContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileContent
+impl core::marker::Send for openai_rs::VectorStoreFileContent
+impl core::marker::Sync for openai_rs::VectorStoreFileContent
+impl core::marker::Unpin for openai_rs::VectorStoreFileContent
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileContent
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileContent
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileContent
+pub struct openai_rs::VectorStoreFileCounts
+pub openai_rs::VectorStoreFileCounts::cancelled: core::option::Option<u64>
+pub openai_rs::VectorStoreFileCounts::completed: core::option::Option<u64>
+pub openai_rs::VectorStoreFileCounts::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::VectorStoreFileCounts::failed: core::option::Option<u64>
+pub openai_rs::VectorStoreFileCounts::in_progress: core::option::Option<u64>
+pub openai_rs::VectorStoreFileCounts::total: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::clone(&self) -> openai_rs::VectorStoreFileCounts
+impl core::default::Default for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::default() -> openai_rs::VectorStoreFileCounts
+impl core::fmt::Debug for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileCounts
+pub fn openai_rs::VectorStoreFileCounts::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileCounts
+impl core::marker::Send for openai_rs::VectorStoreFileCounts
+impl core::marker::Sync for openai_rs::VectorStoreFileCounts
+impl core::marker::Unpin for openai_rs::VectorStoreFileCounts
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileCounts
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileCounts
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileCounts
+pub struct openai_rs::VectorStoreFileLastError
+pub openai_rs::VectorStoreFileLastError::code: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStoreFileLastError::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::VectorStoreFileLastError::message: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::clone(&self) -> openai_rs::VectorStoreFileLastError
+impl core::default::Default for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::default() -> openai_rs::VectorStoreFileLastError
+impl core::fmt::Debug for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreFileLastError
+pub fn openai_rs::VectorStoreFileLastError::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreFileLastError
+impl core::marker::Send for openai_rs::VectorStoreFileLastError
+impl core::marker::Sync for openai_rs::VectorStoreFileLastError
+impl core::marker::Unpin for openai_rs::VectorStoreFileLastError
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreFileLastError
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreFileLastError
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreFileLastError
+pub struct openai_rs::VectorStoreSearchContent
+pub openai_rs::VectorStoreSearchContent::content_type: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStoreSearchContent::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::VectorStoreSearchContent::text: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::clone(&self) -> openai_rs::VectorStoreSearchContent
+impl core::default::Default for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::default() -> openai_rs::VectorStoreSearchContent
+impl core::fmt::Debug for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreSearchContent
+pub fn openai_rs::VectorStoreSearchContent::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreSearchContent
+impl core::marker::Send for openai_rs::VectorStoreSearchContent
+impl core::marker::Sync for openai_rs::VectorStoreSearchContent
+impl core::marker::Unpin for openai_rs::VectorStoreSearchContent
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreSearchContent
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreSearchContent
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreSearchContent
 pub struct openai_rs::VectorStoreSearchResponse
-pub openai_rs::VectorStoreSearchResponse::data: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::VectorStoreSearchResponse::data: alloc::vec::Vec<openai_rs::VectorStoreSearchResult>
 pub openai_rs::VectorStoreSearchResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::VectorStoreSearchResponse::object: alloc::string::String
 pub openai_rs::VectorStoreSearchResponse::search_query: core::option::Option<alloc::string::String>
@@ -8945,6 +10390,51 @@ impl core::marker::Unpin for openai_rs::VectorStoreSearchResponse
 impl core::marker::UnsafeUnpin for openai_rs::VectorStoreSearchResponse
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreSearchResponse
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreSearchResponse
+pub struct openai_rs::VectorStoreSearchResult
+pub openai_rs::VectorStoreSearchResult::attributes: core::option::Option<openai_rs::VectorStoreAttributes>
+pub openai_rs::VectorStoreSearchResult::content: alloc::vec::Vec<openai_rs::VectorStoreSearchContent>
+pub openai_rs::VectorStoreSearchResult::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::VectorStoreSearchResult::file_id: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStoreSearchResult::filename: core::option::Option<alloc::string::String>
+pub openai_rs::VectorStoreSearchResult::score: core::option::Option<f64>
+impl core::clone::Clone for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::clone(&self) -> openai_rs::VectorStoreSearchResult
+impl core::default::Default for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::default() -> openai_rs::VectorStoreSearchResult
+impl core::fmt::Debug for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreSearchResult
+pub fn openai_rs::VectorStoreSearchResult::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreSearchResult
+impl core::marker::Send for openai_rs::VectorStoreSearchResult
+impl core::marker::Sync for openai_rs::VectorStoreSearchResult
+impl core::marker::Unpin for openai_rs::VectorStoreSearchResult
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreSearchResult
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreSearchResult
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreSearchResult
+pub struct openai_rs::VectorStoreStaticFileChunkingStrategy
+pub openai_rs::VectorStoreStaticFileChunkingStrategy::chunk_overlap_tokens: core::option::Option<u64>
+pub openai_rs::VectorStoreStaticFileChunkingStrategy::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::VectorStoreStaticFileChunkingStrategy::max_chunk_size_tokens: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::clone(&self) -> openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::default::Default for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::default() -> openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::fmt::Debug for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::VectorStoreStaticFileChunkingStrategy
+pub fn openai_rs::VectorStoreStaticFileChunkingStrategy::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::Send for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::Sync for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::Unpin for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::marker::UnsafeUnpin for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::VectorStoreStaticFileChunkingStrategy
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::VectorStoreStaticFileChunkingStrategy
 pub struct openai_rs::Video
 pub openai_rs::Video::created_at: core::option::Option<u64>
 pub openai_rs::Video::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
@@ -9198,3 +10688,5 @@ pub type openai_rs::PageStream<T> = core::pin::Pin<alloc::boxed::Box<(dyn future
 pub type openai_rs::RealtimeStreamMessage = openai_rs::websocket::SocketStreamMessage<openai_rs::websocket::RealtimeServerEvent>
 pub type openai_rs::ResponsesStreamMessage = openai_rs::websocket::SocketStreamMessage<openai_rs::websocket::ResponsesServerEvent>
 pub type openai_rs::Result<T, E> = core::result::Result<T, E>
+pub type openai_rs::VectorStoreAttributes = alloc::collections::btree::map::BTreeMap<alloc::string::String, openai_rs::VectorStoreAttributeValue>
+pub type openai_rs::VectorStoreMetadata = alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>

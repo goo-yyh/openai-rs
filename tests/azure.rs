@@ -173,7 +173,7 @@ async fn test_should_preserve_azure_realtime_http_path_without_deployment_prefix
         .await
         .unwrap();
 
-    assert_eq!(response["secret"], "rt_secret");
+    assert_eq!(response.secret_value(), Some("rt_secret"));
 }
 
 #[test]

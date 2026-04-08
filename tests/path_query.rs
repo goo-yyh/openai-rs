@@ -3,7 +3,7 @@ use serde_json::json;
 use wiremock::matchers::{body_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, ConversationItem};
+use openai_rs::{Client, Completion, ConversationItem};
 
 #[tokio::test]
 async fn test_should_merge_default_query_and_request_query() {
@@ -12,7 +12,13 @@ async fn test_should_merge_default_query_and_request_query() {
         .and(path("/completions"))
         .and(query_param("api-version", "2025-01-01"))
         .and(query_param("request", "1"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "cmpl_query_1",
+            "object": "text_completion",
+            "created": 1,
+            "model": "gpt-5",
+            "choices": [{"index": 0, "finish_reason": "stop", "text": "ok", "logprobs": null}]
+        })))
         .mount(&server)
         .await;
 
@@ -24,7 +30,7 @@ async fn test_should_merge_default_query_and_request_query() {
         .build()
         .unwrap();
 
-    let _: serde_json::Value = client
+    let response: Completion = client
         .completions()
         .create()
         .extra_query("request", "1")
@@ -32,6 +38,7 @@ async fn test_should_merge_default_query_and_request_query() {
         .send()
         .await
         .unwrap();
+    assert_eq!(response.id, "cmpl_query_1");
 }
 
 #[tokio::test]
@@ -54,7 +61,7 @@ async fn test_should_encode_reserved_query_values() {
         .build()
         .unwrap();
 
-    let _: serde_json::Value = client
+    let response: Completion = client
         .completions()
         .create()
         .extra_query("note", "hello world/你好")
@@ -63,6 +70,7 @@ async fn test_should_encode_reserved_query_values() {
         .send()
         .await
         .unwrap();
+    assert_eq!(response.id, "cmpl_1");
 
     let requests = server.received_requests().await.unwrap();
     let raw_query = requests[0].url.query().unwrap_or_default().to_owned();

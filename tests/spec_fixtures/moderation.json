@@ -1,0 +1,21 @@
+{
+  "id": "modr_spec_1",
+  "model": "omni-moderation-latest",
+  "results": [
+    {
+      "categories": {
+        "violence": true,
+        "sexual": false
+      },
+      "category_applied_input_types": {
+        "violence": ["text"],
+        "sexual": ["text"]
+      },
+      "category_scores": {
+        "violence": 0.88,
+        "sexual": 0.01
+      },
+      "flagged": true
+    }
+  ]
+}

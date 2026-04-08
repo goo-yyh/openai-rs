@@ -314,7 +314,25 @@ impl PartialJsonParser {
 #[cfg(test)]
 mod tests {
     use super::parse_optional_json;
-    use serde_json::json;
+    use proptest::prelude::*;
+    use serde_json::{Value, json};
+
+    fn arb_json() -> impl Strategy<Value = Value> {
+        let leaf = prop_oneof![
+            any::<bool>().prop_map(Value::Bool),
+            any::<i64>().prop_map(Into::into),
+            "[^\\u0000-\\u001f]{0,16}".prop_map(Value::String),
+            Just(Value::Null),
+        ];
+
+        leaf.prop_recursive(4, 64, 8, |inner| {
+            prop_oneof![
+                prop::collection::vec(inner.clone(), 0..4).prop_map(Value::Array),
+                prop::collection::btree_map("[a-zA-Z0-9_]{1,8}", inner, 0..4)
+                    .prop_map(|map| Value::Object(map.into_iter().collect())),
+            ]
+        })
+    }
 
     #[test]
     fn test_should_parse_partial_json_object_snapshot() {
@@ -329,5 +347,20 @@ mod tests {
         assert_eq!(parse_optional_json("{\"city\":}"), None);
         assert_eq!(parse_optional_json("{\"items\":[1,,2]}"), None);
         assert_eq!(parse_optional_json("hello"), None);
+    }
+
+    proptest! {
+        #[test]
+        fn parse_optional_json_matches_serde_for_complete_payloads(value in arb_json()) {
+            let payload = serde_json::to_string(&value).unwrap();
+            prop_assert_eq!(parse_optional_json(&payload), Some(value));
+        }
+
+        #[test]
+        fn parse_optional_json_recovers_partial_string_snapshots(text in any::<String>()) {
+            let quoted = serde_json::to_string(&text).unwrap();
+            let partial = format!("{{\"value\":{}", &quoted[..quoted.len().saturating_sub(1)]);
+            prop_assert_eq!(parse_optional_json(&partial), Some(json!({ "value": text })));
+        }
     }
 }

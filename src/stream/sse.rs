@@ -39,13 +39,17 @@ impl LineDecoder {
                 }
                 b'\r' => {
                     let end = index;
-                    if index + 1 < self.buffer.len() && self.buffer[index + 1] == b'\n' {
-                        index += 1;
-                        lines.push(bytes_to_string(&self.buffer[start..end])?);
-                        start = index + 1;
+                    if index + 1 < self.buffer.len() {
+                        if self.buffer[index + 1] == b'\n' {
+                            index += 1;
+                            lines.push(bytes_to_string(&self.buffer[start..end])?);
+                            start = index + 1;
+                        } else {
+                            lines.push(bytes_to_string(&self.buffer[start..end])?);
+                            start = index + 1;
+                        }
                     } else {
-                        lines.push(bytes_to_string(&self.buffer[start..end])?);
-                        start = index + 1;
+                        break;
                     }
                 }
                 _ => {}
@@ -258,6 +262,86 @@ impl Stream for RawSseStream {
     }
 }
 
+#[cfg(test)]
+mod property_tests {
+    use proptest::prelude::*;
+
+    use super::LineDecoder;
+
+    #[derive(Debug, Clone, Copy)]
+    enum Separator {
+        Lf,
+        Cr,
+        CrLf,
+    }
+
+    impl Separator {
+        fn as_str(self) -> &'static str {
+            match self {
+                Self::Lf => "\n",
+                Self::Cr => "\r",
+                Self::CrLf => "\r\n",
+            }
+        }
+    }
+
+    fn separator_strategy() -> impl Strategy<Value = Separator> {
+        prop_oneof![
+            Just(Separator::Lf),
+            Just(Separator::Cr),
+            Just(Separator::CrLf),
+        ]
+    }
+
+    proptest! {
+        #[test]
+        fn line_decoder_preserves_lines_across_arbitrary_chunking(
+            lines in prop::collection::vec("[^\r\n]{0,16}", 1..8),
+            separator in separator_strategy(),
+            chunk_sizes in prop::collection::vec(1usize..8, 1..32),
+        ) {
+            let mut payload = String::new();
+            for line in lines.iter() {
+                payload.push_str(line);
+                payload.push_str(separator.as_str());
+            }
+
+            let mut decoder = LineDecoder::default();
+            let mut decoded = Vec::new();
+            let bytes = payload.as_bytes();
+            let mut offset = 0usize;
+
+            for chunk_size in chunk_sizes {
+                if offset >= bytes.len() {
+                    break;
+                }
+                let end = (offset + chunk_size).min(bytes.len());
+                decoded.extend(decoder.push(&bytes[offset..end]).unwrap());
+                offset = end;
+            }
+
+            if offset < bytes.len() {
+                decoded.extend(decoder.push(&bytes[offset..]).unwrap());
+            }
+
+            if let Some(tail) = decoder.finish().unwrap() {
+                decoded.push(tail);
+            }
+            prop_assert_eq!(decoded, lines);
+        }
+    }
+
+    #[test]
+    fn line_decoder_flushes_final_partial_line() {
+        let mut decoder = LineDecoder::default();
+        assert!(decoder.push(b"event: response.created").unwrap().is_empty());
+        assert_eq!(
+            decoder.finish().unwrap(),
+            Some("event: response.created".into())
+        );
+    }
+}
+
 /// 表示一个类型化后的 SSE 流。
 pub struct SseStream<T> {
     inner: Pin<Box<dyn Stream<Item = Result<T>> + Send>>,
@@ -319,6 +403,14 @@ mod tests {
         assert!(second.is_empty());
         let third = decoder.push(b"\n").unwrap();
         assert_eq!(third, vec![snowman.to_string()]);
+    }
+
+    #[test]
+    fn test_should_preserve_crlf_split_across_chunks() {
+        let mut decoder = LineDecoder::default();
+        assert_eq!(decoder.push(b"data: one\r").unwrap(), Vec::<String>::new());
+        assert_eq!(decoder.push(b"\n").unwrap(), vec!["data: one".to_string()]);
+        assert_eq!(decoder.finish().unwrap(), None);
     }
 
     #[test]

@@ -1,0 +1,79 @@
+{
+  "chat": {
+    "chat.completions.messages.list": {
+      "template": "/chat/completions/{completion_id}/messages"
+    }
+  },
+  "core": {
+    "completions.create": {
+      "template": "/completions"
+    },
+    "moderations.create": {
+      "template": "/moderations"
+    }
+  },
+  "responses": {
+    "responses.input_items.list": {
+      "template": "/responses/{response_id}/input_items"
+    },
+    "realtime.client_secrets.create": {
+      "template": "/realtime/client_secrets"
+    },
+    "realtime.calls.accept": {
+      "template": "/realtime/calls/{call_id}/accept"
+    },
+    "realtime.calls.hangup": {
+      "template": "/realtime/calls/{call_id}/hangup"
+    },
+    "realtime.calls.refer": {
+      "template": "/realtime/calls/{call_id}/refer"
+    },
+    "realtime.calls.reject": {
+      "template": "/realtime/calls/{call_id}/reject"
+    }
+  },
+  "uploads": {
+    "uploads.parts.create": {
+      "template": "/uploads/{upload_id}/parts"
+    }
+  },
+  "fine_tuning": {
+    "fine_tuning.alpha.graders.run": {
+      "template": "/fine_tuning/alpha/graders/run"
+    },
+    "fine_tuning.alpha.graders.validate": {
+      "template": "/fine_tuning/alpha/graders/validate"
+    },
+    "graders.grader_models": {
+      "template": "/graders/grader_models"
+    }
+  },
+  "beta_chatkit": {
+    "beta.chatkit.sessions.create": {
+      "template": "/chatkit/sessions"
+    },
+    "beta.chatkit.sessions.cancel": {
+      "template": "/chatkit/sessions/{session_id}/cancel"
+    },
+    "beta.chatkit.threads.retrieve": {
+      "template": "/chatkit/threads/{thread_id}"
+    },
+    "beta.chatkit.threads.list": {
+      "template": "/chatkit/threads"
+    },
+    "beta.chatkit.threads.list_items": {
+      "template": "/chatkit/threads/{thread_id}/items"
+    },
+    "beta.chatkit.threads.delete": {
+      "template": "/chatkit/threads/{thread_id}"
+    }
+  },
+  "beta_realtime": {
+    "beta.realtime.sessions.create": {
+      "template": "/realtime/sessions"
+    },
+    "beta.realtime.transcription_sessions.create": {
+      "template": "/realtime/transcription_sessions"
+    }
+  }
+}

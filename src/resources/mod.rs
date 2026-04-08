@@ -30,11 +30,15 @@ use crate::error::{Error, Result};
 #[cfg(feature = "tool-runner")]
 use crate::helpers::ToolDefinition;
 
-pub use beta::{BetaAssistant, BetaThread, BetaThreadMessage, BetaThreadRun, BetaThreadRunStep};
+pub use beta::{
+    BetaAssistant, BetaRealtimeSession, BetaRealtimeTranscriptionSession, BetaThread,
+    BetaThreadMessage, BetaThreadRun, BetaThreadRunStep, ChatKitSession, ChatKitThread,
+    ChatKitThreadItem, ChatKitThreadStatus,
+};
 #[cfg(feature = "structured-output")]
 pub use chat::ChatCompletionParseRequestBuilder;
 pub use chat::{
-    AssistantStreamRequestBuilder, ChatCompletionCreateRequestBuilder,
+    AssistantStreamRequestBuilder, ChatCompletionCreateRequestBuilder, ChatCompletionStoreMessage,
     ChatCompletionStreamRequestBuilder,
 };
 #[cfg(feature = "tool-runner")]
@@ -42,9 +46,19 @@ pub use chat::{
     ChatCompletionRunToolsRequestBuilder, ChatCompletionRunner, ChatCompletionStreamingRunner,
     ChatCompletionToolResult,
 };
-pub use common::{BytesRequestBuilder, JsonRequestBuilder, ListRequestBuilder};
+pub use common::{
+    BytesRequestBuilder, JsonRequestBuilder, ListRequestBuilder, NoContentRequestBuilder,
+};
 pub(crate) use common::{
     TypedJsonRequestState, encode_path_segment, metadata_is_empty, value_from,
+};
+pub use core::{
+    Completion, CompletionChoice, CompletionLogProbs, CompletionUsage, ModerationCreateResponse,
+    ModerationResult,
+};
+pub use fine_tuning::{
+    GraderModel, GraderModelCatalog, GraderRunErrors, GraderRunMetadata, GraderRunResponse,
+    GraderValidateResponse,
 };
 pub use longtail::{
     AudioSpeechCreateParams, AudioSpeechRequestBuilder, AudioTranscription,
@@ -65,9 +79,16 @@ pub use responses::RealtimeSocketRequestBuilder;
 pub use responses::ResponseParseRequestBuilder;
 #[cfg(feature = "responses-ws")]
 pub use responses::ResponsesSocketRequestBuilder;
-pub use responses::{ResponseCreateRequestBuilder, ResponseStreamRequestBuilder};
+pub use responses::{
+    RealtimeClientSecretCreateResponse, RealtimeSessionClientSecret, ResponseCreateRequestBuilder,
+    ResponseStreamRequestBuilder,
+};
+pub use uploads::UploadPart;
 pub use vector_stores::{
-    VectorStore, VectorStoreFile, VectorStoreFileBatch, VectorStoreSearchResponse,
+    VectorStore, VectorStoreAttributeValue, VectorStoreAttributes, VectorStoreExpiresAfter,
+    VectorStoreFile, VectorStoreFileBatch, VectorStoreFileChunkingStrategy, VectorStoreFileContent,
+    VectorStoreFileCounts, VectorStoreFileLastError, VectorStoreMetadata, VectorStoreSearchContent,
+    VectorStoreSearchResponse, VectorStoreSearchResult, VectorStoreStaticFileChunkingStrategy,
 };
 
 macro_rules! handle {

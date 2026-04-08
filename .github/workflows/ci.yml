@@ -33,11 +33,18 @@ jobs:
         with:
           tool: cargo-public-api
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
       - name: Install nightly for cargo-public-api
         run: rustup toolchain install nightly --profile minimal
 
       - name: Format
         run: cargo fmt --all -- --check
+
+      - name: Generated Endpoint Catalog
+        run: python3 ./scripts/generate_endpoints.py --check
 
       - name: Cargo Deny
         run: cargo deny check
@@ -48,6 +55,9 @@ jobs:
       - name: Examples
         run: cargo check --examples --all-features
 
+      - name: Ecosystem Fixtures
+        run: bash ./scripts/check-ecosystem.sh
+
       - name: Docs.rs-style docs build
         env:
           RUSTDOCFLAGS: --cfg docsrs
@@ -55,6 +65,9 @@ jobs:
 
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Nextest
+        run: cargo nextest run --all-features
 
   cargo-check:
     strategy:

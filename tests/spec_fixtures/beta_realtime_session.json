@@ -1,0 +1,10 @@
+{
+  "id": "sess_spec_1",
+  "type": "realtime",
+  "model": "gpt-4o-realtime-preview",
+  "modalities": ["text", "audio"],
+  "client_secret": {
+    "expires_at": 1700000000,
+    "value": "ek_beta_fixture_1"
+  }
+}

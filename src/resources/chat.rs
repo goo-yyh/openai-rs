@@ -18,6 +18,7 @@ use tokio_util::sync::CancellationToken;
 use crate::Client;
 use crate::config::RequestOptions;
 use crate::error::{Error, Result};
+use crate::generated::endpoints;
 #[cfg(feature = "structured-output")]
 use crate::helpers::{ParsedChatCompletion, parse_json_payload};
 #[cfg(feature = "tool-runner")]
@@ -39,6 +40,28 @@ use super::{
     ChatCompletionMessagesResource, ChatCompletionsResource, ChatResource, ChatToolDefinition,
     DeleteResponse, JsonRequestBuilder, ListRequestBuilder, encode_path_segment, value_from,
 };
+
+/// 表示已存储 chat completion 下的消息对象。
+#[derive(Debug, Clone, Serialize, serde::Deserialize, Default)]
+pub struct ChatCompletionStoreMessage {
+    /// 消息 ID。
+    pub id: String,
+    /// 角色。
+    #[serde(default)]
+    pub role: String,
+    /// 文本内容。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub content: Option<String>,
+    /// content parts。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub content_parts: Vec<Value>,
+    /// 工具调用。
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub tool_calls: Vec<super::ChatCompletionToolCall>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
 
 impl ChatResource {
     /// 返回聊天补全资源。
@@ -119,14 +142,15 @@ impl ChatCompletionsResource {
 
 impl ChatCompletionMessagesResource {
     /// 列出某个聊天补全下的消息。
-    pub fn list(&self, completion_id: impl Into<String>) -> ListRequestBuilder<Value> {
+    pub fn list(
+        &self,
+        completion_id: impl Into<String>,
+    ) -> ListRequestBuilder<ChatCompletionStoreMessage> {
+        let endpoint = endpoints::chat::CHAT_COMPLETIONS_MESSAGES_LIST;
         ListRequestBuilder::new(
             self.client.clone(),
-            "chat.completions.messages.list",
-            format!(
-                "/chat/completions/{}/messages",
-                encode_path_segment(completion_id.into())
-            ),
+            endpoint.id,
+            endpoint.render(&[("completion_id", &encode_path_segment(completion_id.into()))]),
         )
     }
 }

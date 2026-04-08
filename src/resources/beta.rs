@@ -10,6 +10,7 @@ use tokio::time::sleep;
 
 use crate::Client;
 use crate::error::{Error, Result};
+use crate::generated::endpoints;
 
 #[cfg(feature = "realtime")]
 use super::RealtimeSocketRequestBuilder;
@@ -19,7 +20,7 @@ use super::{
     BetaRealtimeSessionsResource, BetaRealtimeTranscriptionSessionsResource, BetaResource,
     BetaThreadMessagesResource, BetaThreadRunStepsResource, BetaThreadRunsResource,
     BetaThreadsResource, DeleteResponse, JsonRequestBuilder, ListRequestBuilder,
-    encode_path_segment,
+    RealtimeSessionClientSecret, encode_path_segment,
 };
 
 /// 表示 beta assistant 对象。
@@ -147,6 +148,133 @@ pub struct BetaThreadRunStep {
     pub step_details: Option<Value>,
     /// 用量。
     pub usage: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 ChatKit session 对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatKitSession {
+    /// session ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// ChatKit client secret。
+    pub client_secret: Option<String>,
+    /// 过期时间。
+    pub expires_at: Option<u64>,
+    /// 每分钟请求上限。
+    pub max_requests_per_1_minute: Option<u64>,
+    /// 会话状态。
+    pub status: Option<String>,
+    /// 用户标识。
+    pub user: Option<String>,
+    /// workflow 元数据。
+    pub workflow: Option<Value>,
+    /// ChatKit 配置。
+    pub chatkit_configuration: Option<Value>,
+    /// rate limit 配置。
+    pub rate_limits: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 ChatKit thread 状态。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatKitThreadStatus {
+    /// 状态类型。
+    #[serde(rename = "type")]
+    pub status_type: Option<String>,
+    /// 状态原因。
+    pub reason: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 ChatKit thread 对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatKitThread {
+    /// thread ID。
+    pub id: String,
+    /// 创建时间。
+    pub created_at: Option<u64>,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// thread 状态。
+    pub status: Option<ChatKitThreadStatus>,
+    /// 标题。
+    pub title: Option<String>,
+    /// 用户标识。
+    pub user: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 ChatKit thread item。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ChatKitThreadItem {
+    /// item ID。
+    pub id: String,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 所属 thread ID。
+    pub thread_id: Option<String>,
+    /// 创建时间。
+    pub created_at: Option<u64>,
+    /// item 类型。
+    #[serde(rename = "type")]
+    pub item_type: Option<String>,
+    /// message content。
+    #[serde(default)]
+    pub content: Vec<Value>,
+    /// client tool call 的参数。
+    pub arguments: Option<String>,
+    /// client tool call ID。
+    pub call_id: Option<String>,
+    /// client tool call 名称。
+    pub name: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 Beta Realtime session 对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaRealtimeSession {
+    /// 会话 ID。
+    pub id: Option<String>,
+    /// 会话类型。
+    #[serde(rename = "type")]
+    pub session_type: Option<String>,
+    /// 临时 client secret。
+    pub client_secret: Option<RealtimeSessionClientSecret>,
+    /// 模型 ID。
+    pub model: Option<String>,
+    /// 模态集合。
+    #[serde(default)]
+    pub modalities: Vec<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 Beta Realtime transcription session 对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaRealtimeTranscriptionSession {
+    /// 临时 client secret。
+    pub client_secret: Option<RealtimeSessionClientSecret>,
+    /// 输入音频格式。
+    pub input_audio_format: Option<String>,
+    /// 模态集合。
+    #[serde(default)]
+    pub modalities: Vec<String>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -694,68 +822,67 @@ impl BetaChatkitResource {
 
 impl BetaChatkitSessionsResource {
     /// 创建 chatkit session。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
-        beta_json(
+    pub fn create(&self) -> JsonRequestBuilder<ChatKitSession> {
+        let endpoint = endpoints::beta_chatkit::BETA_CHATKIT_SESSIONS_CREATE;
+        beta_chatkit_json(
             self.client.clone(),
-            "beta.chatkit.sessions.create",
+            endpoint.id,
             Method::POST,
-            "/chatkit/sessions",
+            endpoint.template,
         )
     }
 
     /// 取消 chatkit session。
-    pub fn cancel(&self, session_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
+    pub fn cancel(&self, session_id: impl Into<String>) -> JsonRequestBuilder<ChatKitSession> {
+        let endpoint = endpoints::beta_chatkit::BETA_CHATKIT_SESSIONS_CANCEL;
+        beta_chatkit_json(
             self.client.clone(),
-            "beta.chatkit.sessions.cancel",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/chatkit/sessions/{}/cancel",
-                encode_path_segment(session_id.into())
-            ),
+            endpoint.render(&[("session_id", &encode_path_segment(session_id.into()))]),
         )
     }
 }
 
 impl BetaChatkitThreadsResource {
     /// 获取 chatkit thread。
-    pub fn retrieve(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<Value> {
-        beta_json(
+    pub fn retrieve(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<ChatKitThread> {
+        let endpoint = endpoints::beta_chatkit::BETA_CHATKIT_THREADS_RETRIEVE;
+        beta_chatkit_json(
             self.client.clone(),
-            "beta.chatkit.threads.retrieve",
+            endpoint.id,
             Method::GET,
-            format!("/chatkit/threads/{}", encode_path_segment(thread_id.into())),
+            endpoint.render(&[("thread_id", &encode_path_segment(thread_id.into()))]),
         )
     }
 
     /// 列出 chatkit threads。
-    pub fn list(&self) -> ListRequestBuilder<Value> {
-        beta_list(
-            self.client.clone(),
-            "beta.chatkit.threads.list",
-            "/chatkit/threads",
-        )
+    pub fn list(&self) -> ListRequestBuilder<ChatKitThread> {
+        let endpoint = endpoints::beta_chatkit::BETA_CHATKIT_THREADS_LIST;
+        beta_chatkit_list(self.client.clone(), endpoint.id, endpoint.template)
     }
 
     /// 列出 chatkit thread items。
-    pub fn list_items(&self, thread_id: impl Into<String>) -> ListRequestBuilder<Value> {
-        beta_list(
+    pub fn list_items(
+        &self,
+        thread_id: impl Into<String>,
+    ) -> ListRequestBuilder<ChatKitThreadItem> {
+        let endpoint = endpoints::beta_chatkit::BETA_CHATKIT_THREADS_LIST_ITEMS;
+        beta_chatkit_list(
             self.client.clone(),
-            "beta.chatkit.threads.list_items",
-            format!(
-                "/chatkit/threads/{}/items",
-                encode_path_segment(thread_id.into())
-            ),
+            endpoint.id,
+            endpoint.render(&[("thread_id", &encode_path_segment(thread_id.into()))]),
         )
     }
 
     /// 删除 chatkit thread。
     pub fn delete(&self, thread_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
-        beta_json(
+        let endpoint = endpoints::beta_chatkit::BETA_CHATKIT_THREADS_DELETE;
+        beta_chatkit_json(
             self.client.clone(),
-            "beta.chatkit.threads.delete",
+            endpoint.id,
             Method::DELETE,
-            format!("/chatkit/threads/{}", encode_path_segment(thread_id.into())),
+            endpoint.render(&[("thread_id", &encode_path_segment(thread_id.into()))]),
         )
     }
 }
@@ -781,24 +908,26 @@ impl BetaRealtimeResource {
 
 impl BetaRealtimeSessionsResource {
     /// 创建 beta realtime session。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<BetaRealtimeSession> {
+        let endpoint = endpoints::beta_realtime::BETA_REALTIME_SESSIONS_CREATE;
         beta_json(
             self.client.clone(),
-            "beta.realtime.sessions.create",
+            endpoint.id,
             Method::POST,
-            "/realtime/sessions",
+            endpoint.template,
         )
     }
 }
 
 impl BetaRealtimeTranscriptionSessionsResource {
     /// 创建 beta realtime transcription session。
-    pub fn create(&self) -> JsonRequestBuilder<Value> {
+    pub fn create(&self) -> JsonRequestBuilder<BetaRealtimeTranscriptionSession> {
+        let endpoint = endpoints::beta_realtime::BETA_REALTIME_TRANSCRIPTION_SESSIONS_CREATE;
         beta_json(
             self.client.clone(),
-            "beta.realtime.transcription_sessions.create",
+            endpoint.id,
             Method::POST,
-            "/realtime/transcription_sessions",
+            endpoint.template,
         )
     }
 }
@@ -819,6 +948,25 @@ fn beta_list<T>(
     path: impl Into<String>,
 ) -> ListRequestBuilder<T> {
     ListRequestBuilder::new(client, endpoint_id, path).extra_header("openai-beta", "assistants=v2")
+}
+
+fn beta_chatkit_json<T>(
+    client: Client,
+    endpoint_id: &'static str,
+    method: Method,
+    path: impl Into<String>,
+) -> JsonRequestBuilder<T> {
+    JsonRequestBuilder::new(client, endpoint_id, method, path)
+        .extra_header("openai-beta", "chatkit_beta=v1")
+}
+
+fn beta_chatkit_list<T>(
+    client: Client,
+    endpoint_id: &'static str,
+    path: impl Into<String>,
+) -> ListRequestBuilder<T> {
+    ListRequestBuilder::new(client, endpoint_id, path)
+        .extra_header("openai-beta", "chatkit_beta=v1")
 }
 
 fn beta_assistant_stream(

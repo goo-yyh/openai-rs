@@ -31,10 +31,11 @@ mod enabled {
     #[cfg(feature = "realtime")]
     use crate::providers::ProviderKind;
     use crate::transport::{join_url, prepare_request_context};
-    use crate::websocket::{
-        RealtimeServerEvent, RealtimeStreamMessage, ResponsesServerEvent, ResponsesStreamMessage,
-        SocketCloseOptions, SocketStreamMessage, WebSocketServerEvent,
-    };
+    #[cfg(feature = "realtime")]
+    use crate::websocket::{RealtimeServerEvent, RealtimeStreamMessage};
+    #[cfg(feature = "responses-ws")]
+    use crate::websocket::{ResponsesServerEvent, ResponsesStreamMessage};
+    use crate::websocket::{SocketCloseOptions, SocketStreamMessage, WebSocketServerEvent};
 
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     enum ConnectionState {

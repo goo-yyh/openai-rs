@@ -4,7 +4,7 @@ use serial_test::serial;
 use wiremock::matchers::{body_json, header, header_exists, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, Provider};
+use openai_rs::{Client, Completion, Provider};
 
 #[derive(Debug)]
 struct EnvGuard {
@@ -87,7 +87,13 @@ async fn test_should_merge_default_headers_and_request_headers() {
         .and(header("x-request", "2"))
         .and(header_exists("authorization"))
         .and(body_json(json!({"model": "gpt-5", "prompt": "hello"})))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"id":"cmpl_1"})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id":"cmpl_1",
+            "object": "text_completion",
+            "created": 1,
+            "model": "gpt-5",
+            "choices": [{"index": 0, "finish_reason": "stop", "text": "ok", "logprobs": null}]
+        })))
         .mount(&server)
         .await;
 
@@ -99,7 +105,7 @@ async fn test_should_merge_default_headers_and_request_headers() {
         .build()
         .unwrap();
 
-    let value: serde_json::Value = client
+    let value: Completion = client
         .completions()
         .create()
         .extra_header("x-request", "2")
@@ -107,7 +113,7 @@ async fn test_should_merge_default_headers_and_request_headers() {
         .send()
         .await
         .unwrap();
-    assert_eq!(value["id"], "cmpl_1");
+    assert_eq!(value.id, "cmpl_1");
 }
 
 #[tokio::test]
@@ -117,7 +123,13 @@ async fn test_should_remove_header_when_value_is_none() {
     Mock::given(method("POST"))
         .and(path("/completions"))
         .and(header("x-keep", "yes"))
-        .respond_with(ResponseTemplate::new(200).set_body_json(json!({"ok": true})))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id":"cmpl_header_1",
+            "object": "text_completion",
+            "created": 1,
+            "model": "gpt-5",
+            "choices": [{"index": 0, "finish_reason": "stop", "text": "ok", "logprobs": null}]
+        })))
         .mount(&server)
         .await;
 
@@ -130,7 +142,7 @@ async fn test_should_remove_header_when_value_is_none() {
         .build()
         .unwrap();
 
-    let _: serde_json::Value = client
+    let response: Completion = client
         .completions()
         .create()
         .remove_header("x-remove")
@@ -138,6 +150,7 @@ async fn test_should_remove_header_when_value_is_none() {
         .send()
         .await
         .unwrap();
+    assert_eq!(response.id, "cmpl_header_1");
 }
 
 #[tokio::test]

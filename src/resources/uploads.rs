@@ -1,11 +1,33 @@
 //! Upload namespace implementations.
 
+use std::collections::BTreeMap;
+
 use http::Method;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use crate::generated::endpoints;
 
 use super::{
     JsonRequestBuilder, UploadObject, UploadPartsResource, UploadsResource, encode_path_segment,
 };
+
+/// 表示 upload part 对象。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct UploadPart {
+    /// part ID。
+    pub id: String,
+    /// 创建时间。
+    pub created_at: Option<u64>,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 所属 upload ID。
+    pub upload_id: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
 
 impl UploadsResource {
     /// 创建 upload。
@@ -49,12 +71,13 @@ impl UploadsResource {
 
 impl UploadPartsResource {
     /// 创建 upload part。
-    pub fn create(&self, upload_id: impl Into<String>) -> JsonRequestBuilder<Value> {
+    pub fn create(&self, upload_id: impl Into<String>) -> JsonRequestBuilder<UploadPart> {
+        let endpoint = endpoints::uploads::UPLOADS_PARTS_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "uploads.parts.create",
+            endpoint.id,
             Method::POST,
-            format!("/uploads/{}/parts", encode_path_segment(upload_id.into())),
+            endpoint.render(&[("upload_id", &encode_path_segment(upload_id.into()))]),
         )
     }
 }
