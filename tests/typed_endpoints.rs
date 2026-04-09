@@ -269,12 +269,10 @@ async fn test_should_deserialize_realtime_client_secret_response() {
     Mock::given(method("POST"))
         .and(path("/realtime/client_secrets"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
-            "client_secret": {
-                "expires_at": 1700000000,
-                "value": "ek_test_123"
-            },
-            "type": "realtime",
+            "value": "ek_test_123",
+            "expires_at": 1700000000,
             "session": {
+                "type": "realtime",
                 "model": "gpt-realtime"
             }
         })))
@@ -298,7 +296,15 @@ async fn test_should_deserialize_realtime_client_secret_response() {
         .unwrap();
 
     assert_eq!(response.secret_value(), Some("ek_test_123"));
-    assert_eq!(response.session_type.as_deref(), Some("realtime"));
+    assert_eq!(response.expires_at, Some(1700000000));
+    assert_eq!(
+        response
+            .session
+            .as_ref()
+            .and_then(|session| session.as_raw().get("type"))
+            .and_then(|session_type| session_type.as_str()),
+        Some("realtime")
+    );
     assert_eq!(
         response
             .session

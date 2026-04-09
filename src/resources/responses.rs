@@ -52,6 +52,10 @@ pub struct RealtimeSessionClientSecret {
 /// `realtime.client_secrets.create` 的返回值。
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct RealtimeClientSecretCreateResponse {
+    /// 官方 documented spec 返回的顶层 secret 值。
+    pub value: Option<String>,
+    /// 官方 documented spec 返回的顶层过期时间。
+    pub expires_at: Option<u64>,
     /// 新版结构化 client secret。
     pub client_secret: Option<RealtimeSessionClientSecret>,
     /// 某些兼容 Provider 返回的扁平 secret 字段。
@@ -72,6 +76,7 @@ impl RealtimeClientSecretCreateResponse {
         self.client_secret
             .as_ref()
             .map(|secret| secret.value.as_str())
+            .or(self.value.as_deref())
             .or(self.secret.as_deref())
     }
 }
@@ -140,15 +145,12 @@ impl ResponsesResource {
     }
 
     /// 压缩 response。
-    pub fn compact(&self, response_id: impl Into<String>) -> JsonRequestBuilder<Response> {
+    pub fn compact(&self) -> JsonRequestBuilder<Response> {
         JsonRequestBuilder::new(
             self.client.clone(),
             "responses.compact",
             Method::POST,
-            format!(
-                "/responses/{}/compact",
-                encode_path_segment(response_id.into())
-            ),
+            "/responses/compact",
         )
     }
 

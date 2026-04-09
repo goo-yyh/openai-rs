@@ -738,6 +738,7 @@ More detail: [docs/provider-capability-matrix.md](./docs/provider-capability-mat
 - [API reference](./docs/api-reference.md)
 - [Examples index](./docs/examples.md)
 - [FAQ](./docs/faq.md)
+- [OpenAPI contract maintenance](./docs/openapi-contract.md)
 - [Streaming and Realtime](./docs/realtime-and-streaming.md)
 - [Structured output and tools](./docs/structured-output-and-tools.md)
 - [Migration notes](./docs/migration.md)

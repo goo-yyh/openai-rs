@@ -33,9 +33,10 @@ RELEASE_VERSION=0.1.0 bash ./scripts/check-release.sh
 6. `cargo deny check`
 7. `cargo check --examples --all-features`
 8. `bash ./scripts/check-ecosystem.sh`
-9. `python3 ./scripts/generate_endpoints.py --check`
-10. `RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps`
-11. `bash ./scripts/check-public-api.sh`
+9. `bash ./scripts/check-downstream-canaries.sh`
+10. `python3 ./scripts/generate_endpoints.py --check`
+11. `RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps`
+12. `bash ./scripts/check-public-api.sh`
 
 如果这次发布包含 provider 兼容性变更，建议额外跑手动 live workflow。
 
@@ -51,6 +52,7 @@ RELEASE_VERSION=0.1.0 bash ./scripts/check-release.sh
 - `cargo test --no-default-features`
 - `cargo test --all-features`
 - examples / ecosystem fixtures 校验
+- downstream canary 校验
 - `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo publish --dry-run --all-features`
 - docs.rs 风格文档构建检查

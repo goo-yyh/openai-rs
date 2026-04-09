@@ -213,7 +213,7 @@ pub(crate) mod evals {
     pub(crate) const EVALS_RUNS_CANCEL: PathTemplateEndpoint = PathTemplateEndpoint::new(
         "evals.runs.cancel",
         "POST",
-        "/evals/{eval_id}/runs/{run_id}/cancel",
+        "/evals/{eval_id}/runs/{run_id}",
     );
     pub(crate) const EVALS_RUNS_OUTPUT_ITEMS_RETRIEVE: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
@@ -366,9 +366,9 @@ pub(crate) mod videos {
     pub(crate) const VIDEOS_DELETE: PathTemplateEndpoint =
         PathTemplateEndpoint::new("videos.delete", "DELETE", "/videos/{video_id}");
     pub(crate) const VIDEOS_EDIT: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("videos.edit", "POST", "/videos/{video_id}/edit");
+        PathTemplateEndpoint::new("videos.edit", "POST", "/videos/edits");
     pub(crate) const VIDEOS_EXTEND: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("videos.extend", "POST", "/videos/{video_id}/extend");
+        PathTemplateEndpoint::new("videos.extend", "POST", "/videos/extensions");
     pub(crate) const VIDEOS_CREATE_CHARACTER: PathTemplateEndpoint =
         PathTemplateEndpoint::new("videos.create_character", "POST", "/videos/characters");
     pub(crate) const VIDEOS_GET_CHARACTER: PathTemplateEndpoint = PathTemplateEndpoint::new(

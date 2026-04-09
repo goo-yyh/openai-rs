@@ -1,0 +1,7 @@
+{
+  "documented_spec_url": "https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml",
+  "openai_openapi_repo_url": "https://github.com/openai/openai-openapi.git",
+  "openai_openapi_repo_head": "e1cb7a86ad53bb818c106ac7875e2a78182bb120",
+  "documented_spec_version": "2.3.0",
+  "fetched_at": "2026-04-10"
+}

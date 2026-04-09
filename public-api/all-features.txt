@@ -5483,10 +5483,12 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::Realtime
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::RealtimeCallsResource
 pub struct openai_rs::resources::RealtimeClientSecretCreateResponse
 pub openai_rs::resources::RealtimeClientSecretCreateResponse::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::expires_at: core::option::Option<u64>
 pub openai_rs::resources::RealtimeClientSecretCreateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::resources::RealtimeClientSecretCreateResponse::secret: core::option::Option<alloc::string::String>
 pub openai_rs::resources::RealtimeClientSecretCreateResponse::session: core::option::Option<openai_rs::resources::RealtimeSessionPayload>
 pub openai_rs::resources::RealtimeClientSecretCreateResponse::session_type: core::option::Option<alloc::string::String>
+pub openai_rs::resources::RealtimeClientSecretCreateResponse::value: core::option::Option<alloc::string::String>
 impl openai_rs::RealtimeClientSecretCreateResponse
 pub fn openai_rs::RealtimeClientSecretCreateResponse::secret_value(&self) -> core::option::Option<&str>
 impl core::clone::Clone for openai_rs::RealtimeClientSecretCreateResponse
@@ -6248,7 +6250,7 @@ impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseUsag
 pub struct openai_rs::resources::ResponsesResource
 impl openai_rs::resources::ResponsesResource
 pub fn openai_rs::resources::ResponsesResource::cancel(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::Response>
-pub fn openai_rs::resources::ResponsesResource::compact(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::Response>
+pub fn openai_rs::resources::ResponsesResource::compact(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::Response>
 pub fn openai_rs::resources::ResponsesResource::create(&self) -> openai_rs::resources::ResponseCreateRequestBuilder
 pub fn openai_rs::resources::ResponsesResource::delete(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::DeleteResponse>
 pub fn openai_rs::resources::ResponsesResource::input_items(&self) -> openai_rs::resources::ResponseInputItemsResource
@@ -6992,8 +6994,8 @@ pub fn openai_rs::resources::VideosResource::create(&self) -> openai_rs::resourc
 pub fn openai_rs::resources::VideosResource::create_character(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::VideoCharacter>
 pub fn openai_rs::resources::VideosResource::delete(&self, video_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::DeleteResponse>
 pub fn openai_rs::resources::VideosResource::download_content(&self, video_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::BytesRequestBuilder
-pub fn openai_rs::resources::VideosResource::edit(&self, video_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::Video>
-pub fn openai_rs::resources::VideosResource::extend(&self, video_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::Video>
+pub fn openai_rs::resources::VideosResource::edit(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::Video>
+pub fn openai_rs::resources::VideosResource::extend(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::Video>
 pub fn openai_rs::resources::VideosResource::get_character(&self, character_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::VideoCharacter>
 pub fn openai_rs::resources::VideosResource::list(&self) -> openai_rs::resources::ListRequestBuilder<openai_rs::Video>
 pub fn openai_rs::resources::VideosResource::remix(&self, video_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::Video>
@@ -12880,10 +12882,12 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::RawSseStream
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::RawSseStream
 pub struct openai_rs::RealtimeClientSecretCreateResponse
 pub openai_rs::RealtimeClientSecretCreateResponse::client_secret: core::option::Option<openai_rs::RealtimeSessionClientSecret>
+pub openai_rs::RealtimeClientSecretCreateResponse::expires_at: core::option::Option<u64>
 pub openai_rs::RealtimeClientSecretCreateResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::RealtimeClientSecretCreateResponse::secret: core::option::Option<alloc::string::String>
 pub openai_rs::RealtimeClientSecretCreateResponse::session: core::option::Option<openai_rs::resources::RealtimeSessionPayload>
 pub openai_rs::RealtimeClientSecretCreateResponse::session_type: core::option::Option<alloc::string::String>
+pub openai_rs::RealtimeClientSecretCreateResponse::value: core::option::Option<alloc::string::String>
 impl openai_rs::RealtimeClientSecretCreateResponse
 pub fn openai_rs::RealtimeClientSecretCreateResponse::secret_value(&self) -> core::option::Option<&str>
 impl core::clone::Clone for openai_rs::RealtimeClientSecretCreateResponse

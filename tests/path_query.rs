@@ -212,10 +212,7 @@ async fn test_should_encode_generated_eval_cancel_path_segments() {
         .unwrap();
 
     let requests = server.received_requests().await.unwrap();
-    assert_eq!(
-        requests[0].url.path(),
-        "/evals/eval%2F1/runs/run%3F2/cancel"
-    );
+    assert_eq!(requests[0].url.path(), "/evals/eval%2F1/runs/run%3F2");
 }
 
 #[tokio::test]
@@ -282,6 +279,95 @@ async fn test_should_encode_generated_vector_store_file_batch_list_path_segments
         requests[0].url.path(),
         "/vector_stores/vs%2F1/file_batches/batch%3F2/files"
     );
+}
+
+#[tokio::test]
+async fn test_should_use_documented_responses_compact_path() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses/compact"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_compact_1",
+            "object": "response",
+            "status": "completed",
+            "output": []
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client
+        .responses()
+        .compact()
+        .body_value(json!({
+            "model": "gpt-5.4",
+            "input": "hello"
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.id, "resp_compact_1");
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(requests[0].url.path(), "/responses/compact");
+}
+
+#[tokio::test]
+async fn test_should_use_documented_video_edit_path() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/videos/edits"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "video_edit_1",
+            "object": "video"
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client.videos().edit().send().await.unwrap();
+
+    assert_eq!(response.id, "video_edit_1");
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(requests[0].url.path(), "/videos/edits");
+}
+
+#[tokio::test]
+async fn test_should_use_documented_video_extend_path() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/videos/extensions"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "video_extend_1",
+            "object": "video"
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client.videos().extend().send().await.unwrap();
+
+    assert_eq!(response.id, "video_extend_1");
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(requests[0].url.path(), "/videos/extensions");
 }
 
 #[tokio::test]

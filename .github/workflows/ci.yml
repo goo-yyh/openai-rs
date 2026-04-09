@@ -58,6 +58,9 @@ jobs:
       - name: Ecosystem Fixtures
         run: bash ./scripts/check-ecosystem.sh
 
+      - name: Downstream Canaries
+        run: bash ./scripts/check-downstream-canaries.sh
+
       - name: Docs.rs-style docs build
         env:
           RUSTDOCFLAGS: --cfg docsrs

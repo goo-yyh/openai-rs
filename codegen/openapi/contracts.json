@@ -1,0 +1,165 @@
+{
+  "documented_generated_exceptions": {
+    "graders.grader_models": "The documented OpenAPI snapshot does not currently publish a grader-model catalog endpoint; keep this as an explicit compatibility exception until it is added upstream."
+  },
+  "manual_endpoints": {
+    "responses.create": {
+      "method": "POST",
+      "template": "/responses"
+    },
+    "responses.retrieve": {
+      "method": "GET",
+      "template": "/responses/{response_id}"
+    },
+    "responses.delete": {
+      "method": "DELETE",
+      "template": "/responses/{response_id}"
+    },
+    "responses.cancel": {
+      "method": "POST",
+      "template": "/responses/{response_id}/cancel"
+    },
+    "responses.compact": {
+      "method": "POST",
+      "template": "/responses/compact"
+    },
+    "chat.completions.create": {
+      "method": "POST",
+      "template": "/chat/completions"
+    },
+    "chat.completions.retrieve": {
+      "method": "GET",
+      "template": "/chat/completions/{completion_id}"
+    },
+    "chat.completions.update": {
+      "method": "POST",
+      "template": "/chat/completions/{completion_id}"
+    },
+    "chat.completions.list": {
+      "method": "GET",
+      "template": "/chat/completions"
+    },
+    "chat.completions.delete": {
+      "method": "DELETE",
+      "template": "/chat/completions/{completion_id}"
+    },
+    "embeddings.create": {
+      "method": "POST",
+      "template": "/embeddings"
+    },
+    "models.list": {
+      "method": "GET",
+      "template": "/models"
+    },
+    "models.retrieve": {
+      "method": "GET",
+      "template": "/models/{model_id}"
+    },
+    "models.delete": {
+      "method": "DELETE",
+      "template": "/models/{model_id}"
+    },
+    "files.create": {
+      "method": "POST",
+      "template": "/files"
+    },
+    "files.retrieve": {
+      "method": "GET",
+      "template": "/files/{file_id}"
+    },
+    "files.list": {
+      "method": "GET",
+      "template": "/files"
+    },
+    "files.delete": {
+      "method": "DELETE",
+      "template": "/files/{file_id}"
+    },
+    "files.content": {
+      "method": "GET",
+      "template": "/files/{file_id}/content"
+    },
+    "uploads.create": {
+      "method": "POST",
+      "template": "/uploads"
+    },
+    "uploads.cancel": {
+      "method": "POST",
+      "template": "/uploads/{upload_id}/cancel"
+    },
+    "uploads.complete": {
+      "method": "POST",
+      "template": "/uploads/{upload_id}/complete"
+    },
+    "images.generate": {
+      "method": "POST",
+      "template": "/images/generations"
+    },
+    "images.edit": {
+      "method": "POST",
+      "template": "/images/edits"
+    },
+    "images.create_variation": {
+      "method": "POST",
+      "template": "/images/variations"
+    }
+  },
+  "shape_assertions": {
+    "responses.create": {
+      "method": "POST",
+      "template": "/responses",
+      "success_status": "200",
+      "request_properties": ["model", "input"],
+      "response_properties": ["id", "status", "model", "output", "usage"]
+    },
+    "responses.compact": {
+      "method": "POST",
+      "template": "/responses/compact",
+      "success_status": "200",
+      "request_properties": ["model", "input"],
+      "response_properties": ["id", "output"]
+    },
+    "chat.completions.create": {
+      "method": "POST",
+      "template": "/chat/completions",
+      "success_status": "200",
+      "request_properties": ["model", "messages"],
+      "response_properties": ["id", "model", "choices", "usage"]
+    },
+    "embeddings.create": {
+      "method": "POST",
+      "template": "/embeddings",
+      "success_status": "200",
+      "request_properties": ["model", "input"],
+      "response_properties": ["object", "data", "usage"]
+    },
+    "batches.create": {
+      "method": "POST",
+      "template": "/batches",
+      "success_status": "200",
+      "request_properties": ["input_file_id", "endpoint", "completion_window"],
+      "response_properties": ["id", "status", "request_counts", "errors", "usage"]
+    },
+    "responses.input_tokens.count": {
+      "method": "POST",
+      "template": "/responses/input_tokens",
+      "success_status": "200",
+      "request_properties": ["model", "input"],
+      "response_properties": ["object", "input_tokens"]
+    },
+    "realtime.client_secrets.create": {
+      "method": "POST",
+      "template": "/realtime/client_secrets",
+      "success_status": "200",
+      "request_properties": ["session"],
+      "response_properties": ["value", "expires_at", "session"]
+    },
+    "vector_stores.file_batches.create": {
+      "method": "POST",
+      "template": "/vector_stores/{vector_store_id}/file_batches",
+      "success_status": "200",
+      "request_properties": ["files"],
+      "response_properties": ["id", "vector_store_id", "status", "file_counts"]
+    }
+  }
+}

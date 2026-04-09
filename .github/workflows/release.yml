@@ -67,6 +67,9 @@ jobs:
       - name: Ecosystem Fixtures
         run: bash ./scripts/check-ecosystem.sh
 
+      - name: Downstream Canaries
+        run: bash ./scripts/check-downstream-canaries.sh
+
       - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 

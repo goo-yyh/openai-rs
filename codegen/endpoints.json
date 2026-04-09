@@ -135,7 +135,7 @@
       "method": "DELETE"
     },
     "evals.runs.cancel": {
-      "template": "/evals/{eval_id}/runs/{run_id}/cancel",
+      "template": "/evals/{eval_id}/runs/{run_id}",
       "method": "POST"
     },
     "evals.runs.output_items.retrieve": {
@@ -249,11 +249,11 @@
       "method": "DELETE"
     },
     "videos.edit": {
-      "template": "/videos/{video_id}/edit",
+      "template": "/videos/edits",
       "method": "POST"
     },
     "videos.extend": {
-      "template": "/videos/{video_id}/extend",
+      "template": "/videos/extensions",
       "method": "POST"
     },
     "videos.create_character": {

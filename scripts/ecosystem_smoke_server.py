@@ -62,12 +62,10 @@ CHAT_COMPLETION_PAYLOAD = {
 }
 
 REALTIME_SECRET_PAYLOAD = {
-    "client_secret": {
-        "expires_at": 1_900_000_000,
-        "value": "ek_fixture_123",
-    },
-    "type": "realtime",
+    "value": "ek_fixture_123",
+    "expires_at": 1_900_000_000,
     "session": {
+        "type": "realtime",
         "model": "gpt-realtime",
     },
 }

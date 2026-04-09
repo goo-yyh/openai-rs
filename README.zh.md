@@ -704,6 +704,7 @@ cargo run --example responses_websocket --features responses-ws
 - [API 参考总览](./docs/api-reference.md)
 - [Examples 索引](./docs/examples.md)
 - [FAQ](./docs/faq.md)
+- [OpenAPI contract 维护](./docs/openapi-contract.md)
 - [流式与 Realtime](./docs/realtime-and-streaming.md)
 - [Structured Output 与 Tool Runner](./docs/structured-output-and-tools.md)
 - [迁移说明](./docs/migration.md)

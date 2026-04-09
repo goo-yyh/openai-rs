@@ -52,26 +52,24 @@ impl VideosResource {
     }
 
     /// 编辑视频。
-    pub fn edit(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
-        let video_id = encode_path_segment(video_id.into());
+    pub fn edit(&self) -> JsonRequestBuilder<Video> {
         let endpoint = endpoints::videos::VIDEOS_EDIT;
         JsonRequestBuilder::new(
             self.client.clone(),
             endpoint.id,
             Method::POST,
-            endpoint.render(&[("video_id", &video_id)]),
+            endpoint.template,
         )
     }
 
     /// 扩展视频。
-    pub fn extend(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
-        let video_id = encode_path_segment(video_id.into());
+    pub fn extend(&self) -> JsonRequestBuilder<Video> {
         let endpoint = endpoints::videos::VIDEOS_EXTEND;
         JsonRequestBuilder::new(
             self.client.clone(),
             endpoint.id,
             Method::POST,
-            endpoint.render(&[("video_id", &video_id)]),
+            endpoint.template,
         )
     }
 
