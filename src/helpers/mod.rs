@@ -14,6 +14,8 @@ use serde::de::DeserializeOwned;
 use serde_json::Value;
 
 use crate::error::{Error, Result};
+#[cfg(feature = "tool-runner")]
+use crate::json_payload::JsonPayload;
 use crate::resources::{ChatCompletion, Response};
 
 /// 返回指定类型对应的 JSON Schema。
@@ -102,7 +104,7 @@ pub struct ToolDefinition {
     /// 工具描述。
     pub description: Option<String>,
     /// 工具参数 JSON Schema。
-    pub parameters: Value,
+    pub parameters: JsonPayload,
     handler: Arc<dyn ToolHandler>,
 }
 
@@ -120,7 +122,12 @@ impl std::fmt::Debug for ToolDefinition {
 #[cfg(feature = "tool-runner")]
 impl ToolDefinition {
     /// 使用显式 JSON Schema 创建工具定义。
-    pub fn new<T, U, H>(name: T, description: Option<U>, parameters: Value, handler: H) -> Self
+    pub fn new<T, U, H>(
+        name: T,
+        description: Option<U>,
+        parameters: impl Into<JsonPayload>,
+        handler: H,
+    ) -> Self
     where
         T: Into<String>,
         U: Into<String>,
@@ -129,7 +136,7 @@ impl ToolDefinition {
         Self {
             name: name.into(),
             description: description.map(Into::into),
-            parameters,
+            parameters: parameters.into(),
             handler: Arc::new(handler),
         }
     }
@@ -145,7 +152,7 @@ impl ToolDefinition {
         Self {
             name: name.into(),
             description: description.map(Into::into),
-            parameters: json_schema_for::<TArgs>(),
+            parameters: json_schema_for::<TArgs>().into(),
             handler: Arc::new(handler),
         }
     }

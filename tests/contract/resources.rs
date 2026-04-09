@@ -165,7 +165,8 @@ async fn test_should_serialize_responses_tools_as_flat_objects() {
                         "b": {"type": "integer"}
                     },
                     "required": ["a", "b"]
-                }),
+                })
+                .into(),
             },
         })
         .send()
@@ -265,7 +266,7 @@ fn test_should_keep_full_assistant_message_for_tool_runner_history() {
         content: Some("text".into()),
         tool_calls: vec![],
         reasoning_content: Some("thinking".into()),
-        reasoning_details: vec![json!({"summary":"ok"})],
+        reasoning_details: vec![json!({"summary":"ok"}).into()],
         ..ChatCompletionMessage::default()
     };
 
@@ -484,7 +485,10 @@ async fn test_should_create_assistant_stream_and_build_snapshot() {
         Some("thread.run.completed")
     );
     assert_eq!(run.status.as_deref(), Some("completed"));
-    assert_eq!(message.content[0]["text"]["value"].as_str(), Some("hello"));
+    assert_eq!(
+        message.content[0].as_raw()["text"]["value"].as_str(),
+        Some("hello")
+    );
 }
 
 #[tokio::test]

@@ -735,6 +735,7 @@ More detail: [docs/provider-capability-matrix.md](./docs/provider-capability-mat
 ## Topic Guides
 
 - [Azure integration](./docs/azure.md)
+- [API reference](./docs/api-reference.md)
 - [Examples index](./docs/examples.md)
 - [FAQ](./docs/faq.md)
 - [Streaming and Realtime](./docs/realtime-and-streaming.md)

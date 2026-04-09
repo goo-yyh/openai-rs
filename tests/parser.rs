@@ -270,8 +270,8 @@ fn test_should_extract_chat_chunk_delta_helpers() {
     assert_eq!(chunk.content_deltas()[0].delta, "hel");
     assert_eq!(chunk.refusal_deltas()[0].delta, "no");
     assert_eq!(chunk.tool_argument_deltas()[0].delta, "{\"city\":\"Sha");
-    assert_eq!(chunk.logprobs_content_deltas()[0].values[0]["token"], "hel");
-    assert_eq!(chunk.logprobs_refusal_deltas()[0].values[0]["token"], "no");
+    assert_eq!(chunk.logprobs_content_deltas()[0].values[0].token, "hel");
+    assert_eq!(chunk.logprobs_refusal_deltas()[0].values[0].token, "no");
 }
 
 #[tokio::test]
@@ -321,7 +321,7 @@ async fn test_should_emit_chat_runtime_events() {
             }
             ChatCompletionRuntimeEvent::LogProbsContentDone(event) => {
                 saw_logprobs_done = true;
-                assert_eq!(event.values[0]["token"], "hel");
+                assert_eq!(event.values[0].token, "hel");
             }
             _ => {}
         }
@@ -377,11 +377,11 @@ async fn test_should_parse_partial_json_in_chat_runtime_events() {
         if let ChatCompletionRuntimeEvent::ContentDelta(event) = event.unwrap() {
             if event.snapshot == "{\"city\":\"Sha" {
                 saw_partial = true;
-                assert_eq!(event.parsed, Some(json!({"city":"Sha"})));
+                assert_eq!(event.parsed, Some(json!({"city":"Sha"}).into()));
             }
             if event.snapshot == "{\"city\":\"Shanghai\"}" {
                 saw_final = true;
-                assert_eq!(event.parsed, Some(json!({"city":"Shanghai"})));
+                assert_eq!(event.parsed, Some(json!({"city":"Shanghai"}).into()));
             }
         }
     }
@@ -443,10 +443,13 @@ async fn test_should_emit_response_runtime_events() {
                 saw_arguments_delta = true;
                 assert_eq!(event.item_id.as_deref(), Some("fc_1"));
                 if event.snapshot == "{\"city\":\"Sha" {
-                    assert_eq!(event.parsed_arguments, Some(json!({"city":"Sha"})));
+                    assert_eq!(event.parsed_arguments, Some(json!({"city":"Sha"}).into()));
                 }
                 if event.snapshot == "{\"city\":\"Shanghai\"}" {
-                    assert_eq!(event.parsed_arguments, Some(json!({"city":"Shanghai"})));
+                    assert_eq!(
+                        event.parsed_arguments,
+                        Some(json!({"city":"Shanghai"}).into())
+                    );
                 }
             }
             ResponseRuntimeEvent::OutputTextDelta(event) => {

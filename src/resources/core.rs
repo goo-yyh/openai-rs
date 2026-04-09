@@ -85,9 +85,37 @@ pub struct CompletionUsage {
     /// 总 token 数。
     pub total_tokens: u64,
     /// prompt token 明细。
-    pub prompt_tokens_details: Option<Value>,
+    pub prompt_tokens_details: Option<CompletionUsagePromptTokensDetails>,
     /// completion token 明细。
-    pub completion_tokens_details: Option<Value>,
+    pub completion_tokens_details: Option<CompletionUsageCompletionTokensDetails>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 prompt token 的用量明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct CompletionUsagePromptTokensDetails {
+    /// prompt 中的音频 token 数。
+    pub audio_tokens: Option<u64>,
+    /// prompt 中命中的缓存 token 数。
+    pub cached_tokens: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 completion token 的用量明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
+pub struct CompletionUsageCompletionTokensDetails {
+    /// 预测命中的 token 数。
+    pub accepted_prediction_tokens: Option<u64>,
+    /// completion 中的音频 token 数。
+    pub audio_tokens: Option<u64>,
+    /// reasoning token 数。
+    pub reasoning_tokens: Option<u64>,
+    /// 预测未命中的 token 数。
+    pub rejected_prediction_tokens: Option<u64>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,

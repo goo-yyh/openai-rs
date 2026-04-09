@@ -10,6 +10,7 @@ use super::partial_json::parse_optional_json;
 use super::sse::SseStream;
 use super::value_helpers::{ensure_array_field, ensure_object, ensure_vec_len};
 use crate::error::Result;
+use crate::json_payload::JsonPayload;
 use crate::resources::Response;
 use crate::response_meta::ResponseMeta;
 
@@ -113,14 +114,14 @@ pub struct ResponseFunctionCallArgumentsEvent {
     /// 当前累计参数字符串。
     pub snapshot: String,
     /// 如果当前参数是合法 JSON，则提供解析结果。
-    pub parsed_arguments: Option<Value>,
+    pub parsed_arguments: Option<JsonPayload>,
 }
 
 /// 表示 Responses 流在运行时派生出的高层事件。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ResponseRuntimeEvent {
     /// 未专门派生的原始事件。
-    Raw(Value),
+    Raw(JsonPayload),
     /// 响应已创建。
     ResponseCreated(Response),
     /// 输出项已追加。
@@ -128,7 +129,7 @@ pub enum ResponseRuntimeEvent {
         /// 输出项索引。
         output_index: usize,
         /// 新增输出项。
-        item: Value,
+        item: JsonPayload,
         /// 当前响应快照。
         snapshot: Response,
     },
@@ -139,7 +140,7 @@ pub enum ResponseRuntimeEvent {
         /// 内容索引。
         content_index: usize,
         /// 新增内容片段。
-        part: Value,
+        part: JsonPayload,
         /// 当前响应快照。
         snapshot: Response,
     },
@@ -232,7 +233,7 @@ fn derive_response_runtime_event(
     match event_type.as_str() {
         "response.created" => snapshot
             .map(ResponseRuntimeEvent::ResponseCreated)
-            .unwrap_or(ResponseRuntimeEvent::Raw(event)),
+            .unwrap_or(ResponseRuntimeEvent::Raw(event.into())),
         "response.output_item.added" => {
             if let (Some(output_index), Some(item), Some(snapshot)) = (
                 event
@@ -244,11 +245,11 @@ fn derive_response_runtime_event(
             ) {
                 ResponseRuntimeEvent::OutputItemAdded {
                     output_index,
-                    item,
+                    item: item.into(),
                     snapshot,
                 }
             } else {
-                ResponseRuntimeEvent::Raw(event)
+                ResponseRuntimeEvent::Raw(event.into())
             }
         }
         "response.content_part.added" => {
@@ -267,11 +268,11 @@ fn derive_response_runtime_event(
                 ResponseRuntimeEvent::ContentPartAdded {
                     output_index,
                     content_index,
-                    part,
+                    part: part.into(),
                     snapshot,
                 }
             } else {
-                ResponseRuntimeEvent::Raw(event)
+                ResponseRuntimeEvent::Raw(event.into())
             }
         }
         "response.output_text.delta" | "response.output_text.done" => {
@@ -346,7 +347,7 @@ fn derive_response_runtime_event(
                 .unwrap_or(fallback_arguments);
             ResponseRuntimeEvent::FunctionCallArgumentsDelta(ResponseFunctionCallArgumentsEvent {
                 output_index,
-                parsed_arguments: parse_optional_json(&snapshot_arguments),
+                parsed_arguments: parse_optional_json(&snapshot_arguments).map(JsonPayload::from),
                 item_id,
                 delta,
                 snapshot: snapshot_arguments,
@@ -354,8 +355,8 @@ fn derive_response_runtime_event(
         }
         "response.completed" => snapshot
             .map(ResponseRuntimeEvent::Completed)
-            .unwrap_or(ResponseRuntimeEvent::Raw(event)),
-        _ => ResponseRuntimeEvent::Raw(event),
+            .unwrap_or(ResponseRuntimeEvent::Raw(event.into())),
+        _ => ResponseRuntimeEvent::Raw(event.into()),
     }
 }
 

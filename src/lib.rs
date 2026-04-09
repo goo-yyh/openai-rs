@@ -16,6 +16,7 @@ mod generated;
 #[cfg(feature = "structured-output")]
 #[cfg_attr(docsrs, doc(cfg(feature = "structured-output")))]
 pub mod helpers;
+mod json_payload;
 pub mod pagination;
 pub mod providers;
 pub mod resources;
@@ -43,35 +44,56 @@ pub use helpers::{ParsedChatCompletion, ParsedResponse, json_schema_for, parse_j
 #[cfg(feature = "tool-runner")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tool-runner")))]
 pub use helpers::{ToolDefinition, ToolHandler, ToolRegistry};
+pub use json_payload::JsonPayload;
 pub use pagination::{CursorPage, ListEnvelope, Page, PageStream};
 pub use providers::{
     AuthScheme, AzureAuthMode, AzureOptions, CapabilitySet, CompatibilityMode, Provider,
     ProviderKind, ProviderProfile,
 };
 pub use resources::{
-    AudioSpeechCreateParams, AudioTranscription, AudioTranslation, Batch, BatchCreateParams,
-    BetaAssistant, BetaRealtimeSession, BetaRealtimeTranscriptionSession, BetaThread,
-    BetaThreadMessage, BetaThreadRun, BetaThreadRunStep, ChatCompletion, ChatCompletionChunk,
-    ChatCompletionMessage, ChatCompletionStoreMessage, ChatCompletionToolCall,
-    ChatContentDeltaEvent, ChatKitSession, ChatKitThread, ChatKitThreadItem, ChatKitThreadStatus,
-    ChatLogProbsDeltaEvent, ChatRefusalDeltaEvent, ChatToolArgumentsDeltaEvent, Completion,
-    CompletionChoice, CompletionLogProbs, CompletionUsage, Container, ContainerCreateParams,
-    ContainerFile, ContainerFileCreateParams, Conversation, ConversationCreateParams,
-    ConversationItem, ConversationItemCreateParams, ConversationUpdateParams, DeleteResponse,
-    EmbeddingData, EmbeddingResponse, EmbeddingUsage, Eval, EvalCreateParams, EvalOutputItem,
-    EvalRun, EvalRunCreateParams, EvalUpdateParams, FileObject, FineTuningCheckpoint,
-    FineTuningCheckpointPermission, FineTuningJob, FineTuningJobCreateParams, FineTuningJobEvent,
-    GraderModel, GraderModelCatalog, GraderRunErrors, GraderRunMetadata, GraderRunResponse,
-    GraderValidateResponse, ImageData, ImageGenerateParams, ImageGenerationResponse, Model,
+    AudioSpeechCreateParams, AudioTranscription, AudioTranscriptionSegment,
+    AudioTranscriptionSegmentId, AudioTranscriptionWord, AudioTranslation, Batch,
+    BatchCreateParams, BatchError, BatchErrors, BatchRequestCounts, BatchUsage,
+    BatchUsageInputTokensDetails, BatchUsageOutputTokensDetails, BetaAssistant, BetaAssistantTool,
+    BetaRealtimeSession, BetaRealtimeTranscriptionSession, BetaThread, BetaThreadMessage,
+    BetaThreadMessageContent, BetaThreadRun, BetaThreadRunIncompleteDetails,
+    BetaThreadRunLastError, BetaThreadRunRequiredAction, BetaThreadRunRequiredActionFunction,
+    BetaThreadRunRequiredActionFunctionToolCall, BetaThreadRunRequiredActionSubmitToolOutputs,
+    BetaThreadRunStep, BetaThreadRunStepDetails, BetaThreadRunTool, BetaThreadRunUsage,
+    BetaThreadToolResources, ChatCompletion, ChatCompletionChoiceLogprobs, ChatCompletionChunk,
+    ChatCompletionMessage, ChatCompletionStoreContentPart, ChatCompletionStoreMessage,
+    ChatCompletionTokenLogprob, ChatCompletionTokenTopLogprob, ChatCompletionToolCall,
+    ChatContentDeltaEvent, ChatKitConfiguration, ChatKitRateLimits, ChatKitSession, ChatKitThread,
+    ChatKitThreadContent, ChatKitThreadItem, ChatKitThreadStatus, ChatKitWorkflow,
+    ChatLogProbsDeltaEvent, ChatReasoningDetail, ChatRefusalDeltaEvent,
+    ChatToolArgumentsDeltaEvent, ChatToolChoice, ChatToolChoiceMode, Completion, CompletionChoice,
+    CompletionLogProbs, CompletionUsage, CompletionUsageCompletionTokensDetails,
+    CompletionUsagePromptTokensDetails, Container, ContainerCreateParams, ContainerExpiresAfter,
+    ContainerFile, ContainerFileCreateParams, Conversation, ConversationContentPart,
+    ConversationCreateParams, ConversationInputItem, ConversationItem,
+    ConversationItemCreateParams, ConversationUpdateParams, DeleteResponse, EmbeddingData,
+    EmbeddingResponse, EmbeddingUsage, Eval, EvalCreateParams, EvalDataSourceConfig, EvalOutput,
+    EvalOutputItem, EvalRun, EvalRunCreateParams, EvalRunInput, EvalTestingCriterion,
+    EvalUpdateParams, FileObject, FineTuningCheckpoint, FineTuningCheckpointPermission,
+    FineTuningHyperparameterValue, FineTuningJob, FineTuningJobCreateParams, FineTuningJobError,
+    FineTuningJobEvent, FineTuningJobHyperparameters, FineTuningJobIntegration, FineTuningMetrics,
+    FineTuningWandbIntegration, GraderModel, GraderModelCatalog, GraderRunErrors,
+    GraderRunMetadata, GraderRunResponse, GraderValidateResponse, ImageData, ImageGenerateParams,
+    ImageGenerationResponse, InputTokenCount, KnownResponseOutputTextAnnotation, Model,
     ModerationCreateResponse, ModerationResult, RealtimeClientSecretCreateResponse,
-    RealtimeSessionClientSecret, Response, ResponseError, ResponseFunctionToolCall,
-    ResponseIncompleteDetails, ResponseInputTokensDetails, ResponseOutputContentPart,
-    ResponseOutputItem, ResponseOutputMessage, ResponseOutputRefusal, ResponseOutputText,
-    ResponseOutputTokensDetails, ResponseUsage, Skill, SkillCreateParams, SkillUpdateParams,
-    SkillVersion, SkillVersionCreateParams, UploadObject, UploadPart, VectorStore,
-    VectorStoreAttributeValue, VectorStoreAttributes, VectorStoreExpiresAfter, VectorStoreFile,
-    VectorStoreFileBatch, VectorStoreFileChunkingStrategy, VectorStoreFileContent,
-    VectorStoreFileCounts, VectorStoreFileLastError, VectorStoreMetadata, VectorStoreSearchContent,
+    RealtimeSessionClientSecret, RealtimeSessionPayload, Response, ResponseError,
+    ResponseFunctionToolCall, ResponseIncompleteDetails, ResponseInputItemPayload,
+    ResponseInputPayload, ResponseInputTokensDetails, ResponseOutputContentPart,
+    ResponseOutputContentPartRaw, ResponseOutputItem, ResponseOutputItemRaw, ResponseOutputMessage,
+    ResponseOutputRefusal, ResponseOutputText, ResponseOutputTextAnnotation,
+    ResponseOutputTextAnnotationUnknown, ResponseOutputTextContainerFileCitation,
+    ResponseOutputTextFileCitation, ResponseOutputTextFilePath, ResponseOutputTextLogprob,
+    ResponseOutputTextTopLogprob, ResponseOutputTextUrlCitation, ResponseOutputTokensDetails,
+    ResponseUsage, Skill, SkillCreateParams, SkillUpdateParams, SkillVersion, SkillVersionContent,
+    SkillVersionCreateParams, UploadObject, UploadPart, VectorStore, VectorStoreAttributeValue,
+    VectorStoreAttributes, VectorStoreExpiresAfter, VectorStoreFile, VectorStoreFileBatch,
+    VectorStoreFileChunkingStrategy, VectorStoreFileContent, VectorStoreFileCounts,
+    VectorStoreFileLastError, VectorStoreMetadata, VectorStoreSearchContent,
     VectorStoreSearchResponse, VectorStoreSearchResult, VectorStoreStaticFileChunkingStrategy,
     Video, VideoCharacter, VideoCharacterCreateParams, VideoCreateParams,
 };

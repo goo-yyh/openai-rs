@@ -24,10 +24,23 @@ def render_module(module_name: str, endpoints: dict[str, dict[str, str]]) -> str
         "    use super::PathTemplateEndpoint;",
         "",
     ]
+    endpoint_consts: list[str] = []
     for endpoint_id, spec in endpoints.items():
+        const = const_name(endpoint_id)
+        endpoint_consts.append(const)
         lines.append(
-            f"    pub(crate) const {const_name(endpoint_id)}: PathTemplateEndpoint = "
-            f'PathTemplateEndpoint::new("{endpoint_id}", "{spec["template"]}");'
+            f"    pub(crate) const {const}: PathTemplateEndpoint = "
+            f'PathTemplateEndpoint::new("{endpoint_id}", "{spec["method"]}", "{spec["template"]}");'
+        )
+    if endpoint_consts:
+        lines.extend(
+            [
+                "",
+                "    #[allow(dead_code)]",
+                "    pub(crate) const ALL: &[PathTemplateEndpoint] = &[",
+                *[f"        {const}," for const in endpoint_consts],
+                "    ];",
+            ]
         )
     lines.extend(["}", ""])
     return "\n".join(lines)
@@ -41,12 +54,17 @@ def render() -> str:
         "#[derive(Debug, Clone, Copy, PartialEq, Eq)]",
         "pub(crate) struct PathTemplateEndpoint {",
         "    pub(crate) id: &'static str,",
+        "    pub(crate) method: &'static str,",
         "    pub(crate) template: &'static str,",
         "}",
         "",
         "impl PathTemplateEndpoint {",
-        "    pub(crate) const fn new(id: &'static str, template: &'static str) -> Self {",
-        "        Self { id, template }",
+        "    pub(crate) const fn new(",
+        "        id: &'static str,",
+        "        method: &'static str,",
+        "        template: &'static str,",
+        "    ) -> Self {",
+        "        Self { id, method, template }",
         "    }",
         "",
         "    pub(crate) fn render(self, params: &[(&str, &str)]) -> String {",
@@ -62,6 +80,19 @@ def render() -> str:
     ]
     for module_name, endpoints in manifest.items():
         parts.append(render_module(module_name, endpoints))
+    parts.extend(
+        [
+            "#[allow(dead_code)]",
+            "pub(crate) const ALL_ENDPOINTS: &[PathTemplateEndpoint] = &[",
+            *[
+                f"    {module_name}::{const_name(endpoint_id)},"
+                for module_name, endpoints in manifest.items()
+                for endpoint_id in endpoints
+            ],
+            "];",
+            "",
+        ]
+    )
     return "\n".join(parts).rstrip() + "\n"
 
 

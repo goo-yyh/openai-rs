@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 
+use crate::json_payload::JsonPayload;
 use crate::providers::ProviderKind;
 
 /// SDK 统一 `Result` 类型别名。
@@ -117,7 +118,7 @@ pub struct ApiError {
     /// 当前 Provider。
     pub provider: ProviderKind,
     /// 原始错误载荷。
-    pub raw: Option<Value>,
+    pub raw: Option<JsonPayload>,
 }
 
 impl ApiError {
@@ -127,7 +128,7 @@ impl ApiError {
         message: impl Into<String>,
         request_id: Option<String>,
         provider: ProviderKind,
-        raw: Option<Value>,
+        raw: Option<JsonPayload>,
     ) -> Self {
         Self {
             status,
@@ -319,7 +320,7 @@ pub struct ErrorBody {
     /// 错误参数。
     pub param: Option<String>,
     /// 错误码。
-    pub code: Option<Value>,
+    pub code: Option<JsonPayload>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,

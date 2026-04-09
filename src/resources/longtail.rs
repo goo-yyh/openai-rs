@@ -6,9 +6,284 @@ use tokio_util::sync::CancellationToken;
 
 use super::*;
 use crate::files::UploadSource;
+use crate::generated::endpoints;
+use crate::json_payload::JsonPayload;
 use crate::response_meta::ApiResponse;
 use crate::stream::{RawSseStream, SseStream};
 use crate::transport::RequestSpec;
+
+macro_rules! json_payload_wrapper {
+    ($(#[$meta:meta])* $name:ident) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        #[serde(transparent)]
+        pub struct $name(Value);
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self(Value::Null)
+            }
+        }
+
+        impl From<Value> for $name {
+            fn from(value: Value) -> Self {
+                Self(value)
+            }
+        }
+
+        impl From<$name> for Value {
+            fn from(value: $name) -> Self {
+                value.0
+            }
+        }
+
+        impl $name {
+            /// 返回未经解释的原始 JSON 值。
+            pub fn as_raw(&self) -> &Value {
+                &self.0
+            }
+
+            /// 消费该包装器并返回原始 JSON 值。
+            pub fn into_raw(self) -> Value {
+                self.0
+            }
+
+            /// 返回载荷中的 `type` 字段，若存在且为字符串。
+            pub fn kind(&self) -> Option<&str> {
+                self.0.get("type").and_then(Value::as_str)
+            }
+        }
+    };
+}
+
+json_payload_wrapper!(
+    /// 表示 conversation item 的内容片段。
+    ConversationContentPart
+);
+json_payload_wrapper!(
+    /// 表示 conversation 创建时的初始条目。
+    ConversationInputItem
+);
+json_payload_wrapper!(
+    /// 表示 eval 数据源配置。
+    EvalDataSourceConfig
+);
+json_payload_wrapper!(
+    /// 表示 eval 测试标准项。
+    EvalTestingCriterion
+);
+json_payload_wrapper!(
+    /// 表示 eval run 的输入载荷。
+    EvalRunInput
+);
+json_payload_wrapper!(
+    /// 表示 eval 输出项载荷。
+    EvalOutput
+);
+json_payload_wrapper!(
+    /// 表示 skill version 内容载荷。
+    SkillVersionContent
+);
+
+/// 表示音频转写 segment ID。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum AudioTranscriptionSegmentId {
+    /// 数值 ID。
+    Number(u64),
+    /// 字符串 ID。
+    String(String),
+}
+
+/// 表示音频转写分段。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AudioTranscriptionSegment {
+    /// 分段 ID。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub id: Option<AudioTranscriptionSegmentId>,
+    /// 平均 logprob。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avg_logprob: Option<f64>,
+    /// 压缩比。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub compression_ratio: Option<f64>,
+    /// 结束时间。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end: Option<f64>,
+    /// 静音概率。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub no_speech_prob: Option<f64>,
+    /// seek 偏移。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub seek: Option<u64>,
+    /// 说话人。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub speaker: Option<String>,
+    /// 开始时间。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub start: Option<f64>,
+    /// 采样温度。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub temperature: Option<f64>,
+    /// 文本内容。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub text: Option<String>,
+    /// token ID 列表。
+    #[serde(default)]
+    pub tokens: Vec<u64>,
+    /// 分段类型。
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub segment_type: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示音频转写词级时间戳。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AudioTranscriptionWord {
+    /// 词文本。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub word: Option<String>,
+    /// 开始时间。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub start: Option<f64>,
+    /// 结束时间。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub end: Option<f64>,
+    /// 概率。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub probability: Option<f64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 fine-tuning 超参数值。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum FineTuningHyperparameterValue {
+    /// 字符串配置，通常为 `auto`。
+    Text(String),
+    /// 整型配置。
+    Integer(u64),
+    /// 浮点配置。
+    Float(f64),
+}
+
+/// 表示 fine-tuning 超参数。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FineTuningJobHyperparameters {
+    /// batch size。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub batch_size: Option<FineTuningHyperparameterValue>,
+    /// learning rate multiplier。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub learning_rate_multiplier: Option<FineTuningHyperparameterValue>,
+    /// epoch 数。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub n_epochs: Option<FineTuningHyperparameterValue>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 fine-tuning 错误。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FineTuningJobError {
+    /// 错误码。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub code: Option<String>,
+    /// 错误消息。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// 关联参数。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub param: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 fine-tuning 指标。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FineTuningMetrics {
+    /// 完整验证集 loss。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_valid_loss: Option<f64>,
+    /// 完整验证集平均 token 准确率。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_valid_mean_token_accuracy: Option<f64>,
+    /// 当前 step。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub step: Option<u64>,
+    /// 训练 loss。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub train_loss: Option<f64>,
+    /// 训练平均 token 准确率。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub train_mean_token_accuracy: Option<f64>,
+    /// 验证 loss。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub valid_loss: Option<f64>,
+    /// 验证平均 token 准确率。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub valid_mean_token_accuracy: Option<f64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 Weights & Biases 集成配置。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FineTuningWandbIntegration {
+    /// 项目名。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub project: Option<String>,
+    /// 实体名。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub entity: Option<String>,
+    /// 展示名称。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    /// 标签集合。
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 fine-tuning 集成项。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct FineTuningJobIntegration {
+    /// 集成类型。
+    #[serde(rename = "type")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub integration_type: Option<String>,
+    /// Weights & Biases 配置。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wandb: Option<FineTuningWandbIntegration>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 container 过期策略。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ContainerExpiresAfter {
+    /// 锚点。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub anchor: Option<String>,
+    /// 过期分钟数。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub minutes: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
 
 /// 表示单个图像输出。
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -122,10 +397,10 @@ pub struct AudioTranscription {
     pub duration: Option<f64>,
     /// 分段结果。
     #[serde(default)]
-    pub segments: Vec<Value>,
+    pub segments: Vec<AudioTranscriptionSegment>,
     /// 词级结果。
     #[serde(default)]
-    pub words: Vec<Value>,
+    pub words: Vec<AudioTranscriptionWord>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -143,10 +418,10 @@ pub struct AudioTranslation {
     pub duration: Option<f64>,
     /// 分段结果。
     #[serde(default)]
-    pub segments: Vec<Value>,
+    pub segments: Vec<AudioTranscriptionSegment>,
     /// 词级结果。
     #[serde(default)]
-    pub words: Vec<Value>,
+    pub words: Vec<AudioTranscriptionWord>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -180,12 +455,12 @@ pub struct FineTuningJob {
     #[serde(default)]
     pub metadata: BTreeMap<String, String>,
     /// 超参数配置。
-    pub hyperparameters: Option<Value>,
+    pub hyperparameters: Option<FineTuningJobHyperparameters>,
     /// 结果文件。
     #[serde(default)]
     pub result_files: Vec<String>,
     /// 错误信息。
-    pub error: Option<Value>,
+    pub error: Option<FineTuningJobError>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -209,7 +484,7 @@ pub struct FineTuningJobEvent {
     /// 创建时间。
     pub created_at: Option<u64>,
     /// 额外数据。
-    pub data: Option<Value>,
+    pub data: Option<FineTuningMetrics>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -232,7 +507,7 @@ pub struct FineTuningCheckpoint {
     /// 创建时间。
     pub created_at: Option<u64>,
     /// 指标。
-    pub metrics: Option<Value>,
+    pub metrics: Option<FineTuningMetrics>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -277,10 +552,10 @@ pub struct FineTuningJobCreateParams {
     pub seed: Option<u64>,
     /// 超参数。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub hyperparameters: Option<Value>,
+    pub hyperparameters: Option<FineTuningJobHyperparameters>,
     /// 集成配置。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub integrations: Vec<Value>,
+    pub integrations: Vec<FineTuningJobIntegration>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -311,13 +586,120 @@ pub struct Batch {
     pub completion_window: Option<String>,
     /// 创建时间。
     pub created_at: Option<u64>,
+    /// 取消时间。
+    pub cancelled_at: Option<u64>,
+    /// 开始取消时间。
+    pub cancelling_at: Option<u64>,
+    /// 完成时间。
+    pub completed_at: Option<u64>,
+    /// 过期时间。
+    pub expired_at: Option<u64>,
+    /// 预计过期时间。
+    pub expires_at: Option<u64>,
+    /// 失败时间。
+    pub failed_at: Option<u64>,
+    /// 开始最终整理时间。
+    pub finalizing_at: Option<u64>,
+    /// 开始执行时间。
+    pub in_progress_at: Option<u64>,
     /// 自定义 metadata。
     #[serde(default)]
     pub metadata: BTreeMap<String, String>,
+    /// 处理该 batch 的模型。
+    pub model: Option<String>,
     /// 请求统计。
-    pub request_counts: Option<Value>,
+    pub request_counts: Option<BatchRequestCounts>,
     /// 错误摘要。
-    pub errors: Option<Value>,
+    pub errors: Option<BatchErrors>,
+    /// token 用量统计。
+    pub usage: Option<BatchUsage>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 batch 的单条错误。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct BatchError {
+    /// 错误码。
+    pub code: Option<String>,
+    /// 输入文件中的行号。
+    pub line: Option<u64>,
+    /// 错误消息。
+    pub message: Option<String>,
+    /// 相关参数名。
+    pub param: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 batch 的错误摘要列表。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct BatchErrors {
+    /// 错误列表。
+    #[serde(default)]
+    pub data: Vec<BatchError>,
+    /// 对象类型。
+    pub object: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 batch 内各状态请求数。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct BatchRequestCounts {
+    /// 已完成请求数。
+    #[serde(default)]
+    pub completed: u64,
+    /// 失败请求数。
+    #[serde(default)]
+    pub failed: u64,
+    /// 总请求数。
+    #[serde(default)]
+    pub total: u64,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 batch 输入 token 明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct BatchUsageInputTokensDetails {
+    /// 缓存命中的 token 数。
+    pub cached_tokens: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 batch 输出 token 明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct BatchUsageOutputTokensDetails {
+    /// reasoning token 数。
+    pub reasoning_tokens: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 batch token 用量。
+#[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq, Eq)]
+pub struct BatchUsage {
+    /// 输入 token 数。
+    #[serde(default)]
+    pub input_tokens: u64,
+    /// 输入 token 明细。
+    pub input_tokens_details: Option<BatchUsageInputTokensDetails>,
+    /// 输出 token 数。
+    #[serde(default)]
+    pub output_tokens: u64,
+    /// 输出 token 明细。
+    pub output_tokens_details: Option<BatchUsageOutputTokensDetails>,
+    /// 总 token 数。
+    #[serde(default)]
+    pub total_tokens: u64,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -380,7 +762,7 @@ pub struct ConversationItem {
     pub role: Option<String>,
     /// 内容列表。
     #[serde(default)]
-    pub content: Vec<Value>,
+    pub content: Vec<ConversationContentPart>,
     /// 自定义 metadata。
     #[serde(default)]
     pub metadata: BTreeMap<String, String>,
@@ -397,7 +779,7 @@ pub struct ConversationCreateParams {
     pub name: Option<String>,
     /// 初始条目。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub items: Vec<Value>,
+    pub items: Vec<ConversationInputItem>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -431,7 +813,7 @@ pub struct ConversationItemCreateParams {
     pub role: Option<String>,
     /// 内容列表。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub content: Vec<Value>,
+    pub content: Vec<ConversationContentPart>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -495,7 +877,7 @@ pub struct EvalOutputItem {
     /// 当前状态。
     pub status: Option<String>,
     /// 输出内容。
-    pub output: Option<Value>,
+    pub output: Option<EvalOutput>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -509,10 +891,10 @@ pub struct EvalCreateParams {
     pub name: Option<String>,
     /// 数据源。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data_source: Option<Value>,
+    pub data_source: Option<EvalDataSourceConfig>,
     /// 测试标准。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub testing_criteria: Vec<Value>,
+    pub testing_criteria: Vec<EvalTestingCriterion>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -529,10 +911,10 @@ pub struct EvalUpdateParams {
     pub name: Option<String>,
     /// 数据源。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data_source: Option<Value>,
+    pub data_source: Option<EvalDataSourceConfig>,
     /// 测试标准。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub testing_criteria: Vec<Value>,
+    pub testing_criteria: Vec<EvalTestingCriterion>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -546,10 +928,10 @@ pub struct EvalUpdateParams {
 pub struct EvalRunCreateParams {
     /// 输入数据。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub input: Option<Value>,
+    pub input: Option<EvalRunInput>,
     /// 数据源。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub data_source: Option<Value>,
+    pub data_source: Option<EvalDataSourceConfig>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -612,7 +994,7 @@ pub struct ContainerCreateParams {
     pub name: Option<String>,
     /// 过期策略。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub expires_after: Option<Value>,
+    pub expires_after: Option<ContainerExpiresAfter>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -736,7 +1118,7 @@ pub struct SkillVersionCreateParams {
     pub description: Option<String>,
     /// 版本内容。
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub content: Option<Value>,
+    pub content: Option<SkillVersionContent>,
     /// 自定义 metadata。
     #[serde(default, skip_serializing_if = "metadata_is_empty")]
     pub metadata: BTreeMap<String, String>,
@@ -915,7 +1297,7 @@ impl ImageGenerateRequestBuilder {
         self
     }
 
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.state = self.state.body_value(body);
         self
     }
@@ -938,12 +1320,16 @@ impl ImageGenerateRequestBuilder {
         self
     }
 
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.state = self.state.extra_body(key, value);
         self
     }
 
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.state = self.state.provider_option(key, value);
         self
     }
@@ -1075,7 +1461,7 @@ impl AudioSpeechRequestBuilder {
         self
     }
 
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.body_value(body);
         self
     }
@@ -1098,12 +1484,16 @@ impl AudioSpeechRequestBuilder {
         self
     }
 
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -1208,7 +1598,7 @@ impl AudioTranscriptionRequestBuilder {
         self
     }
 
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.body_value(body);
         self
     }
@@ -1241,12 +1631,16 @@ impl AudioTranscriptionRequestBuilder {
         self
     }
 
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -1340,7 +1734,7 @@ impl AudioTranslationRequestBuilder {
         self
     }
 
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.body_value(body);
         self
     }
@@ -1373,12 +1767,16 @@ impl AudioTranslationRequestBuilder {
         self
     }
 
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -1449,13 +1847,16 @@ impl FineTuningJobCreateRequestBuilder {
         self
     }
 
-    pub fn hyperparameters(mut self, hyperparameters: Value) -> Self {
-        self.state.params.hyperparameters = Some(hyperparameters);
+    pub fn hyperparameters(
+        mut self,
+        hyperparameters: impl Into<FineTuningJobHyperparameters>,
+    ) -> Self {
+        self.state.params.hyperparameters = Some(hyperparameters.into());
         self
     }
 
-    pub fn integration(mut self, integration: Value) -> Self {
-        self.state.params.integrations.push(integration);
+    pub fn integration(mut self, integration: impl Into<FineTuningJobIntegration>) -> Self {
+        self.state.params.integrations.push(integration.into());
         self
     }
 
@@ -1469,7 +1870,7 @@ impl FineTuningJobCreateRequestBuilder {
         self
     }
 
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.state = self.state.body_value(body);
         self
     }
@@ -1492,12 +1893,16 @@ impl FineTuningJobCreateRequestBuilder {
         self
     }
 
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.state = self.state.extra_body(key, value);
         self
     }
 
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.state = self.state.provider_option(key, value);
         self
     }
@@ -1599,7 +2004,7 @@ impl BatchCreateRequestBuilder {
         self
     }
 
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.state = self.state.body_value(body);
         self
     }
@@ -1622,12 +2027,16 @@ impl BatchCreateRequestBuilder {
         self
     }
 
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.state = self.state.extra_body(key, value);
         self
     }
 
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.state = self.state.provider_option(key, value);
         self
     }
@@ -1684,7 +2093,8 @@ impl BatchCreateRequestBuilder {
                 });
             }
         }
-        self.state.build_spec("batches.create", "/batches")
+        let endpoint = endpoints::batches::BATCHES_CREATE;
+        self.state.build_spec(endpoint.id, endpoint.template)
     }
 
     pub async fn send(self) -> Result<Batch> {

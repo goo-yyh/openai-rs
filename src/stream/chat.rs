@@ -4,15 +4,15 @@ use std::task::{Context, Poll};
 
 use futures_util::Stream;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::Value;
 
 use super::partial_json::parse_optional_json;
 use super::sse::SseStream;
-use super::value_helpers::ensure_object;
 use crate::error::Result;
+use crate::json_payload::JsonPayload;
 use crate::resources::{
-    ChatCompletion, ChatCompletionChunk, ChatCompletionChunkDelta, ChatCompletionMessage,
-    ChatCompletionToolCall,
+    ChatCompletion, ChatCompletionChoiceLogprobs, ChatCompletionChunk, ChatCompletionChunkDelta,
+    ChatCompletionMessage, ChatCompletionTokenLogprob, ChatCompletionToolCall,
 };
 use crate::response_meta::ResponseMeta;
 
@@ -123,7 +123,7 @@ pub struct ChatContentSnapshotEvent {
     /// 当前累计文本。
     pub snapshot: String,
     /// 如果当前文本是合法 JSON，则提供解析结果。
-    pub parsed: Option<Value>,
+    pub parsed: Option<JsonPayload>,
 }
 
 /// 表示聊天文本完成事件。
@@ -134,7 +134,7 @@ pub struct ChatContentDoneEvent {
     /// 完整文本。
     pub content: String,
     /// 如果完整文本是合法 JSON，则提供解析结果。
-    pub parsed: Option<Value>,
+    pub parsed: Option<JsonPayload>,
 }
 
 /// 表示拒绝回答文本增量和当前聚合快照。
@@ -171,7 +171,7 @@ pub struct ChatToolArgumentsSnapshotEvent {
     /// 当前累计参数字符串。
     pub arguments: String,
     /// 如果当前参数是合法 JSON，则提供解析结果。
-    pub parsed_arguments: Option<Value>,
+    pub parsed_arguments: Option<JsonPayload>,
 }
 
 /// 表示工具参数完成事件。
@@ -186,7 +186,7 @@ pub struct ChatToolArgumentsDoneEvent {
     /// 完整参数字符串。
     pub arguments: String,
     /// 如果完整参数是合法 JSON，则提供解析结果。
-    pub parsed_arguments: Option<Value>,
+    pub parsed_arguments: Option<JsonPayload>,
 }
 
 /// 表示 token logprobs 增量和当前聚合快照。
@@ -195,9 +195,9 @@ pub struct ChatLogProbsSnapshotEvent {
     /// 候选索引。
     pub choice_index: u32,
     /// 本次 logprobs 增量。
-    pub values: Vec<Value>,
+    pub values: Vec<ChatCompletionTokenLogprob>,
     /// 当前累计 logprobs。
-    pub snapshot: Vec<Value>,
+    pub snapshot: Vec<ChatCompletionTokenLogprob>,
 }
 
 /// 表示 token logprobs 完成事件。
@@ -206,11 +206,12 @@ pub struct ChatLogProbsDoneEvent {
     /// 候选索引。
     pub choice_index: u32,
     /// 完整 logprobs。
-    pub values: Vec<Value>,
+    pub values: Vec<ChatCompletionTokenLogprob>,
 }
 
 /// 表示聊天流在运行时派生出的高层事件。
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(clippy::large_enum_variant)]
 pub enum ChatCompletionRuntimeEvent {
     /// 原始 chunk 与当前补全快照。
     Chunk {
@@ -389,7 +390,7 @@ struct AccumulatedChoice {
     reasoning_content: String,
     finish_reason: Option<String>,
     tool_calls: HashMap<u32, ChatCompletionToolCall>,
-    logprobs: Option<Value>,
+    logprobs: Option<ChatCompletionChoiceLogprobs>,
 }
 
 impl ChatCompletionAccumulator {
@@ -528,36 +529,27 @@ fn apply_delta(state: &mut AccumulatedChoice, delta: &ChatCompletionChunkDelta) 
     }
 }
 
-fn merge_logprobs(target: &mut Option<Value>, incoming: &Value) {
-    let Some(incoming_object) = incoming.as_object() else {
-        *target = Some(incoming.clone());
-        return;
-    };
-
-    let target_value = target.get_or_insert_with(|| Value::Object(Map::new()));
-    let target_object = ensure_object(target_value);
-
-    for (key, value) in incoming_object {
-        match value {
-            Value::Array(values) => {
-                let slot = target_object
-                    .entry(key.clone())
-                    .or_insert_with(|| Value::Array(Vec::new()));
-                if let Some(existing) = slot.as_array_mut() {
-                    existing.extend(values.iter().cloned());
-                } else {
-                    *slot = Value::Array(values.clone());
-                }
-            }
-            _ => {
-                target_object.insert(key.clone(), value.clone());
-            }
-        }
+fn merge_logprobs(
+    target: &mut Option<ChatCompletionChoiceLogprobs>,
+    incoming: &ChatCompletionChoiceLogprobs,
+) {
+    let target_logprobs = target.get_or_insert_with(ChatCompletionChoiceLogprobs::default);
+    target_logprobs
+        .content
+        .extend(incoming.content.iter().cloned());
+    target_logprobs
+        .refusal
+        .extend(incoming.refusal.iter().cloned());
+    for (key, value) in &incoming.extra {
+        target_logprobs.extra.insert(key.clone(), value.clone());
     }
 }
 
-fn logprobs_values(logprobs: Option<&Value>, field_name: &str) -> Option<Vec<Value>> {
-    logprobs?.get(field_name).and_then(Value::as_array).cloned()
+fn logprobs_values(
+    logprobs: Option<&ChatCompletionChoiceLogprobs>,
+    field_name: &str,
+) -> Option<Vec<ChatCompletionTokenLogprob>> {
+    logprobs?.values(field_name).map(<[_]>::to_vec)
 }
 
 fn derive_chat_choice_events(
@@ -574,7 +566,7 @@ fn derive_chat_choice_events(
             ChatContentSnapshotEvent {
                 choice_index: choice.index,
                 delta: delta.clone(),
-                parsed: parse_optional_json(&snapshot_content),
+                parsed: parse_optional_json(&snapshot_content).map(JsonPayload::from),
                 snapshot: snapshot_content,
             },
         ));
@@ -643,7 +635,8 @@ fn derive_chat_choice_events(
                     choice_index: choice.index,
                     tool_call_index,
                     name: snapshot_tool_call.function.name.clone(),
-                    parsed_arguments: parse_optional_json(&snapshot_tool_call.function.arguments),
+                    parsed_arguments: parse_optional_json(&snapshot_tool_call.function.arguments)
+                        .map(JsonPayload::from),
                     arguments_delta,
                     arguments: snapshot_tool_call.function.arguments.clone(),
                 },
@@ -670,7 +663,7 @@ fn emit_chat_choice_done_events(
         events.push(ChatCompletionRuntimeEvent::ContentDone(
             ChatContentDoneEvent {
                 choice_index,
-                parsed: parse_optional_json(&content),
+                parsed: parse_optional_json(&content).map(JsonPayload::from),
                 content,
             },
         ));
@@ -748,7 +741,8 @@ fn emit_chat_tool_call_done(
             choice_index,
             tool_call_index,
             name: snapshot_tool_call.function.name.clone(),
-            parsed_arguments: parse_optional_json(&snapshot_tool_call.function.arguments),
+            parsed_arguments: parse_optional_json(&snapshot_tool_call.function.arguments)
+                .map(JsonPayload::from),
             arguments: snapshot_tool_call.function.arguments.clone(),
         },
     ));

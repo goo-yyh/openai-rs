@@ -11,6 +11,7 @@ use super::{
     VectorStoreFilesResource, VectorStoresResource, encode_path_segment,
 };
 use crate::Page;
+use crate::generated::endpoints;
 
 /// Vector store 元数据。
 pub type VectorStoreMetadata = BTreeMap<String, String>;
@@ -246,55 +247,54 @@ pub struct VectorStoreSearchResponse {
 impl VectorStoresResource {
     /// 创建 vector store。
     pub fn create(&self) -> JsonRequestBuilder<VectorStore> {
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_CREATE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.create",
+            endpoint.id,
             Method::POST,
-            "/vector_stores",
+            endpoint.template,
         )
     }
 
     /// 获取 vector store。
     pub fn retrieve(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<VectorStore> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_RETRIEVE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/vector_stores/{}",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
     /// 更新 vector store。
     pub fn update(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<VectorStore> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_UPDATE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.update",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/vector_stores/{}",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
     /// 列出 vector store。
     pub fn list(&self) -> ListRequestBuilder<VectorStore> {
-        vector_store_list(self.client.clone(), "vector_stores.list", "/vector_stores")
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_LIST;
+        vector_store_list(self.client.clone(), endpoint.id, endpoint.template)
     }
 
     /// 删除 vector store。
     pub fn delete(&self, vector_store_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_DELETE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.delete",
+            endpoint.id,
             Method::DELETE,
-            format!(
-                "/vector_stores/{}",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
@@ -303,14 +303,13 @@ impl VectorStoresResource {
         &self,
         vector_store_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreSearchResponse> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_SEARCH;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.search",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/vector_stores/{}/search",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
@@ -331,14 +330,13 @@ impl VectorStoreFilesResource {
         &self,
         vector_store_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreFile> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILES_CREATE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.files.create",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/vector_stores/{}/files",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
@@ -348,15 +346,14 @@ impl VectorStoreFilesResource {
         vector_store_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreFile> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILES_RETRIEVE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.files.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/vector_stores/{}/files/{}",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id), ("file_id", &file_id)]),
         )
     }
 
@@ -366,27 +363,25 @@ impl VectorStoreFilesResource {
         vector_store_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreFile> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILES_UPDATE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.files.update",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/vector_stores/{}/files/{}",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id), ("file_id", &file_id)]),
         )
     }
 
     /// 列出 vector store 文件。
     pub fn list(&self, vector_store_id: impl Into<String>) -> ListRequestBuilder<VectorStoreFile> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILES_LIST;
         vector_store_list(
             self.client.clone(),
-            "vector_stores.files.list",
-            format!(
-                "/vector_stores/{}/files",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.id,
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
@@ -396,15 +391,14 @@ impl VectorStoreFilesResource {
         vector_store_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> JsonRequestBuilder<DeleteResponse> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILES_DELETE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.files.delete",
+            endpoint.id,
             Method::DELETE,
-            format!(
-                "/vector_stores/{}/files/{}",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id), ("file_id", &file_id)]),
         )
     }
 
@@ -414,15 +408,14 @@ impl VectorStoreFilesResource {
         vector_store_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> JsonRequestBuilder<Page<VectorStoreFileContent>> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILES_CONTENT;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.files.content",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/vector_stores/{}/files/{}/content",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id), ("file_id", &file_id)]),
         )
     }
 }
@@ -433,14 +426,13 @@ impl VectorStoreFileBatchesResource {
         &self,
         vector_store_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreFileBatch> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILE_BATCHES_CREATE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.file_batches.create",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/vector_stores/{}/file_batches",
-                encode_path_segment(vector_store_id.into())
-            ),
+            endpoint.render(&[("vector_store_id", &vector_store_id)]),
         )
     }
 
@@ -450,15 +442,17 @@ impl VectorStoreFileBatchesResource {
         vector_store_id: impl Into<String>,
         batch_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreFileBatch> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let batch_id = encode_path_segment(batch_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILE_BATCHES_RETRIEVE;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.file_batches.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/vector_stores/{}/file_batches/{}",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(batch_id.into())
-            ),
+            endpoint.render(&[
+                ("vector_store_id", &vector_store_id),
+                ("batch_id", &batch_id),
+            ]),
         )
     }
 
@@ -468,15 +462,17 @@ impl VectorStoreFileBatchesResource {
         vector_store_id: impl Into<String>,
         batch_id: impl Into<String>,
     ) -> JsonRequestBuilder<VectorStoreFileBatch> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let batch_id = encode_path_segment(batch_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILE_BATCHES_CANCEL;
         vector_store_json(
             self.client.clone(),
-            "vector_stores.file_batches.cancel",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/vector_stores/{}/file_batches/{}/cancel",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(batch_id.into())
-            ),
+            endpoint.render(&[
+                ("vector_store_id", &vector_store_id),
+                ("batch_id", &batch_id),
+            ]),
         )
     }
 
@@ -486,14 +482,16 @@ impl VectorStoreFileBatchesResource {
         vector_store_id: impl Into<String>,
         batch_id: impl Into<String>,
     ) -> ListRequestBuilder<VectorStoreFile> {
+        let vector_store_id = encode_path_segment(vector_store_id.into());
+        let batch_id = encode_path_segment(batch_id.into());
+        let endpoint = endpoints::vector_stores::VECTOR_STORES_FILE_BATCHES_LIST_FILES;
         vector_store_list(
             self.client.clone(),
-            "vector_stores.file_batches.list_files",
-            format!(
-                "/vector_stores/{}/file_batches/{}/files",
-                encode_path_segment(vector_store_id.into()),
-                encode_path_segment(batch_id.into())
-            ),
+            endpoint.id,
+            endpoint.render(&[
+                ("vector_store_id", &vector_store_id),
+                ("batch_id", &batch_id),
+            ]),
         )
     }
 }

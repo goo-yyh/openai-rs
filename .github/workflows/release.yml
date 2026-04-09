@@ -23,8 +23,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
+          components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-public-api
 
       - name: Install nightly for docs.rs check
         run: rustup toolchain install nightly --profile minimal
@@ -33,6 +42,33 @@ jobs:
         env:
           RELEASE_VERSION: ${{ inputs.version }}
         run: bash ./scripts/check-release.sh
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Generated Endpoint Catalog
+        run: python3 ./scripts/generate_endpoints.py --check
+
+      - name: Cargo Deny
+        run: cargo deny check
+
+      - name: Public API
+        run: bash ./scripts/check-public-api.sh
+
+      - name: No Default Features
+        run: cargo test --no-default-features
+
+      - name: All Features
+        run: cargo test --all-features
+
+      - name: Examples
+        run: cargo check --examples --all-features
+
+      - name: Ecosystem Fixtures
+        run: bash ./scripts/check-ecosystem.sh
+
+      - name: Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Cargo publish dry run
         run: cargo publish --dry-run --all-features

@@ -2,6 +2,8 @@
 
 use http::Method;
 
+use crate::generated::endpoints;
+
 use super::{
     Batch, BatchCreateRequestBuilder, BatchesResource, JsonRequestBuilder, ListRequestBuilder,
     encode_path_segment,
@@ -15,26 +17,29 @@ impl BatchesResource {
 
     /// 获取 batch。
     pub fn retrieve(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Batch> {
+        let endpoint = endpoints::batches::BATCHES_RETRIEVE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "batches.retrieve",
+            endpoint.id,
             Method::GET,
-            format!("/batches/{}", encode_path_segment(batch_id.into())),
+            endpoint.render(&[("batch_id", &encode_path_segment(batch_id.into()))]),
         )
     }
 
     /// 列出 batches。
     pub fn list(&self) -> ListRequestBuilder<Batch> {
-        ListRequestBuilder::new(self.client.clone(), "batches.list", "/batches")
+        let endpoint = endpoints::batches::BATCHES_LIST;
+        ListRequestBuilder::new(self.client.clone(), endpoint.id, endpoint.template)
     }
 
     /// 取消 batch。
     pub fn cancel(&self, batch_id: impl Into<String>) -> JsonRequestBuilder<Batch> {
+        let endpoint = endpoints::batches::BATCHES_CANCEL;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "batches.cancel",
+            endpoint.id,
             Method::POST,
-            format!("/batches/{}/cancel", encode_path_segment(batch_id.into())),
+            endpoint.render(&[("batch_id", &encode_path_segment(batch_id.into()))]),
         )
     }
 }

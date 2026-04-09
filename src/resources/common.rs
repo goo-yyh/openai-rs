@@ -15,6 +15,7 @@ use crate::Client;
 use crate::config::RequestOptions;
 use crate::error::{Error, Result};
 use crate::files::{MultipartField, UploadSource};
+use crate::json_payload::JsonPayload;
 use crate::pagination::{CursorPage, ListEnvelope};
 use crate::response_meta::ApiResponse;
 use crate::stream::{RawSseStream, SseStream};
@@ -71,8 +72,8 @@ impl<P> TypedJsonRequestState<P> {
         }
     }
 
-    pub(crate) fn body_value(mut self, body: Value) -> Self {
-        self.body_override = Some(body);
+    pub(crate) fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
+        self.body_override = Some(body.into().into_raw());
         self
     }
 
@@ -86,13 +87,22 @@ impl<P> TypedJsonRequestState<P> {
         self
     }
 
-    pub(crate) fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.extra_body.insert(key.into(), value);
+    pub(crate) fn extra_body(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
+        self.extra_body.insert(key.into(), value.into().into_raw());
         self
     }
 
-    pub(crate) fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.provider_options.insert(key.into(), value);
+    pub(crate) fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
+        self.provider_options
+            .insert(key.into(), value.into().into_raw());
         self
     }
 
@@ -170,8 +180,8 @@ impl<T> JsonRequestBuilder<T> {
     }
 
     /// 设置整个请求体为一个 `serde_json::Value`。
-    pub fn body_value(mut self, body: Value) -> Self {
-        self.spec.body = Some(body);
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
+        self.spec.body = Some(body.into().into_raw());
         self
     }
 
@@ -207,14 +217,19 @@ impl<T> JsonRequestBuilder<T> {
     }
 
     /// 在 JSON 根对象中追加字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.extra_body.insert(key.into(), value);
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
+        self.extra_body.insert(key.into(), value.into().into_raw());
         self
     }
 
     /// 在 provider 对应的 `provider_options` 下追加字段。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.provider_options.insert(key.into(), value);
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
+        self.provider_options
+            .insert(key.into(), value.into().into_raw());
         self
     }
 
@@ -357,7 +372,7 @@ impl BytesRequestBuilder {
     }
 
     /// 设置 JSON 请求体。
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.body_value(body);
         self
     }
@@ -388,7 +403,11 @@ impl BytesRequestBuilder {
     }
 
     /// 在 provider 对应的 `provider_options` 下追加字段。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -424,7 +443,7 @@ impl BytesRequestBuilder {
     }
 
     /// 在 JSON 根对象中追加字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
@@ -503,7 +522,7 @@ impl NoContentRequestBuilder {
     }
 
     /// 设置 JSON 请求体。
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.body_value(body);
         self
     }
@@ -540,13 +559,17 @@ impl NoContentRequestBuilder {
     }
 
     /// 在 JSON 根对象中追加字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
     /// 在 provider 对应的 `provider_options` 下追加字段。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -639,7 +662,7 @@ impl<T> ListRequestBuilder<T> {
     }
 
     /// 在根对象追加额外字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }

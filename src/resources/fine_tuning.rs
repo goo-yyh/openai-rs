@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::generated::endpoints;
+use crate::json_payload::JsonPayload;
 
 use super::{
     DeleteResponse, FineTuningAlphaGradersResource, FineTuningAlphaResource, FineTuningCheckpoint,
@@ -109,7 +110,7 @@ pub struct GraderRunErrors {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct GraderValidateResponse {
     /// 返回的 grader 定义。
-    pub grader: Option<Value>,
+    pub grader: Option<JsonPayload>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,

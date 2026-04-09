@@ -23,6 +23,176 @@ use super::{
     RealtimeSessionClientSecret, encode_path_segment,
 };
 
+macro_rules! json_payload_wrapper {
+    ($(#[$meta:meta])* $name:ident) => {
+        $(#[$meta])*
+        #[derive(Debug, Clone, Serialize, Deserialize)]
+        #[serde(transparent)]
+        pub struct $name(Value);
+
+        impl Default for $name {
+            fn default() -> Self {
+                Self(Value::Null)
+            }
+        }
+
+        impl From<Value> for $name {
+            fn from(value: Value) -> Self {
+                Self(value)
+            }
+        }
+
+        impl From<$name> for Value {
+            fn from(value: $name) -> Self {
+                value.0
+            }
+        }
+
+        impl $name {
+            /// 返回未经解释的原始 JSON 值。
+            pub fn as_raw(&self) -> &Value {
+                &self.0
+            }
+
+            /// 消费该包装器并返回原始 JSON 值。
+            pub fn into_raw(self) -> Value {
+                self.0
+            }
+
+            /// 返回载荷中的 `type` 字段，若存在且为字符串。
+            pub fn kind(&self) -> Option<&str> {
+                self.0.get("type").and_then(Value::as_str)
+            }
+        }
+    };
+}
+
+json_payload_wrapper!(
+    /// 表示 beta assistant 工具定义。
+    BetaAssistantTool
+);
+json_payload_wrapper!(
+    /// 表示 beta thread 的工具资源。
+    BetaThreadToolResources
+);
+json_payload_wrapper!(
+    /// 表示 beta thread message 内容块。
+    BetaThreadMessageContent
+);
+json_payload_wrapper!(
+    /// 表示 beta thread run 工具定义。
+    BetaThreadRunTool
+);
+json_payload_wrapper!(
+    /// 表示 beta thread run step 详情。
+    BetaThreadRunStepDetails
+);
+json_payload_wrapper!(
+    /// 表示 ChatKit workflow 配置。
+    ChatKitWorkflow
+);
+json_payload_wrapper!(
+    /// 表示 ChatKit 配置。
+    ChatKitConfiguration
+);
+json_payload_wrapper!(
+    /// 表示 ChatKit rate limit 配置。
+    ChatKitRateLimits
+);
+json_payload_wrapper!(
+    /// 表示 ChatKit thread item 内容。
+    ChatKitThreadContent
+);
+
+/// 表示 beta run 所需函数调用。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunRequiredActionFunction {
+    /// 参数 JSON 字符串。
+    #[serde(default)]
+    pub arguments: String,
+    /// 函数名。
+    pub name: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 beta run 所需工具调用。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunRequiredActionFunctionToolCall {
+    /// 工具调用 ID。
+    pub id: String,
+    /// 函数定义。
+    #[serde(rename = "function")]
+    pub function_call: Option<BetaThreadRunRequiredActionFunction>,
+    /// 工具类型。
+    #[serde(rename = "type")]
+    pub tool_type: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 beta run 所需工具输出。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunRequiredActionSubmitToolOutputs {
+    /// 工具调用列表。
+    #[serde(default)]
+    pub tool_calls: Vec<BetaThreadRunRequiredActionFunctionToolCall>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 beta run 所需动作。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunRequiredAction {
+    /// 工具输出详情。
+    pub submit_tool_outputs: Option<BetaThreadRunRequiredActionSubmitToolOutputs>,
+    /// 动作类型。
+    #[serde(rename = "type")]
+    pub action_type: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 beta run 最近错误。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunLastError {
+    /// 错误码。
+    pub code: Option<String>,
+    /// 错误描述。
+    pub message: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 beta run 不完整原因。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunIncompleteDetails {
+    /// 不完整原因。
+    pub reason: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 beta run / run step token 用量。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct BetaThreadRunUsage {
+    /// completion token 数。
+    pub completion_tokens: Option<u64>,
+    /// prompt token 数。
+    pub prompt_tokens: Option<u64>,
+    /// 总 token 数。
+    pub total_tokens: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
 /// 表示 beta assistant 对象。
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BetaAssistant {
@@ -41,9 +211,9 @@ pub struct BetaAssistant {
     pub instructions: Option<String>,
     /// 工具集合。
     #[serde(default)]
-    pub tools: Vec<Value>,
+    pub tools: Vec<BetaAssistantTool>,
     /// 元数据。
-    pub metadata: Option<Value>,
+    pub metadata: Option<BTreeMap<String, String>>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -58,9 +228,9 @@ pub struct BetaThread {
     #[serde(default)]
     pub object: String,
     /// 元数据。
-    pub metadata: Option<Value>,
+    pub metadata: Option<BTreeMap<String, String>>,
     /// 工具资源。
-    pub tool_resources: Option<Value>,
+    pub tool_resources: Option<BetaThreadToolResources>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -82,13 +252,13 @@ pub struct BetaThreadMessage {
     pub status: Option<String>,
     /// 内容。
     #[serde(default)]
-    pub content: Vec<Value>,
+    pub content: Vec<BetaThreadMessageContent>,
     /// assistant ID。
     pub assistant_id: Option<String>,
     /// run ID。
     pub run_id: Option<String>,
     /// 元数据。
-    pub metadata: Option<Value>,
+    pub metadata: Option<BTreeMap<String, String>>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -113,18 +283,18 @@ pub struct BetaThreadRun {
     /// 指令。
     pub instructions: Option<String>,
     /// 需要用户采取的动作。
-    pub required_action: Option<Value>,
+    pub required_action: Option<BetaThreadRunRequiredAction>,
     /// 最近错误。
-    pub last_error: Option<Value>,
+    pub last_error: Option<BetaThreadRunLastError>,
     /// 不完整细节。
-    pub incomplete_details: Option<Value>,
+    pub incomplete_details: Option<BetaThreadRunIncompleteDetails>,
     /// 工具集合。
     #[serde(default)]
-    pub tools: Vec<Value>,
+    pub tools: Vec<BetaThreadRunTool>,
     /// 元数据。
-    pub metadata: Option<Value>,
+    pub metadata: Option<BTreeMap<String, String>>,
     /// 用量。
-    pub usage: Option<Value>,
+    pub usage: Option<BetaThreadRunUsage>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -145,9 +315,9 @@ pub struct BetaThreadRunStep {
     /// 状态。
     pub status: Option<String>,
     /// step 详情。
-    pub step_details: Option<Value>,
+    pub step_details: Option<BetaThreadRunStepDetails>,
     /// 用量。
-    pub usage: Option<Value>,
+    pub usage: Option<BetaThreadRunUsage>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -172,11 +342,11 @@ pub struct ChatKitSession {
     /// 用户标识。
     pub user: Option<String>,
     /// workflow 元数据。
-    pub workflow: Option<Value>,
+    pub workflow: Option<ChatKitWorkflow>,
     /// ChatKit 配置。
-    pub chatkit_configuration: Option<Value>,
+    pub chatkit_configuration: Option<ChatKitConfiguration>,
     /// rate limit 配置。
-    pub rate_limits: Option<Value>,
+    pub rate_limits: Option<ChatKitRateLimits>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -233,7 +403,7 @@ pub struct ChatKitThreadItem {
     pub item_type: Option<String>,
     /// message content。
     #[serde(default)]
-    pub content: Vec<Value>,
+    pub content: Vec<ChatKitThreadContent>,
     /// client tool call 的参数。
     pub arguments: Option<String>,
     /// client tool call ID。

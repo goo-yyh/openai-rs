@@ -6,8 +6,10 @@ use wiremock::matchers::{body_json, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use openai_rs::{
-    BatchCreateParams, Client, ContainerCreateParams, ContainerFileCreateParams,
-    ConversationCreateParams, ConversationItemCreateParams, EvalCreateParams, EvalRunCreateParams,
+    BatchCreateParams, Client, ContainerCreateParams, ContainerExpiresAfter,
+    ContainerFileCreateParams, ConversationCreateParams, ConversationItemCreateParams,
+    EvalCreateParams, EvalRunCreateParams, FineTuningHyperparameterValue,
+    FineTuningJobHyperparameters, FineTuningJobIntegration, FineTuningWandbIntegration,
     SkillCreateParams, SkillVersionCreateParams, UploadSource, VideoCharacterCreateParams,
     VideoCreateParams,
 };
@@ -51,7 +53,20 @@ async fn test_should_use_typed_image_and_audio_resources() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "text": "hello from audio",
             "language": "en",
-            "duration": 1.25
+            "duration": 1.25,
+            "segments": [{
+                "id": 1,
+                "start": 0.0,
+                "end": 1.25,
+                "text": "hello from audio",
+                "tokens": [1, 2, 3]
+            }],
+            "words": [{
+                "word": "hello",
+                "start": 0.0,
+                "end": 0.4,
+                "probability": 0.99
+            }]
         })))
         .mount(&server)
         .await;
@@ -60,7 +75,13 @@ async fn test_should_use_typed_image_and_audio_resources() {
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "text": "hello from translation",
             "language": "en",
-            "duration": 1.25
+            "duration": 1.25,
+            "segments": [{
+                "id": 1,
+                "start": 0.0,
+                "end": 1.25,
+                "text": "hello from translation"
+            }]
         })))
         .mount(&server)
         .await;
@@ -107,6 +128,11 @@ async fn test_should_use_typed_image_and_audio_resources() {
         .unwrap();
     assert_eq!(transcription.text, "hello from audio");
     assert_eq!(transcription.language.as_deref(), Some("en"));
+    assert_eq!(
+        transcription.segments[0].text.as_deref(),
+        Some("hello from audio")
+    );
+    assert_eq!(transcription.words[0].word.as_deref(), Some("hello"));
 
     let translation = client
         .audio()
@@ -118,6 +144,10 @@ async fn test_should_use_typed_image_and_audio_resources() {
         .await
         .unwrap();
     assert_eq!(translation.text, "hello from translation");
+    assert_eq!(
+        translation.segments[0].text.as_deref(),
+        Some("hello from translation")
+    );
 
     let requests = server.received_requests().await.unwrap();
     let speech_request = requests
@@ -148,7 +178,18 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
         .and(path("/fine_tuning/jobs"))
         .and(body_json(json!({
             "model": "gpt-4o-mini",
-            "training_file": "file_train_1"
+            "training_file": "file_train_1",
+            "hyperparameters": {
+                "batch_size": 4,
+                "n_epochs": "auto"
+            },
+            "integrations": [{
+                "type": "wandb",
+                "wandb": {
+                    "project": "sdk-contract",
+                    "tags": ["contract"]
+                }
+            }]
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "ftjob_1",
@@ -156,7 +197,11 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
             "model": "gpt-4o-mini",
             "status": "running",
             "training_file": "file_train_1",
-            "created_at": 1
+            "created_at": 1,
+            "hyperparameters": {
+                "batch_size": 4,
+                "n_epochs": "auto"
+            }
         })))
         .mount(&server)
         .await;
@@ -170,7 +215,16 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
             "training_file": "file_train_1",
             "fine_tuned_model": "ft:gpt-4o-mini:demo",
             "created_at": 1,
-            "finished_at": 2
+            "finished_at": 2,
+            "hyperparameters": {
+                "batch_size": 4,
+                "n_epochs": "auto"
+            },
+            "error": {
+                "code": "server_error",
+                "message": "transient",
+                "param": null
+            }
         })))
         .mount(&server)
         .await;
@@ -184,7 +238,11 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
                 "type": "info",
                 "level": "info",
                 "message": "queued",
-                "created_at": 1
+                "created_at": 1,
+                "data": {
+                    "step": 1,
+                    "train_loss": 0.25
+                }
             }],
             "first_id": "ftevent_1",
             "last_id": "ftevent_1",
@@ -202,7 +260,12 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
                 "fine_tuning_job_id": "ftjob_1",
                 "fine_tuned_model_checkpoint": "ft:gpt-4o-mini:demo:ckpt",
                 "step_number": 42,
-                "created_at": 2
+                "created_at": 2,
+                "metrics": {
+                    "step": 42,
+                    "train_loss": 0.12,
+                    "valid_loss": 0.18
+                }
             }],
             "first_id": "ftckpt_1",
             "last_id": "ftckpt_1",
@@ -224,7 +287,51 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
             "status": "validating",
             "input_file_id": "file_batch_1",
             "completion_window": "24h",
-            "created_at": 1
+            "created_at": 1,
+            "request_counts": {
+                "completed": 0,
+                "failed": 0,
+                "total": 2
+            }
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("GET"))
+        .and(path("/batches/batch_1"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "batch_1",
+            "object": "batch",
+            "endpoint": "/v1/responses",
+            "status": "completed",
+            "input_file_id": "file_batch_1",
+            "completion_window": "24h",
+            "created_at": 1,
+            "completed_at": 2,
+            "request_counts": {
+                "completed": 2,
+                "failed": 0,
+                "total": 2
+            },
+            "errors": {
+                "object": "list",
+                "data": [{
+                    "code": "invalid_request_error",
+                    "line": 7,
+                    "message": "bad jsonl line",
+                    "param": "input"
+                }]
+            },
+            "usage": {
+                "input_tokens": 10,
+                "output_tokens": 4,
+                "total_tokens": 14,
+                "input_tokens_details": {
+                    "cached_tokens": 2
+                },
+                "output_tokens_details": {
+                    "reasoning_tokens": 1
+                }
+            }
         })))
         .mount(&server)
         .await;
@@ -239,11 +346,35 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
                 "status": "completed",
                 "input_file_id": "file_batch_1",
                 "completion_window": "24h",
-                "created_at": 1
+                "created_at": 1,
+                "request_counts": {
+                    "completed": 2,
+                    "failed": 0,
+                    "total": 2
+                }
             }],
             "first_id": "batch_1",
             "last_id": "batch_1",
             "has_more": false
+        })))
+        .mount(&server)
+        .await;
+    Mock::given(method("POST"))
+        .and(path("/batches/batch_1/cancel"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "batch_1",
+            "object": "batch",
+            "endpoint": "/v1/responses",
+            "status": "cancelled",
+            "input_file_id": "file_batch_1",
+            "completion_window": "24h",
+            "created_at": 1,
+            "cancelled_at": 3,
+            "request_counts": {
+                "completed": 1,
+                "failed": 0,
+                "total": 2
+            }
         })))
         .mount(&server)
         .await;
@@ -256,10 +387,30 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
         .create()
         .model("gpt-4o-mini")
         .training_file("file_train_1")
+        .hyperparameters(FineTuningJobHyperparameters {
+            batch_size: Some(FineTuningHyperparameterValue::Integer(4)),
+            n_epochs: Some(FineTuningHyperparameterValue::Text("auto".into())),
+            ..FineTuningJobHyperparameters::default()
+        })
+        .integration(FineTuningJobIntegration {
+            integration_type: Some("wandb".into()),
+            wandb: Some(FineTuningWandbIntegration {
+                project: Some("sdk-contract".into()),
+                tags: vec!["contract".into()],
+                ..FineTuningWandbIntegration::default()
+            }),
+            ..FineTuningJobIntegration::default()
+        })
         .send()
         .await
         .unwrap();
     assert_eq!(job.id, "ftjob_1");
+    assert_eq!(
+        job.hyperparameters
+            .as_ref()
+            .and_then(|params| params.batch_size.as_ref()),
+        Some(&FineTuningHyperparameterValue::Integer(4))
+    );
 
     let retrieved_job = client
         .fine_tuning()
@@ -273,6 +424,20 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
         retrieved_job.fine_tuned_model.as_deref(),
         Some("ft:gpt-4o-mini:demo")
     );
+    assert_eq!(
+        retrieved_job
+            .hyperparameters
+            .as_ref()
+            .and_then(|params| params.n_epochs.as_ref()),
+        Some(&FineTuningHyperparameterValue::Text("auto".into()))
+    );
+    assert_eq!(
+        retrieved_job
+            .error
+            .as_ref()
+            .and_then(|error| error.code.as_deref()),
+        Some("server_error")
+    );
 
     let events = client
         .fine_tuning()
@@ -283,6 +448,10 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
         .await
         .unwrap();
     assert_eq!(events.data[0].message.as_deref(), Some("queued"));
+    assert_eq!(
+        events.data[0].data.as_ref().and_then(|data| data.step),
+        Some(1)
+    );
 
     let checkpoints = client
         .fine_tuning()
@@ -293,6 +462,13 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
         .await
         .unwrap();
     assert_eq!(checkpoints.data[0].id, "ftckpt_1");
+    assert_eq!(
+        checkpoints.data[0]
+            .metrics
+            .as_ref()
+            .and_then(|metrics| metrics.valid_loss),
+        Some(0.18)
+    );
 
     let batch = client
         .batches()
@@ -308,9 +484,57 @@ async fn test_should_use_typed_fine_tuning_and_batches_resources() {
         .await
         .unwrap();
     assert_eq!(batch.id, "batch_1");
+    assert_eq!(
+        batch.request_counts.as_ref().map(|counts| counts.total),
+        Some(2)
+    );
+
+    let retrieved_batch = client.batches().retrieve("batch_1").send().await.unwrap();
+    assert_eq!(retrieved_batch.status.as_deref(), Some("completed"));
+    assert_eq!(
+        retrieved_batch
+            .request_counts
+            .as_ref()
+            .map(|counts| counts.completed),
+        Some(2)
+    );
+    assert_eq!(
+        retrieved_batch
+            .errors
+            .as_ref()
+            .and_then(|errors| errors.data.first())
+            .and_then(|error| error.line),
+        Some(7)
+    );
+    assert_eq!(
+        retrieved_batch
+            .usage
+            .as_ref()
+            .map(|usage| usage.total_tokens),
+        Some(14)
+    );
+    assert_eq!(
+        retrieved_batch
+            .usage
+            .as_ref()
+            .and_then(|usage| usage.input_tokens_details.as_ref())
+            .and_then(|details| details.cached_tokens),
+        Some(2)
+    );
 
     let batches = client.batches().list().limit(10).send().await.unwrap();
     assert_eq!(batches.data[0].status.as_deref(), Some("completed"));
+    assert_eq!(
+        batches.data[0]
+            .request_counts
+            .as_ref()
+            .map(|counts| counts.total),
+        Some(2)
+    );
+
+    let cancelled_batch = client.batches().cancel("batch_1").send().await.unwrap();
+    assert_eq!(cancelled_batch.status.as_deref(), Some("cancelled"));
+    assert_eq!(cancelled_batch.cancelled_at, Some(3));
 }
 
 #[tokio::test]
@@ -414,6 +638,7 @@ async fn test_should_use_typed_conversation_and_eval_resources() {
             "object": "eval.output_item",
             "status": "completed",
             "output": {
+                "type": "output_text",
                 "score": 0.98
             }
         })))
@@ -443,10 +668,13 @@ async fn test_should_use_typed_conversation_and_eval_resources() {
         .json_body(&ConversationItemCreateParams {
             item_type: Some("message".into()),
             role: Some("user".into()),
-            content: vec![json!({
-                "type": "input_text",
-                "text": "hello"
-            })],
+            content: vec![
+                json!({
+                    "type": "input_text",
+                    "text": "hello"
+                })
+                .into(),
+            ],
             ..ConversationItemCreateParams::default()
         })
         .unwrap()
@@ -454,6 +682,7 @@ async fn test_should_use_typed_conversation_and_eval_resources() {
         .await
         .unwrap();
     assert_eq!(item.role.as_deref(), Some("user"));
+    assert_eq!(item.content[0].kind(), Some("input_text"));
 
     let items = client
         .conversations()
@@ -469,10 +698,13 @@ async fn test_should_use_typed_conversation_and_eval_resources() {
         .create()
         .json_body(&EvalCreateParams {
             name: Some("support-eval".into()),
-            data_source: Some(json!({
-                "type": "conversation",
-                "conversation_id": "conv_1"
-            })),
+            data_source: Some(
+                json!({
+                    "type": "conversation",
+                    "conversation_id": "conv_1"
+                })
+                .into(),
+            ),
             ..EvalCreateParams::default()
         })
         .unwrap()
@@ -486,9 +718,12 @@ async fn test_should_use_typed_conversation_and_eval_resources() {
         .runs()
         .create("eval_1")
         .json_body(&EvalRunCreateParams {
-            input: Some(json!({
-                "conversation_id": "conv_1"
-            })),
+            input: Some(
+                json!({
+                    "conversation_id": "conv_1"
+                })
+                .into(),
+            ),
             ..EvalRunCreateParams::default()
         })
         .unwrap()
@@ -506,6 +741,10 @@ async fn test_should_use_typed_conversation_and_eval_resources() {
         .await
         .unwrap();
     assert_eq!(output_item.status.as_deref(), Some("completed"));
+    assert_eq!(
+        output_item.output.as_ref().and_then(|output| output.kind()),
+        Some("output_text")
+    );
 }
 
 #[tokio::test]
@@ -514,7 +753,11 @@ async fn test_should_use_typed_container_skill_and_video_resources() {
     Mock::given(method("POST"))
         .and(path("/containers"))
         .and(body_json(json!({
-            "name": "sandbox"
+            "name": "sandbox",
+            "expires_after": {
+                "anchor": "last_active_at",
+                "minutes": 60
+            }
         })))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!({
             "id": "cont_1",
@@ -610,6 +853,11 @@ async fn test_should_use_typed_container_skill_and_video_resources() {
         .create()
         .json_body(&ContainerCreateParams {
             name: Some("sandbox".into()),
+            expires_after: Some(ContainerExpiresAfter {
+                anchor: Some("last_active_at".into()),
+                minutes: Some(60),
+                ..ContainerExpiresAfter::default()
+            }),
             ..ContainerCreateParams::default()
         })
         .unwrap()
@@ -653,9 +901,12 @@ async fn test_should_use_typed_container_skill_and_video_resources() {
         .create("skill_1")
         .json_body(&SkillVersionCreateParams {
             description: Some("initial version".into()),
-            content: Some(json!({
-                "instructions": "Write concise release notes."
-            })),
+            content: Some(
+                json!({
+                    "instructions": "Write concise release notes."
+                })
+                .into(),
+            ),
             ..SkillVersionCreateParams::default()
         })
         .unwrap()

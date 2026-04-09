@@ -3,7 +3,9 @@ use serde_json::json;
 use wiremock::matchers::{body_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, Completion, ConversationItem};
+use openai_rs::{
+    Batch, Client, Completion, ConversationItem, CursorPage, EvalRun, VectorStoreFile,
+};
 
 #[tokio::test]
 async fn test_should_merge_default_query_and_request_query() {
@@ -143,6 +145,142 @@ async fn test_should_encode_nested_dynamic_path_segments() {
     assert_eq!(
         requests[0].url.path(),
         "/conversations/conv%2F1/items/item%3F2%3D3"
+    );
+}
+
+#[tokio::test]
+async fn test_should_encode_generated_skill_version_content_path_segments() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/plain; charset=utf-8")
+                .set_body_raw("skill-body", "text/plain"),
+        )
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let _ = client
+        .skills()
+        .versions()
+        .content()
+        .retrieve("skill/1", "ver?2")
+        .send_raw()
+        .await
+        .unwrap();
+
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(
+        requests[0].url.path(),
+        "/skills/skill%2F1/versions/ver%3F2/content"
+    );
+}
+
+#[tokio::test]
+async fn test_should_encode_generated_eval_cancel_path_segments() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "run?2",
+            "object": "eval.run",
+            "eval_id": "eval/1",
+            "status": "cancelled"
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let _: EvalRun = client
+        .evals()
+        .runs()
+        .cancel("eval/1", "run?2")
+        .send()
+        .await
+        .unwrap();
+
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(
+        requests[0].url.path(),
+        "/evals/eval%2F1/runs/run%3F2/cancel"
+    );
+}
+
+#[tokio::test]
+async fn test_should_encode_generated_batch_cancel_path_segments() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "batch?2",
+            "object": "batch",
+            "status": "cancelled"
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let _: Batch = client.batches().cancel("batch?2").send().await.unwrap();
+
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(requests[0].url.path(), "/batches/batch%3F2/cancel");
+}
+
+#[tokio::test]
+async fn test_should_encode_generated_vector_store_file_batch_list_path_segments() {
+    let server = MockServer::start().await;
+    Mock::given(method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "object": "list",
+            "data": [{
+                "id": "file?2",
+                "object": "vector_store.file",
+                "vector_store_id": "vs/1",
+                "status": "completed"
+            }],
+            "first_id": "file?2",
+            "last_id": "file?2",
+            "has_more": false
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let _: CursorPage<VectorStoreFile> = client
+        .vector_stores()
+        .file_batches()
+        .list_files("vs/1", "batch?2")
+        .send()
+        .await
+        .unwrap();
+
+    let requests = server.received_requests().await.unwrap();
+    assert_eq!(
+        requests[0].url.path(),
+        "/vector_stores/vs%2F1/file_batches/batch%3F2/files"
     );
 }
 

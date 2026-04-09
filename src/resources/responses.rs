@@ -18,6 +18,7 @@ use crate::error::{Error, Result};
 use crate::generated::endpoints;
 #[cfg(feature = "structured-output")]
 use crate::helpers::{ParsedResponse, parse_json_payload};
+use crate::json_payload::JsonPayload;
 use crate::response_meta::ApiResponse;
 use crate::stream::{ResponseEventStream, ResponseStream};
 use crate::transport::{RequestSpec, merge_json_body};
@@ -29,9 +30,10 @@ use crate::websocket::ResponsesSocket;
 use super::{
     ChatToolDefinition, ConversationItem, DeleteResponse, InputTokenCount, JsonRequestBuilder,
     ListRequestBuilder, NoContentRequestBuilder, RealtimeCallsResource,
-    RealtimeClientSecretsResource, RealtimeResource, Response, ResponseCreateParams,
-    ResponseInputItemsResource, ResponseInputTokensResource, ResponsesResource,
-    encode_path_segment, value_from,
+    RealtimeClientSecretsResource, RealtimeResource, RealtimeSessionPayload, Response,
+    ResponseCreateParams, ResponseInputItemPayload, ResponseInputItemsResource,
+    ResponseInputPayload, ResponseInputTokensResource, ResponsesResource, encode_path_segment,
+    value_from,
 };
 
 /// Realtime API 返回的临时 client secret。
@@ -58,7 +60,7 @@ pub struct RealtimeClientSecretCreateResponse {
     #[serde(rename = "type")]
     pub session_type: Option<String>,
     /// 生效后的会话配置。
-    pub session: Option<Value>,
+    pub session: Option<RealtimeSessionPayload>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -176,11 +178,12 @@ impl ResponseInputItemsResource {
 impl ResponseInputTokensResource {
     /// 统计输入 token。
     pub fn count(&self) -> JsonRequestBuilder<InputTokenCount> {
+        let endpoint = endpoints::responses::RESPONSES_INPUT_TOKENS_COUNT;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "responses.input_tokens.count",
+            endpoint.id,
             Method::POST,
-            "/responses/input_tokens",
+            endpoint.template,
         )
     }
 }
@@ -328,13 +331,13 @@ impl ResponseStreamRequestBuilder {
     }
 
     /// 设置输入项数组。
-    pub fn input_items(mut self, items: Vec<Value>) -> Self {
+    pub fn input_items(mut self, items: Vec<ResponseInputItemPayload>) -> Self {
         self.inner = self.inner.input_items(items);
         self
     }
 
     /// 直接设置输入载荷。
-    pub fn input(mut self, input: Value) -> Self {
+    pub fn input(mut self, input: impl Into<ResponseInputPayload>) -> Self {
         self.inner = self.inner.input(input);
         self
     }
@@ -352,13 +355,17 @@ impl ResponseStreamRequestBuilder {
     }
 
     /// 添加请求体字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
     /// 添加 provider 选项。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -547,19 +554,19 @@ impl ResponseCreateRequestBuilder {
 
     /// 直接设置输入文本。
     pub fn input_text(mut self, input: impl Into<String>) -> Self {
-        self.params.input = Some(Value::String(input.into()));
+        self.params.input = Some(ResponseInputPayload::from(input.into()));
         self
     }
 
     /// 设置输入项数组。
-    pub fn input_items(mut self, items: Vec<Value>) -> Self {
-        self.params.input = Some(Value::Array(items));
+    pub fn input_items(mut self, items: Vec<ResponseInputItemPayload>) -> Self {
+        self.params.input = Some(ResponseInputPayload::from(items));
         self
     }
 
     /// 直接设置输入载荷。
-    pub fn input(mut self, input: Value) -> Self {
-        self.params.input = Some(input);
+    pub fn input(mut self, input: impl Into<ResponseInputPayload>) -> Self {
+        self.params.input = Some(input.into());
         self
     }
 
@@ -576,14 +583,19 @@ impl ResponseCreateRequestBuilder {
     }
 
     /// 追加请求体字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.extra_body.insert(key.into(), value);
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
+        self.extra_body.insert(key.into(), value.into().into_raw());
         self
     }
 
     /// 追加 provider 选项。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.provider_options.insert(key.into(), value);
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
+        self.provider_options
+            .insert(key.into(), value.into().into_raw());
         self
     }
 
@@ -715,7 +727,7 @@ impl<T> ResponseParseRequestBuilder<T> {
     }
 
     /// 设置输入数组。
-    pub fn input_items(mut self, items: Vec<Value>) -> Self {
+    pub fn input_items(mut self, items: Vec<ResponseInputItemPayload>) -> Self {
         self.inner = self.inner.input_items(items);
         self
     }

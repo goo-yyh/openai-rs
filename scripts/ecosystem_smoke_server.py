@@ -19,6 +19,48 @@ RESPONSES_PAYLOAD = {
     ],
 }
 
+CHAT_COMPLETION_PAYLOAD = {
+    "id": "chatcmpl_fixture_1",
+    "object": "chat.completion",
+    "created": 1,
+    "model": "gpt-5.4",
+    "choices": [
+        {
+            "index": 0,
+            "finish_reason": "stop",
+            "message": {
+                "role": "assistant",
+                "content": "fixture assistant reply",
+                "tool_calls": [],
+                "reasoning_details": [{"summary": "fixture"}],
+            },
+            "logprobs": {
+                "content": [
+                    {
+                        "token": "fixture",
+                        "bytes": [102, 105, 120, 116, 117, 114, 101],
+                        "logprob": -0.1,
+                        "top_logprobs": [
+                            {
+                                "token": "fixture",
+                                "bytes": [102, 105, 120, 116, 117, 114, 101],
+                                "logprob": -0.1,
+                            }
+                        ],
+                    }
+                ]
+            },
+        }
+    ],
+    "usage": {
+        "prompt_tokens": 3,
+        "completion_tokens": 2,
+        "total_tokens": 5,
+        "prompt_tokens_details": {"cached_tokens": 1},
+        "completion_tokens_details": {"reasoning_tokens": 1},
+    },
+}
+
 REALTIME_SECRET_PAYLOAD = {
     "client_secret": {
         "expires_at": 1_900_000_000,
@@ -77,6 +119,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802
         body = self._consume_body()
+        if self.path == "/v1/chat/completions":
+            self._send_json(200, CHAT_COMPLETION_PAYLOAD)
+            return
         if self.path == "/v1/responses":
             payload = json.loads(body.decode("utf-8")) if body else {}
             if payload.get("stream") is True:

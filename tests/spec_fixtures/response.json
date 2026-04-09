@@ -30,7 +30,30 @@
       "content": [
         {
           "type": "output_text",
-          "text": "fixture response"
+          "text": "fixture response",
+          "annotations": [
+            {
+              "type": "url_citation",
+              "start_index": 0,
+              "end_index": 7,
+              "title": "Fixture",
+              "url": "https://example.com/fixture"
+            }
+          ],
+          "logprobs": [
+            {
+              "token": "fixture",
+              "bytes": [102, 105, 120, 116, 117, 114, 101],
+              "logprob": -0.1,
+              "top_logprobs": [
+                {
+                  "token": "fixture",
+                  "bytes": [102, 105, 120, 116, 117, 114, 101],
+                  "logprob": -0.1
+                }
+              ]
+            }
+          ]
         }
       ]
     }

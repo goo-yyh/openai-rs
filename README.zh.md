@@ -701,6 +701,7 @@ cargo run --example responses_websocket --features responses-ws
 ## 专题文档
 
 - [Azure OpenAI 接入](./docs/azure.md)
+- [API 参考总览](./docs/api-reference.md)
 - [Examples 索引](./docs/examples.md)
 - [FAQ](./docs/faq.md)
 - [流式与 Realtime](./docs/realtime-and-streaming.md)

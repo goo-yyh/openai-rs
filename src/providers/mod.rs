@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::error::{Error, ProviderCompatibilityError, Result};
+use crate::json_payload::JsonPayload;
 
 /// 表示支持的 Provider 类型。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -176,7 +177,7 @@ pub struct RequestContext {
     /// 请求头。
     pub headers: BTreeMap<String, String>,
     /// JSON 请求体。
-    pub body: Option<Value>,
+    pub body: Option<JsonPayload>,
 }
 
 /// ProviderProfile 用于屏蔽不同兼容 Provider 的差异。
@@ -792,9 +793,12 @@ mod tests {
             path: "/chat/completions".into(),
             query: BTreeMap::new(),
             headers: BTreeMap::new(),
-            body: Some(serde_json::json!({
-                "model": "gpt-4o-deployment"
-            })),
+            body: Some(
+                serde_json::json!({
+                    "model": "gpt-4o-deployment"
+                })
+                .into(),
+            ),
         };
 
         provider.profile().prepare_request(&mut context).unwrap();

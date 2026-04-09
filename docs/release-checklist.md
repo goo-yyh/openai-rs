@@ -32,8 +32,10 @@ RELEASE_VERSION=0.1.0 bash ./scripts/check-release.sh
 5. `cargo clippy --all-targets --all-features -- -D warnings`
 6. `cargo deny check`
 7. `cargo check --examples --all-features`
-8. `RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps`
-9. `bash ./scripts/check-public-api.sh`
+8. `bash ./scripts/check-ecosystem.sh`
+9. `python3 ./scripts/generate_endpoints.py --check`
+10. `RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps`
+11. `bash ./scripts/check-public-api.sh`
 
 如果这次发布包含 provider 兼容性变更，建议额外跑手动 live workflow。
 
@@ -42,6 +44,14 @@ RELEASE_VERSION=0.1.0 bash ./scripts/check-release.sh
 仓库提供了手动 `Release Readiness` workflow，建议在发布前至少跑一次，它会执行：
 
 - 版本 / changelog 检查
+- `cargo fmt --all -- --check`
+- generated endpoint catalog 校验
+- `cargo deny check`
+- public API 基线校验
+- `cargo test --no-default-features`
+- `cargo test --all-features`
+- examples / ecosystem fixtures 校验
+- `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo publish --dry-run --all-features`
 - docs.rs 风格文档构建检查
 

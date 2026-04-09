@@ -6,6 +6,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use crate::error::WebSocketError;
+use crate::json_payload::JsonPayload;
 
 /// 表示服务端推送的通用 WebSocket 事件。
 #[derive(Debug, Clone, Serialize, Deserialize, Default, PartialEq)]
@@ -46,7 +47,7 @@ pub struct ResponseCreatedEvent {
     /// 响应 ID。
     pub id: Option<String>,
     /// 原始响应对象。
-    pub response: Option<Value>,
+    pub response: Option<JsonPayload>,
     /// 原始事件。
     pub raw: WebSocketServerEvent,
 }
@@ -70,7 +71,7 @@ pub struct SessionCreatedEvent {
     /// 会话 ID。
     pub id: Option<String>,
     /// 原始会话对象。
-    pub session: Option<Value>,
+    pub session: Option<JsonPayload>,
     /// 原始事件。
     pub raw: WebSocketServerEvent,
 }
@@ -143,7 +144,7 @@ impl From<WebSocketServerEvent> for RealtimeServerEvent {
                         .and_then(Value::as_str)
                         .map(str::to_owned)
                 }),
-                session: raw.data.get("session").cloned(),
+                session: raw.data.get("session").cloned().map(JsonPayload::from),
                 raw,
             }),
             "response.created" => Self::ResponseCreated(ResponseCreatedEvent {
@@ -154,7 +155,7 @@ impl From<WebSocketServerEvent> for RealtimeServerEvent {
                         .and_then(Value::as_str)
                         .map(str::to_owned)
                 }),
-                response: raw.data.get("response").cloned(),
+                response: raw.data.get("response").cloned().map(JsonPayload::from),
                 raw,
             }),
             "response.output_text.delta" => {
@@ -181,7 +182,7 @@ impl From<WebSocketServerEvent> for ResponsesServerEvent {
                         .and_then(Value::as_str)
                         .map(str::to_owned)
                 }),
-                response: raw.data.get("response").cloned(),
+                response: raw.data.get("response").cloned().map(JsonPayload::from),
                 raw,
             }),
             "response.output_text.delta" => {

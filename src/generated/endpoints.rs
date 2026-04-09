@@ -3,12 +3,21 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) struct PathTemplateEndpoint {
     pub(crate) id: &'static str,
+    pub(crate) method: &'static str,
     pub(crate) template: &'static str,
 }
 
 impl PathTemplateEndpoint {
-    pub(crate) const fn new(id: &'static str, template: &'static str) -> Self {
-        Self { id, template }
+    pub(crate) const fn new(
+        id: &'static str,
+        method: &'static str,
+        template: &'static str,
+    ) -> Self {
+        Self {
+            id,
+            method,
+            template,
+        }
     }
 
     pub(crate) fn render(self, params: &[(&str, &str)]) -> String {
@@ -27,17 +36,24 @@ pub(crate) mod chat {
     pub(crate) const CHAT_COMPLETIONS_MESSAGES_LIST: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
             "chat.completions.messages.list",
+            "GET",
             "/chat/completions/{completion_id}/messages",
         );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[CHAT_COMPLETIONS_MESSAGES_LIST];
 }
 
 pub(crate) mod core {
     use super::PathTemplateEndpoint;
 
     pub(crate) const COMPLETIONS_CREATE: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("completions.create", "/completions");
+        PathTemplateEndpoint::new("completions.create", "POST", "/completions");
     pub(crate) const MODERATIONS_CREATE: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("moderations.create", "/moderations");
+        PathTemplateEndpoint::new("moderations.create", "POST", "/moderations");
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[COMPLETIONS_CREATE, MODERATIONS_CREATE];
 }
 
 pub(crate) mod responses {
@@ -45,25 +61,455 @@ pub(crate) mod responses {
 
     pub(crate) const RESPONSES_INPUT_ITEMS_LIST: PathTemplateEndpoint = PathTemplateEndpoint::new(
         "responses.input_items.list",
+        "GET",
         "/responses/{response_id}/input_items",
     );
+    pub(crate) const RESPONSES_INPUT_TOKENS_COUNT: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "responses.input_tokens.count",
+        "POST",
+        "/responses/input_tokens",
+    );
     pub(crate) const REALTIME_CLIENT_SECRETS_CREATE: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("realtime.client_secrets.create", "/realtime/client_secrets");
-    pub(crate) const REALTIME_CALLS_ACCEPT: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("realtime.calls.accept", "/realtime/calls/{call_id}/accept");
-    pub(crate) const REALTIME_CALLS_HANGUP: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("realtime.calls.hangup", "/realtime/calls/{call_id}/hangup");
-    pub(crate) const REALTIME_CALLS_REFER: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("realtime.calls.refer", "/realtime/calls/{call_id}/refer");
-    pub(crate) const REALTIME_CALLS_REJECT: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("realtime.calls.reject", "/realtime/calls/{call_id}/reject");
+        PathTemplateEndpoint::new(
+            "realtime.client_secrets.create",
+            "POST",
+            "/realtime/client_secrets",
+        );
+    pub(crate) const REALTIME_CALLS_ACCEPT: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "realtime.calls.accept",
+        "POST",
+        "/realtime/calls/{call_id}/accept",
+    );
+    pub(crate) const REALTIME_CALLS_HANGUP: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "realtime.calls.hangup",
+        "POST",
+        "/realtime/calls/{call_id}/hangup",
+    );
+    pub(crate) const REALTIME_CALLS_REFER: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "realtime.calls.refer",
+        "POST",
+        "/realtime/calls/{call_id}/refer",
+    );
+    pub(crate) const REALTIME_CALLS_REJECT: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "realtime.calls.reject",
+        "POST",
+        "/realtime/calls/{call_id}/reject",
+    );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        RESPONSES_INPUT_ITEMS_LIST,
+        RESPONSES_INPUT_TOKENS_COUNT,
+        REALTIME_CLIENT_SECRETS_CREATE,
+        REALTIME_CALLS_ACCEPT,
+        REALTIME_CALLS_HANGUP,
+        REALTIME_CALLS_REFER,
+        REALTIME_CALLS_REJECT,
+    ];
+}
+
+pub(crate) mod batches {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const BATCHES_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("batches.create", "POST", "/batches");
+    pub(crate) const BATCHES_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("batches.retrieve", "GET", "/batches/{batch_id}");
+    pub(crate) const BATCHES_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("batches.list", "GET", "/batches");
+    pub(crate) const BATCHES_CANCEL: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("batches.cancel", "POST", "/batches/{batch_id}/cancel");
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        BATCHES_CREATE,
+        BATCHES_RETRIEVE,
+        BATCHES_LIST,
+        BATCHES_CANCEL,
+    ];
+}
+
+pub(crate) mod conversations {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const CONVERSATIONS_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("conversations.create", "POST", "/conversations");
+    pub(crate) const CONVERSATIONS_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.retrieve",
+        "GET",
+        "/conversations/{conversation_id}",
+    );
+    pub(crate) const CONVERSATIONS_UPDATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.update",
+        "POST",
+        "/conversations/{conversation_id}",
+    );
+    pub(crate) const CONVERSATIONS_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.delete",
+        "DELETE",
+        "/conversations/{conversation_id}",
+    );
+    pub(crate) const CONVERSATIONS_ITEMS_CREATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.items.create",
+        "POST",
+        "/conversations/{conversation_id}/items",
+    );
+    pub(crate) const CONVERSATIONS_ITEMS_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.items.retrieve",
+        "GET",
+        "/conversations/{conversation_id}/items/{item_id}",
+    );
+    pub(crate) const CONVERSATIONS_ITEMS_LIST: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.items.list",
+        "GET",
+        "/conversations/{conversation_id}/items",
+    );
+    pub(crate) const CONVERSATIONS_ITEMS_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "conversations.items.delete",
+        "DELETE",
+        "/conversations/{conversation_id}/items/{item_id}",
+    );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        CONVERSATIONS_CREATE,
+        CONVERSATIONS_RETRIEVE,
+        CONVERSATIONS_UPDATE,
+        CONVERSATIONS_DELETE,
+        CONVERSATIONS_ITEMS_CREATE,
+        CONVERSATIONS_ITEMS_RETRIEVE,
+        CONVERSATIONS_ITEMS_LIST,
+        CONVERSATIONS_ITEMS_DELETE,
+    ];
+}
+
+pub(crate) mod evals {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const EVALS_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.create", "POST", "/evals");
+    pub(crate) const EVALS_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.retrieve", "GET", "/evals/{eval_id}");
+    pub(crate) const EVALS_UPDATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.update", "POST", "/evals/{eval_id}");
+    pub(crate) const EVALS_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.list", "GET", "/evals");
+    pub(crate) const EVALS_DELETE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.delete", "DELETE", "/evals/{eval_id}");
+    pub(crate) const EVALS_RUNS_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.runs.create", "POST", "/evals/{eval_id}/runs");
+    pub(crate) const EVALS_RUNS_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "evals.runs.retrieve",
+        "GET",
+        "/evals/{eval_id}/runs/{run_id}",
+    );
+    pub(crate) const EVALS_RUNS_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("evals.runs.list", "GET", "/evals/{eval_id}/runs");
+    pub(crate) const EVALS_RUNS_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "evals.runs.delete",
+        "DELETE",
+        "/evals/{eval_id}/runs/{run_id}",
+    );
+    pub(crate) const EVALS_RUNS_CANCEL: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "evals.runs.cancel",
+        "POST",
+        "/evals/{eval_id}/runs/{run_id}/cancel",
+    );
+    pub(crate) const EVALS_RUNS_OUTPUT_ITEMS_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "evals.runs.output_items.retrieve",
+            "GET",
+            "/evals/{eval_id}/runs/{run_id}/output_items/{item_id}",
+        );
+    pub(crate) const EVALS_RUNS_OUTPUT_ITEMS_LIST: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "evals.runs.output_items.list",
+        "GET",
+        "/evals/{eval_id}/runs/{run_id}/output_items",
+    );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        EVALS_CREATE,
+        EVALS_RETRIEVE,
+        EVALS_UPDATE,
+        EVALS_LIST,
+        EVALS_DELETE,
+        EVALS_RUNS_CREATE,
+        EVALS_RUNS_RETRIEVE,
+        EVALS_RUNS_LIST,
+        EVALS_RUNS_DELETE,
+        EVALS_RUNS_CANCEL,
+        EVALS_RUNS_OUTPUT_ITEMS_RETRIEVE,
+        EVALS_RUNS_OUTPUT_ITEMS_LIST,
+    ];
+}
+
+pub(crate) mod containers {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const CONTAINERS_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("containers.create", "POST", "/containers");
+    pub(crate) const CONTAINERS_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("containers.retrieve", "GET", "/containers/{container_id}");
+    pub(crate) const CONTAINERS_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("containers.list", "GET", "/containers");
+    pub(crate) const CONTAINERS_DELETE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("containers.delete", "DELETE", "/containers/{container_id}");
+    pub(crate) const CONTAINERS_FILES_CREATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "containers.files.create",
+        "POST",
+        "/containers/{container_id}/files",
+    );
+    pub(crate) const CONTAINERS_FILES_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "containers.files.retrieve",
+        "GET",
+        "/containers/{container_id}/files/{file_id}",
+    );
+    pub(crate) const CONTAINERS_FILES_LIST: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "containers.files.list",
+        "GET",
+        "/containers/{container_id}/files",
+    );
+    pub(crate) const CONTAINERS_FILES_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "containers.files.delete",
+        "DELETE",
+        "/containers/{container_id}/files/{file_id}",
+    );
+    pub(crate) const CONTAINERS_FILES_CONTENT_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "containers.files.content.retrieve",
+            "GET",
+            "/containers/{container_id}/files/{file_id}/content",
+        );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        CONTAINERS_CREATE,
+        CONTAINERS_RETRIEVE,
+        CONTAINERS_LIST,
+        CONTAINERS_DELETE,
+        CONTAINERS_FILES_CREATE,
+        CONTAINERS_FILES_RETRIEVE,
+        CONTAINERS_FILES_LIST,
+        CONTAINERS_FILES_DELETE,
+        CONTAINERS_FILES_CONTENT_RETRIEVE,
+    ];
+}
+
+pub(crate) mod skills {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const SKILLS_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("skills.create", "POST", "/skills");
+    pub(crate) const SKILLS_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("skills.retrieve", "GET", "/skills/{skill_id}");
+    pub(crate) const SKILLS_UPDATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("skills.update", "POST", "/skills/{skill_id}");
+    pub(crate) const SKILLS_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("skills.list", "GET", "/skills");
+    pub(crate) const SKILLS_DELETE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("skills.delete", "DELETE", "/skills/{skill_id}");
+    pub(crate) const SKILLS_CONTENT_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "skills.content.retrieve",
+        "GET",
+        "/skills/{skill_id}/content",
+    );
+    pub(crate) const SKILLS_VERSIONS_CREATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "skills.versions.create",
+        "POST",
+        "/skills/{skill_id}/versions",
+    );
+    pub(crate) const SKILLS_VERSIONS_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "skills.versions.retrieve",
+        "GET",
+        "/skills/{skill_id}/versions/{version_id}",
+    );
+    pub(crate) const SKILLS_VERSIONS_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("skills.versions.list", "GET", "/skills/{skill_id}/versions");
+    pub(crate) const SKILLS_VERSIONS_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "skills.versions.delete",
+        "DELETE",
+        "/skills/{skill_id}/versions/{version_id}",
+    );
+    pub(crate) const SKILLS_VERSIONS_CONTENT_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "skills.versions.content.retrieve",
+            "GET",
+            "/skills/{skill_id}/versions/{version_id}/content",
+        );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        SKILLS_CREATE,
+        SKILLS_RETRIEVE,
+        SKILLS_UPDATE,
+        SKILLS_LIST,
+        SKILLS_DELETE,
+        SKILLS_CONTENT_RETRIEVE,
+        SKILLS_VERSIONS_CREATE,
+        SKILLS_VERSIONS_RETRIEVE,
+        SKILLS_VERSIONS_LIST,
+        SKILLS_VERSIONS_DELETE,
+        SKILLS_VERSIONS_CONTENT_RETRIEVE,
+    ];
+}
+
+pub(crate) mod videos {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const VIDEOS_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.create", "POST", "/videos");
+    pub(crate) const VIDEOS_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.retrieve", "GET", "/videos/{video_id}");
+    pub(crate) const VIDEOS_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.list", "GET", "/videos");
+    pub(crate) const VIDEOS_DELETE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.delete", "DELETE", "/videos/{video_id}");
+    pub(crate) const VIDEOS_EDIT: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.edit", "POST", "/videos/{video_id}/edit");
+    pub(crate) const VIDEOS_EXTEND: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.extend", "POST", "/videos/{video_id}/extend");
+    pub(crate) const VIDEOS_CREATE_CHARACTER: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.create_character", "POST", "/videos/characters");
+    pub(crate) const VIDEOS_GET_CHARACTER: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "videos.get_character",
+        "GET",
+        "/videos/characters/{character_id}",
+    );
+    pub(crate) const VIDEOS_DOWNLOAD_CONTENT: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "videos.download_content",
+        "GET",
+        "/videos/{video_id}/content",
+    );
+    pub(crate) const VIDEOS_REMIX: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("videos.remix", "POST", "/videos/{video_id}/remix");
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        VIDEOS_CREATE,
+        VIDEOS_RETRIEVE,
+        VIDEOS_LIST,
+        VIDEOS_DELETE,
+        VIDEOS_EDIT,
+        VIDEOS_EXTEND,
+        VIDEOS_CREATE_CHARACTER,
+        VIDEOS_GET_CHARACTER,
+        VIDEOS_DOWNLOAD_CONTENT,
+        VIDEOS_REMIX,
+    ];
+}
+
+pub(crate) mod vector_stores {
+    use super::PathTemplateEndpoint;
+
+    pub(crate) const VECTOR_STORES_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("vector_stores.create", "POST", "/vector_stores");
+    pub(crate) const VECTOR_STORES_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.retrieve",
+        "GET",
+        "/vector_stores/{vector_store_id}",
+    );
+    pub(crate) const VECTOR_STORES_UPDATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.update",
+        "POST",
+        "/vector_stores/{vector_store_id}",
+    );
+    pub(crate) const VECTOR_STORES_LIST: PathTemplateEndpoint =
+        PathTemplateEndpoint::new("vector_stores.list", "GET", "/vector_stores");
+    pub(crate) const VECTOR_STORES_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.delete",
+        "DELETE",
+        "/vector_stores/{vector_store_id}",
+    );
+    pub(crate) const VECTOR_STORES_SEARCH: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.search",
+        "POST",
+        "/vector_stores/{vector_store_id}/search",
+    );
+    pub(crate) const VECTOR_STORES_FILES_CREATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.files.create",
+        "POST",
+        "/vector_stores/{vector_store_id}/files",
+    );
+    pub(crate) const VECTOR_STORES_FILES_RETRIEVE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.files.retrieve",
+        "GET",
+        "/vector_stores/{vector_store_id}/files/{file_id}",
+    );
+    pub(crate) const VECTOR_STORES_FILES_UPDATE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.files.update",
+        "POST",
+        "/vector_stores/{vector_store_id}/files/{file_id}",
+    );
+    pub(crate) const VECTOR_STORES_FILES_LIST: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.files.list",
+        "GET",
+        "/vector_stores/{vector_store_id}/files",
+    );
+    pub(crate) const VECTOR_STORES_FILES_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.files.delete",
+        "DELETE",
+        "/vector_stores/{vector_store_id}/files/{file_id}",
+    );
+    pub(crate) const VECTOR_STORES_FILES_CONTENT: PathTemplateEndpoint = PathTemplateEndpoint::new(
+        "vector_stores.files.content",
+        "GET",
+        "/vector_stores/{vector_store_id}/files/{file_id}/content",
+    );
+    pub(crate) const VECTOR_STORES_FILE_BATCHES_CREATE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "vector_stores.file_batches.create",
+            "POST",
+            "/vector_stores/{vector_store_id}/file_batches",
+        );
+    pub(crate) const VECTOR_STORES_FILE_BATCHES_RETRIEVE: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "vector_stores.file_batches.retrieve",
+            "GET",
+            "/vector_stores/{vector_store_id}/file_batches/{batch_id}",
+        );
+    pub(crate) const VECTOR_STORES_FILE_BATCHES_CANCEL: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "vector_stores.file_batches.cancel",
+            "POST",
+            "/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel",
+        );
+    pub(crate) const VECTOR_STORES_FILE_BATCHES_LIST_FILES: PathTemplateEndpoint =
+        PathTemplateEndpoint::new(
+            "vector_stores.file_batches.list_files",
+            "GET",
+            "/vector_stores/{vector_store_id}/file_batches/{batch_id}/files",
+        );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        VECTOR_STORES_CREATE,
+        VECTOR_STORES_RETRIEVE,
+        VECTOR_STORES_UPDATE,
+        VECTOR_STORES_LIST,
+        VECTOR_STORES_DELETE,
+        VECTOR_STORES_SEARCH,
+        VECTOR_STORES_FILES_CREATE,
+        VECTOR_STORES_FILES_RETRIEVE,
+        VECTOR_STORES_FILES_UPDATE,
+        VECTOR_STORES_FILES_LIST,
+        VECTOR_STORES_FILES_DELETE,
+        VECTOR_STORES_FILES_CONTENT,
+        VECTOR_STORES_FILE_BATCHES_CREATE,
+        VECTOR_STORES_FILE_BATCHES_RETRIEVE,
+        VECTOR_STORES_FILE_BATCHES_CANCEL,
+        VECTOR_STORES_FILE_BATCHES_LIST_FILES,
+    ];
 }
 
 pub(crate) mod uploads {
     use super::PathTemplateEndpoint;
 
     pub(crate) const UPLOADS_PARTS_CREATE: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("uploads.parts.create", "/uploads/{upload_id}/parts");
+        PathTemplateEndpoint::new("uploads.parts.create", "POST", "/uploads/{upload_id}/parts");
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[UPLOADS_PARTS_CREATE];
 }
 
 pub(crate) mod fine_tuning {
@@ -72,52 +518,182 @@ pub(crate) mod fine_tuning {
     pub(crate) const FINE_TUNING_ALPHA_GRADERS_RUN: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
             "fine_tuning.alpha.graders.run",
+            "POST",
             "/fine_tuning/alpha/graders/run",
         );
     pub(crate) const FINE_TUNING_ALPHA_GRADERS_VALIDATE: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
             "fine_tuning.alpha.graders.validate",
+            "POST",
             "/fine_tuning/alpha/graders/validate",
         );
     pub(crate) const GRADERS_GRADER_MODELS: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("graders.grader_models", "/graders/grader_models");
+        PathTemplateEndpoint::new("graders.grader_models", "GET", "/graders/grader_models");
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        FINE_TUNING_ALPHA_GRADERS_RUN,
+        FINE_TUNING_ALPHA_GRADERS_VALIDATE,
+        GRADERS_GRADER_MODELS,
+    ];
 }
 
 pub(crate) mod beta_chatkit {
     use super::PathTemplateEndpoint;
 
     pub(crate) const BETA_CHATKIT_SESSIONS_CREATE: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("beta.chatkit.sessions.create", "/chatkit/sessions");
+        PathTemplateEndpoint::new("beta.chatkit.sessions.create", "POST", "/chatkit/sessions");
     pub(crate) const BETA_CHATKIT_SESSIONS_CANCEL: PathTemplateEndpoint = PathTemplateEndpoint::new(
         "beta.chatkit.sessions.cancel",
+        "POST",
         "/chatkit/sessions/{session_id}/cancel",
     );
     pub(crate) const BETA_CHATKIT_THREADS_RETRIEVE: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
             "beta.chatkit.threads.retrieve",
+            "GET",
             "/chatkit/threads/{thread_id}",
         );
     pub(crate) const BETA_CHATKIT_THREADS_LIST: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("beta.chatkit.threads.list", "/chatkit/threads");
+        PathTemplateEndpoint::new("beta.chatkit.threads.list", "GET", "/chatkit/threads");
     pub(crate) const BETA_CHATKIT_THREADS_LIST_ITEMS: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
             "beta.chatkit.threads.list_items",
+            "GET",
             "/chatkit/threads/{thread_id}/items",
         );
     pub(crate) const BETA_CHATKIT_THREADS_DELETE: PathTemplateEndpoint = PathTemplateEndpoint::new(
         "beta.chatkit.threads.delete",
+        "DELETE",
         "/chatkit/threads/{thread_id}",
     );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        BETA_CHATKIT_SESSIONS_CREATE,
+        BETA_CHATKIT_SESSIONS_CANCEL,
+        BETA_CHATKIT_THREADS_RETRIEVE,
+        BETA_CHATKIT_THREADS_LIST,
+        BETA_CHATKIT_THREADS_LIST_ITEMS,
+        BETA_CHATKIT_THREADS_DELETE,
+    ];
 }
 
 pub(crate) mod beta_realtime {
     use super::PathTemplateEndpoint;
 
     pub(crate) const BETA_REALTIME_SESSIONS_CREATE: PathTemplateEndpoint =
-        PathTemplateEndpoint::new("beta.realtime.sessions.create", "/realtime/sessions");
+        PathTemplateEndpoint::new(
+            "beta.realtime.sessions.create",
+            "POST",
+            "/realtime/sessions",
+        );
     pub(crate) const BETA_REALTIME_TRANSCRIPTION_SESSIONS_CREATE: PathTemplateEndpoint =
         PathTemplateEndpoint::new(
             "beta.realtime.transcription_sessions.create",
+            "POST",
             "/realtime/transcription_sessions",
         );
+
+    #[allow(dead_code)]
+    pub(crate) const ALL: &[PathTemplateEndpoint] = &[
+        BETA_REALTIME_SESSIONS_CREATE,
+        BETA_REALTIME_TRANSCRIPTION_SESSIONS_CREATE,
+    ];
 }
+
+#[allow(dead_code)]
+pub(crate) const ALL_ENDPOINTS: &[PathTemplateEndpoint] = &[
+    chat::CHAT_COMPLETIONS_MESSAGES_LIST,
+    core::COMPLETIONS_CREATE,
+    core::MODERATIONS_CREATE,
+    responses::RESPONSES_INPUT_ITEMS_LIST,
+    responses::RESPONSES_INPUT_TOKENS_COUNT,
+    responses::REALTIME_CLIENT_SECRETS_CREATE,
+    responses::REALTIME_CALLS_ACCEPT,
+    responses::REALTIME_CALLS_HANGUP,
+    responses::REALTIME_CALLS_REFER,
+    responses::REALTIME_CALLS_REJECT,
+    batches::BATCHES_CREATE,
+    batches::BATCHES_RETRIEVE,
+    batches::BATCHES_LIST,
+    batches::BATCHES_CANCEL,
+    conversations::CONVERSATIONS_CREATE,
+    conversations::CONVERSATIONS_RETRIEVE,
+    conversations::CONVERSATIONS_UPDATE,
+    conversations::CONVERSATIONS_DELETE,
+    conversations::CONVERSATIONS_ITEMS_CREATE,
+    conversations::CONVERSATIONS_ITEMS_RETRIEVE,
+    conversations::CONVERSATIONS_ITEMS_LIST,
+    conversations::CONVERSATIONS_ITEMS_DELETE,
+    evals::EVALS_CREATE,
+    evals::EVALS_RETRIEVE,
+    evals::EVALS_UPDATE,
+    evals::EVALS_LIST,
+    evals::EVALS_DELETE,
+    evals::EVALS_RUNS_CREATE,
+    evals::EVALS_RUNS_RETRIEVE,
+    evals::EVALS_RUNS_LIST,
+    evals::EVALS_RUNS_DELETE,
+    evals::EVALS_RUNS_CANCEL,
+    evals::EVALS_RUNS_OUTPUT_ITEMS_RETRIEVE,
+    evals::EVALS_RUNS_OUTPUT_ITEMS_LIST,
+    containers::CONTAINERS_CREATE,
+    containers::CONTAINERS_RETRIEVE,
+    containers::CONTAINERS_LIST,
+    containers::CONTAINERS_DELETE,
+    containers::CONTAINERS_FILES_CREATE,
+    containers::CONTAINERS_FILES_RETRIEVE,
+    containers::CONTAINERS_FILES_LIST,
+    containers::CONTAINERS_FILES_DELETE,
+    containers::CONTAINERS_FILES_CONTENT_RETRIEVE,
+    skills::SKILLS_CREATE,
+    skills::SKILLS_RETRIEVE,
+    skills::SKILLS_UPDATE,
+    skills::SKILLS_LIST,
+    skills::SKILLS_DELETE,
+    skills::SKILLS_CONTENT_RETRIEVE,
+    skills::SKILLS_VERSIONS_CREATE,
+    skills::SKILLS_VERSIONS_RETRIEVE,
+    skills::SKILLS_VERSIONS_LIST,
+    skills::SKILLS_VERSIONS_DELETE,
+    skills::SKILLS_VERSIONS_CONTENT_RETRIEVE,
+    videos::VIDEOS_CREATE,
+    videos::VIDEOS_RETRIEVE,
+    videos::VIDEOS_LIST,
+    videos::VIDEOS_DELETE,
+    videos::VIDEOS_EDIT,
+    videos::VIDEOS_EXTEND,
+    videos::VIDEOS_CREATE_CHARACTER,
+    videos::VIDEOS_GET_CHARACTER,
+    videos::VIDEOS_DOWNLOAD_CONTENT,
+    videos::VIDEOS_REMIX,
+    vector_stores::VECTOR_STORES_CREATE,
+    vector_stores::VECTOR_STORES_RETRIEVE,
+    vector_stores::VECTOR_STORES_UPDATE,
+    vector_stores::VECTOR_STORES_LIST,
+    vector_stores::VECTOR_STORES_DELETE,
+    vector_stores::VECTOR_STORES_SEARCH,
+    vector_stores::VECTOR_STORES_FILES_CREATE,
+    vector_stores::VECTOR_STORES_FILES_RETRIEVE,
+    vector_stores::VECTOR_STORES_FILES_UPDATE,
+    vector_stores::VECTOR_STORES_FILES_LIST,
+    vector_stores::VECTOR_STORES_FILES_DELETE,
+    vector_stores::VECTOR_STORES_FILES_CONTENT,
+    vector_stores::VECTOR_STORES_FILE_BATCHES_CREATE,
+    vector_stores::VECTOR_STORES_FILE_BATCHES_RETRIEVE,
+    vector_stores::VECTOR_STORES_FILE_BATCHES_CANCEL,
+    vector_stores::VECTOR_STORES_FILE_BATCHES_LIST_FILES,
+    uploads::UPLOADS_PARTS_CREATE,
+    fine_tuning::FINE_TUNING_ALPHA_GRADERS_RUN,
+    fine_tuning::FINE_TUNING_ALPHA_GRADERS_VALIDATE,
+    fine_tuning::GRADERS_GRADER_MODELS,
+    beta_chatkit::BETA_CHATKIT_SESSIONS_CREATE,
+    beta_chatkit::BETA_CHATKIT_SESSIONS_CANCEL,
+    beta_chatkit::BETA_CHATKIT_THREADS_RETRIEVE,
+    beta_chatkit::BETA_CHATKIT_THREADS_LIST,
+    beta_chatkit::BETA_CHATKIT_THREADS_LIST_ITEMS,
+    beta_chatkit::BETA_CHATKIT_THREADS_DELETE,
+    beta_realtime::BETA_REALTIME_SESSIONS_CREATE,
+    beta_realtime::BETA_REALTIME_TRANSCRIPTION_SESSIONS_CREATE,
+];

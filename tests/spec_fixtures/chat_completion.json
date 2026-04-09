@@ -1,0 +1,49 @@
+{
+  "id": "chatcmpl_spec_1",
+  "object": "chat.completion",
+  "created": 1,
+  "model": "gpt-5.4",
+  "choices": [
+    {
+      "index": 0,
+      "finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "fixture assistant reply",
+        "tool_calls": [],
+        "reasoning_details": [
+          {
+            "summary": "concise"
+          }
+        ]
+      },
+      "logprobs": {
+        "content": [
+          {
+            "token": "fixture",
+            "bytes": [102, 105, 120, 116, 117, 114, 101],
+            "logprob": -0.1,
+            "top_logprobs": [
+              {
+                "token": "fixture",
+                "bytes": [102, 105, 120, 116, 117, 114, 101],
+                "logprob": -0.1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 3,
+    "completion_tokens": 2,
+    "total_tokens": 5,
+    "prompt_tokens_details": {
+      "cached_tokens": 1
+    },
+    "completion_tokens_details": {
+      "reasoning_tokens": 1
+    }
+  }
+}

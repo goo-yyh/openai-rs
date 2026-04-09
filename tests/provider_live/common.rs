@@ -7,7 +7,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[cfg(feature = "tool-runner")]
 use openai_rs::ToolDefinition;
-use openai_rs::resources::{ChatToolDefinition, ChatToolFunction};
+use openai_rs::resources::{ChatToolChoice, ChatToolDefinition, ChatToolFunction};
 use openai_rs::{ApiError, ChatCompletion, ChatCompletionToolCall, Error, ProviderKind, Result};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -371,7 +371,8 @@ pub fn add_numbers_tool() -> ChatToolDefinition {
                     "b": {"type": "integer"}
                 },
                 "required": ["a", "b"]
-            }),
+            })
+            .into(),
         },
     }
 }
@@ -390,7 +391,8 @@ pub fn multiply_numbers_tool() -> ChatToolDefinition {
                     "b": {"type": "integer"}
                 },
                 "required": ["a", "b"]
-            }),
+            })
+            .into(),
         },
     }
 }
@@ -452,13 +454,8 @@ pub fn multiply_numbers_runner_tool() -> ToolDefinition {
 }
 
 /// 构造强制模型选择指定函数工具的参数。
-pub fn force_tool_choice(name: &str) -> Value {
-    json!({
-        "type": "function",
-        "function": {
-            "name": name
-        }
-    })
+pub fn force_tool_choice(name: &str) -> ChatToolChoice {
+    ChatToolChoice::function(name)
 }
 
 /// 解析工具调用参数 JSON。

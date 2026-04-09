@@ -1,79 +1,398 @@
 {
   "chat": {
     "chat.completions.messages.list": {
-      "template": "/chat/completions/{completion_id}/messages"
+      "template": "/chat/completions/{completion_id}/messages",
+      "method": "GET"
     }
   },
   "core": {
     "completions.create": {
-      "template": "/completions"
+      "template": "/completions",
+      "method": "POST"
     },
     "moderations.create": {
-      "template": "/moderations"
+      "template": "/moderations",
+      "method": "POST"
     }
   },
   "responses": {
     "responses.input_items.list": {
-      "template": "/responses/{response_id}/input_items"
+      "template": "/responses/{response_id}/input_items",
+      "method": "GET"
+    },
+    "responses.input_tokens.count": {
+      "template": "/responses/input_tokens",
+      "method": "POST"
     },
     "realtime.client_secrets.create": {
-      "template": "/realtime/client_secrets"
+      "template": "/realtime/client_secrets",
+      "method": "POST"
     },
     "realtime.calls.accept": {
-      "template": "/realtime/calls/{call_id}/accept"
+      "template": "/realtime/calls/{call_id}/accept",
+      "method": "POST"
     },
     "realtime.calls.hangup": {
-      "template": "/realtime/calls/{call_id}/hangup"
+      "template": "/realtime/calls/{call_id}/hangup",
+      "method": "POST"
     },
     "realtime.calls.refer": {
-      "template": "/realtime/calls/{call_id}/refer"
+      "template": "/realtime/calls/{call_id}/refer",
+      "method": "POST"
     },
     "realtime.calls.reject": {
-      "template": "/realtime/calls/{call_id}/reject"
+      "template": "/realtime/calls/{call_id}/reject",
+      "method": "POST"
+    }
+  },
+  "batches": {
+    "batches.create": {
+      "template": "/batches",
+      "method": "POST"
+    },
+    "batches.retrieve": {
+      "template": "/batches/{batch_id}",
+      "method": "GET"
+    },
+    "batches.list": {
+      "template": "/batches",
+      "method": "GET"
+    },
+    "batches.cancel": {
+      "template": "/batches/{batch_id}/cancel",
+      "method": "POST"
+    }
+  },
+  "conversations": {
+    "conversations.create": {
+      "template": "/conversations",
+      "method": "POST"
+    },
+    "conversations.retrieve": {
+      "template": "/conversations/{conversation_id}",
+      "method": "GET"
+    },
+    "conversations.update": {
+      "template": "/conversations/{conversation_id}",
+      "method": "POST"
+    },
+    "conversations.delete": {
+      "template": "/conversations/{conversation_id}",
+      "method": "DELETE"
+    },
+    "conversations.items.create": {
+      "template": "/conversations/{conversation_id}/items",
+      "method": "POST"
+    },
+    "conversations.items.retrieve": {
+      "template": "/conversations/{conversation_id}/items/{item_id}",
+      "method": "GET"
+    },
+    "conversations.items.list": {
+      "template": "/conversations/{conversation_id}/items",
+      "method": "GET"
+    },
+    "conversations.items.delete": {
+      "template": "/conversations/{conversation_id}/items/{item_id}",
+      "method": "DELETE"
+    }
+  },
+  "evals": {
+    "evals.create": {
+      "template": "/evals",
+      "method": "POST"
+    },
+    "evals.retrieve": {
+      "template": "/evals/{eval_id}",
+      "method": "GET"
+    },
+    "evals.update": {
+      "template": "/evals/{eval_id}",
+      "method": "POST"
+    },
+    "evals.list": {
+      "template": "/evals",
+      "method": "GET"
+    },
+    "evals.delete": {
+      "template": "/evals/{eval_id}",
+      "method": "DELETE"
+    },
+    "evals.runs.create": {
+      "template": "/evals/{eval_id}/runs",
+      "method": "POST"
+    },
+    "evals.runs.retrieve": {
+      "template": "/evals/{eval_id}/runs/{run_id}",
+      "method": "GET"
+    },
+    "evals.runs.list": {
+      "template": "/evals/{eval_id}/runs",
+      "method": "GET"
+    },
+    "evals.runs.delete": {
+      "template": "/evals/{eval_id}/runs/{run_id}",
+      "method": "DELETE"
+    },
+    "evals.runs.cancel": {
+      "template": "/evals/{eval_id}/runs/{run_id}/cancel",
+      "method": "POST"
+    },
+    "evals.runs.output_items.retrieve": {
+      "template": "/evals/{eval_id}/runs/{run_id}/output_items/{item_id}",
+      "method": "GET"
+    },
+    "evals.runs.output_items.list": {
+      "template": "/evals/{eval_id}/runs/{run_id}/output_items",
+      "method": "GET"
+    }
+  },
+  "containers": {
+    "containers.create": {
+      "template": "/containers",
+      "method": "POST"
+    },
+    "containers.retrieve": {
+      "template": "/containers/{container_id}",
+      "method": "GET"
+    },
+    "containers.list": {
+      "template": "/containers",
+      "method": "GET"
+    },
+    "containers.delete": {
+      "template": "/containers/{container_id}",
+      "method": "DELETE"
+    },
+    "containers.files.create": {
+      "template": "/containers/{container_id}/files",
+      "method": "POST"
+    },
+    "containers.files.retrieve": {
+      "template": "/containers/{container_id}/files/{file_id}",
+      "method": "GET"
+    },
+    "containers.files.list": {
+      "template": "/containers/{container_id}/files",
+      "method": "GET"
+    },
+    "containers.files.delete": {
+      "template": "/containers/{container_id}/files/{file_id}",
+      "method": "DELETE"
+    },
+    "containers.files.content.retrieve": {
+      "template": "/containers/{container_id}/files/{file_id}/content",
+      "method": "GET"
+    }
+  },
+  "skills": {
+    "skills.create": {
+      "template": "/skills",
+      "method": "POST"
+    },
+    "skills.retrieve": {
+      "template": "/skills/{skill_id}",
+      "method": "GET"
+    },
+    "skills.update": {
+      "template": "/skills/{skill_id}",
+      "method": "POST"
+    },
+    "skills.list": {
+      "template": "/skills",
+      "method": "GET"
+    },
+    "skills.delete": {
+      "template": "/skills/{skill_id}",
+      "method": "DELETE"
+    },
+    "skills.content.retrieve": {
+      "template": "/skills/{skill_id}/content",
+      "method": "GET"
+    },
+    "skills.versions.create": {
+      "template": "/skills/{skill_id}/versions",
+      "method": "POST"
+    },
+    "skills.versions.retrieve": {
+      "template": "/skills/{skill_id}/versions/{version_id}",
+      "method": "GET"
+    },
+    "skills.versions.list": {
+      "template": "/skills/{skill_id}/versions",
+      "method": "GET"
+    },
+    "skills.versions.delete": {
+      "template": "/skills/{skill_id}/versions/{version_id}",
+      "method": "DELETE"
+    },
+    "skills.versions.content.retrieve": {
+      "template": "/skills/{skill_id}/versions/{version_id}/content",
+      "method": "GET"
+    }
+  },
+  "videos": {
+    "videos.create": {
+      "template": "/videos",
+      "method": "POST"
+    },
+    "videos.retrieve": {
+      "template": "/videos/{video_id}",
+      "method": "GET"
+    },
+    "videos.list": {
+      "template": "/videos",
+      "method": "GET"
+    },
+    "videos.delete": {
+      "template": "/videos/{video_id}",
+      "method": "DELETE"
+    },
+    "videos.edit": {
+      "template": "/videos/{video_id}/edit",
+      "method": "POST"
+    },
+    "videos.extend": {
+      "template": "/videos/{video_id}/extend",
+      "method": "POST"
+    },
+    "videos.create_character": {
+      "template": "/videos/characters",
+      "method": "POST"
+    },
+    "videos.get_character": {
+      "template": "/videos/characters/{character_id}",
+      "method": "GET"
+    },
+    "videos.download_content": {
+      "template": "/videos/{video_id}/content",
+      "method": "GET"
+    },
+    "videos.remix": {
+      "template": "/videos/{video_id}/remix",
+      "method": "POST"
+    }
+  },
+  "vector_stores": {
+    "vector_stores.create": {
+      "template": "/vector_stores",
+      "method": "POST"
+    },
+    "vector_stores.retrieve": {
+      "template": "/vector_stores/{vector_store_id}",
+      "method": "GET"
+    },
+    "vector_stores.update": {
+      "template": "/vector_stores/{vector_store_id}",
+      "method": "POST"
+    },
+    "vector_stores.list": {
+      "template": "/vector_stores",
+      "method": "GET"
+    },
+    "vector_stores.delete": {
+      "template": "/vector_stores/{vector_store_id}",
+      "method": "DELETE"
+    },
+    "vector_stores.search": {
+      "template": "/vector_stores/{vector_store_id}/search",
+      "method": "POST"
+    },
+    "vector_stores.files.create": {
+      "template": "/vector_stores/{vector_store_id}/files",
+      "method": "POST"
+    },
+    "vector_stores.files.retrieve": {
+      "template": "/vector_stores/{vector_store_id}/files/{file_id}",
+      "method": "GET"
+    },
+    "vector_stores.files.update": {
+      "template": "/vector_stores/{vector_store_id}/files/{file_id}",
+      "method": "POST"
+    },
+    "vector_stores.files.list": {
+      "template": "/vector_stores/{vector_store_id}/files",
+      "method": "GET"
+    },
+    "vector_stores.files.delete": {
+      "template": "/vector_stores/{vector_store_id}/files/{file_id}",
+      "method": "DELETE"
+    },
+    "vector_stores.files.content": {
+      "template": "/vector_stores/{vector_store_id}/files/{file_id}/content",
+      "method": "GET"
+    },
+    "vector_stores.file_batches.create": {
+      "template": "/vector_stores/{vector_store_id}/file_batches",
+      "method": "POST"
+    },
+    "vector_stores.file_batches.retrieve": {
+      "template": "/vector_stores/{vector_store_id}/file_batches/{batch_id}",
+      "method": "GET"
+    },
+    "vector_stores.file_batches.cancel": {
+      "template": "/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel",
+      "method": "POST"
+    },
+    "vector_stores.file_batches.list_files": {
+      "template": "/vector_stores/{vector_store_id}/file_batches/{batch_id}/files",
+      "method": "GET"
     }
   },
   "uploads": {
     "uploads.parts.create": {
-      "template": "/uploads/{upload_id}/parts"
+      "template": "/uploads/{upload_id}/parts",
+      "method": "POST"
     }
   },
   "fine_tuning": {
     "fine_tuning.alpha.graders.run": {
-      "template": "/fine_tuning/alpha/graders/run"
+      "template": "/fine_tuning/alpha/graders/run",
+      "method": "POST"
     },
     "fine_tuning.alpha.graders.validate": {
-      "template": "/fine_tuning/alpha/graders/validate"
+      "template": "/fine_tuning/alpha/graders/validate",
+      "method": "POST"
     },
     "graders.grader_models": {
-      "template": "/graders/grader_models"
+      "template": "/graders/grader_models",
+      "method": "GET"
     }
   },
   "beta_chatkit": {
     "beta.chatkit.sessions.create": {
-      "template": "/chatkit/sessions"
+      "template": "/chatkit/sessions",
+      "method": "POST"
     },
     "beta.chatkit.sessions.cancel": {
-      "template": "/chatkit/sessions/{session_id}/cancel"
+      "template": "/chatkit/sessions/{session_id}/cancel",
+      "method": "POST"
     },
     "beta.chatkit.threads.retrieve": {
-      "template": "/chatkit/threads/{thread_id}"
+      "template": "/chatkit/threads/{thread_id}",
+      "method": "GET"
     },
     "beta.chatkit.threads.list": {
-      "template": "/chatkit/threads"
+      "template": "/chatkit/threads",
+      "method": "GET"
     },
     "beta.chatkit.threads.list_items": {
-      "template": "/chatkit/threads/{thread_id}/items"
+      "template": "/chatkit/threads/{thread_id}/items",
+      "method": "GET"
     },
     "beta.chatkit.threads.delete": {
-      "template": "/chatkit/threads/{thread_id}"
+      "template": "/chatkit/threads/{thread_id}",
+      "method": "DELETE"
     }
   },
   "beta_realtime": {
     "beta.realtime.sessions.create": {
-      "template": "/realtime/sessions"
+      "template": "/realtime/sessions",
+      "method": "POST"
     },
     "beta.realtime.transcription_sessions.create": {
-      "template": "/realtime/transcription_sessions"
+      "template": "/realtime/transcription_sessions",
+      "method": "POST"
     }
   }
 }

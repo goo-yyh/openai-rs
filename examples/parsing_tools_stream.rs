@@ -49,7 +49,7 @@ async fn main() -> ExampleResult {
             ChatCompletionRuntimeEvent::ToolCallArgumentsDelta(event) => {
                 println!("delta: {}", event.arguments_delta);
                 if let Some(parsed) = event.parsed_arguments {
-                    let parsed: QueryOrdersArgs = serde_json::from_value(parsed)?;
+                    let parsed: QueryOrdersArgs = serde_json::from_value(parsed.into())?;
                     println!("partial.table_name: {}", parsed.table_name);
                     println!("partial.columns: {:?}", parsed.columns);
                     println!("partial.order_by: {}", parsed.order_by);
@@ -62,7 +62,7 @@ async fn main() -> ExampleResult {
             }
             ChatCompletionRuntimeEvent::ToolCallArgumentsDone(event) => {
                 if let Some(parsed) = event.parsed_arguments {
-                    let parsed: QueryOrdersArgs = serde_json::from_value(parsed)?;
+                    let parsed: QueryOrdersArgs = serde_json::from_value(parsed.into())?;
                     println!("final.table_name: {}", parsed.table_name);
                     println!("final.columns: {:?}", parsed.columns);
                     println!("final.order_by: {}", parsed.order_by);

@@ -16,6 +16,7 @@ use crate::client::ClientInner;
 use crate::config::{LogLevel, RequestOptions};
 use crate::error::{ApiError, ConnectionError, Error, Result};
 use crate::files::{MultipartField, UploadSource};
+use crate::json_payload::JsonPayload;
 use crate::providers::{AuthScheme, RequestContext};
 use crate::response_meta::{ApiResponse, ResponseMeta, into_http_response};
 use crate::stream::{RawSseStream, SseStream};
@@ -196,7 +197,9 @@ async fn execute_response(
                 let retry_after = extract_retry_after(response.headers());
                 let request_id = extract_request_id(response.headers());
                 let body = response.text().await.unwrap_or_default();
-                let raw = serde_json::from_str::<Value>(&body).ok();
+                let raw = serde_json::from_str::<Value>(&body)
+                    .ok()
+                    .map(JsonPayload::from);
                 let message = extract_error_message(&raw).unwrap_or_else(|| body.clone());
                 let api_error = ApiError::new(
                     status.as_u16(),
@@ -284,7 +287,7 @@ async fn build_request(inner: &ClientInner, spec: &RequestSpec) -> Result<reqwes
         let mut form = reqwest::multipart::Form::new();
         let mut fields = Vec::new();
         if let Some(body) = &body {
-            flatten_json_to_multipart_fields("", body, &mut fields);
+            flatten_json_to_multipart_fields("", body.as_raw(), &mut fields);
         }
         fields.extend(multipart.fields.iter().cloned());
         for field in &fields {
@@ -295,7 +298,7 @@ async fn build_request(inner: &ClientInner, spec: &RequestSpec) -> Result<reqwes
         }
         builder = builder.multipart(form);
     } else if let Some(body) = &body {
-        builder = builder.json(body);
+        builder = builder.json(body.as_raw());
     }
 
     builder
@@ -320,12 +323,12 @@ pub(crate) async fn prepare_request_context(
         path,
         query: merged_query,
         headers: merged_headers,
-        body,
+        body: body.map(JsonPayload::from),
     };
 
     provider.validate_request(
         endpoint_id,
-        context.body.as_ref(),
+        context.body.as_ref().map(JsonPayload::as_raw),
         inner.options.compatibility_mode,
     )?;
     provider.prepare_request(&mut context)?;
@@ -405,8 +408,9 @@ fn extract_request_id(headers: &reqwest::header::HeaderMap) -> Option<String> {
         .map(str::to_owned)
 }
 
-fn extract_error_message(raw: &Option<Value>) -> Option<String> {
+fn extract_error_message(raw: &Option<JsonPayload>) -> Option<String> {
     raw.as_ref().and_then(|value| {
+        let value = value.as_raw();
         if let Some(error) = value.get("error") {
             match error {
                 Value::Object(map) => {
@@ -583,24 +587,30 @@ mod tests {
 
     #[test]
     fn test_should_extract_top_level_error_string_message() {
-        let raw = Some(json!({
-            "timestamp": "2026-04-06T14:04:49.360+00:00",
-            "status": 404,
-            "error": "Not Found",
-            "path": "/v4/responses"
-        }));
+        let raw = Some(
+            json!({
+                "timestamp": "2026-04-06T14:04:49.360+00:00",
+                "status": 404,
+                "error": "Not Found",
+                "path": "/v4/responses"
+            })
+            .into(),
+        );
 
         assert_eq!(extract_error_message(&raw).as_deref(), Some("Not Found"));
     }
 
     #[test]
     fn test_should_extract_minimax_style_status_message() {
-        let raw = Some(json!({
-            "base_resp": {
-                "status_code": 429,
-                "status_msg": "Too many requests"
-            }
-        }));
+        let raw = Some(
+            json!({
+                "base_resp": {
+                    "status_code": 429,
+                    "status_msg": "Too many requests"
+                }
+            })
+            .into(),
+        );
 
         assert_eq!(
             extract_error_message(&raw).as_deref(),

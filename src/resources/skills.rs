@@ -2,6 +2,8 @@
 
 use http::Method;
 
+use crate::generated::endpoints;
+
 use super::{
     BytesRequestBuilder, DeleteResponse, JsonRequestBuilder, ListRequestBuilder, Skill,
     SkillVersion, SkillVersionsContentResource, SkillVersionsResource, SkillsContentResource,
@@ -11,46 +13,54 @@ use super::{
 impl SkillsResource {
     /// 创建 skill。
     pub fn create(&self) -> JsonRequestBuilder<Skill> {
+        let endpoint = endpoints::skills::SKILLS_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.create",
+            endpoint.id,
             Method::POST,
-            "/skills",
+            endpoint.template,
         )
     }
 
     /// 获取 skill。
     pub fn retrieve(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Skill> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let endpoint = endpoints::skills::SKILLS_RETRIEVE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.retrieve",
+            endpoint.id,
             Method::GET,
-            format!("/skills/{}", encode_path_segment(skill_id.into())),
+            endpoint.render(&[("skill_id", &skill_id)]),
         )
     }
 
     /// 更新 skill。
     pub fn update(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<Skill> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let endpoint = endpoints::skills::SKILLS_UPDATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.update",
+            endpoint.id,
             Method::POST,
-            format!("/skills/{}", encode_path_segment(skill_id.into())),
+            endpoint.render(&[("skill_id", &skill_id)]),
         )
     }
 
     /// 列出 skills。
     pub fn list(&self) -> ListRequestBuilder<Skill> {
-        ListRequestBuilder::new(self.client.clone(), "skills.list", "/skills")
+        let endpoint = endpoints::skills::SKILLS_LIST;
+        ListRequestBuilder::new(self.client.clone(), endpoint.id, endpoint.template)
     }
 
     /// 删除 skill。
     pub fn delete(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let endpoint = endpoints::skills::SKILLS_DELETE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.delete",
+            endpoint.id,
             Method::DELETE,
-            format!("/skills/{}", encode_path_segment(skill_id.into())),
+            endpoint.render(&[("skill_id", &skill_id)]),
         )
     }
 
@@ -68,11 +78,13 @@ impl SkillsResource {
 impl SkillsContentResource {
     /// 获取 skill 内容。
     pub fn retrieve(&self, skill_id: impl Into<String>) -> BytesRequestBuilder {
+        let skill_id = encode_path_segment(skill_id.into());
+        let endpoint = endpoints::skills::SKILLS_CONTENT_RETRIEVE;
         BytesRequestBuilder::new(
             self.client.clone(),
-            "skills.content.retrieve",
+            endpoint.id,
             Method::GET,
-            format!("/skills/{}/content", encode_path_segment(skill_id.into())),
+            endpoint.render(&[("skill_id", &skill_id)]),
         )
     }
 }
@@ -80,11 +92,13 @@ impl SkillsContentResource {
 impl SkillVersionsResource {
     /// 创建 skill version。
     pub fn create(&self, skill_id: impl Into<String>) -> JsonRequestBuilder<SkillVersion> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let endpoint = endpoints::skills::SKILLS_VERSIONS_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.versions.create",
+            endpoint.id,
             Method::POST,
-            format!("/skills/{}/versions", encode_path_segment(skill_id.into())),
+            endpoint.render(&[("skill_id", &skill_id)]),
         )
     }
 
@@ -94,24 +108,25 @@ impl SkillVersionsResource {
         skill_id: impl Into<String>,
         version_id: impl Into<String>,
     ) -> JsonRequestBuilder<SkillVersion> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let version_id = encode_path_segment(version_id.into());
+        let endpoint = endpoints::skills::SKILLS_VERSIONS_RETRIEVE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.versions.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/skills/{}/versions/{}",
-                encode_path_segment(skill_id.into()),
-                encode_path_segment(version_id.into())
-            ),
+            endpoint.render(&[("skill_id", &skill_id), ("version_id", &version_id)]),
         )
     }
 
     /// 列出 skill versions。
     pub fn list(&self, skill_id: impl Into<String>) -> ListRequestBuilder<SkillVersion> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let endpoint = endpoints::skills::SKILLS_VERSIONS_LIST;
         ListRequestBuilder::new(
             self.client.clone(),
-            "skills.versions.list",
-            format!("/skills/{}/versions", encode_path_segment(skill_id.into())),
+            endpoint.id,
+            endpoint.render(&[("skill_id", &skill_id)]),
         )
     }
 
@@ -121,15 +136,14 @@ impl SkillVersionsResource {
         skill_id: impl Into<String>,
         version_id: impl Into<String>,
     ) -> JsonRequestBuilder<DeleteResponse> {
+        let skill_id = encode_path_segment(skill_id.into());
+        let version_id = encode_path_segment(version_id.into());
+        let endpoint = endpoints::skills::SKILLS_VERSIONS_DELETE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "skills.versions.delete",
+            endpoint.id,
             Method::DELETE,
-            format!(
-                "/skills/{}/versions/{}",
-                encode_path_segment(skill_id.into()),
-                encode_path_segment(version_id.into())
-            ),
+            endpoint.render(&[("skill_id", &skill_id), ("version_id", &version_id)]),
         )
     }
 
@@ -146,15 +160,14 @@ impl SkillVersionsContentResource {
         skill_id: impl Into<String>,
         version_id: impl Into<String>,
     ) -> BytesRequestBuilder {
+        let skill_id = encode_path_segment(skill_id.into());
+        let version_id = encode_path_segment(version_id.into());
+        let endpoint = endpoints::skills::SKILLS_VERSIONS_CONTENT_RETRIEVE;
         BytesRequestBuilder::new(
             self.client.clone(),
-            "skills.versions.content.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/skills/{}/versions/{}/content",
-                encode_path_segment(skill_id.into()),
-                encode_path_segment(version_id.into())
-            ),
+            endpoint.render(&[("skill_id", &skill_id), ("version_id", &version_id)]),
         )
     }
 }

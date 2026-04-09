@@ -2,6 +2,8 @@
 
 use http::Method;
 
+use crate::generated::endpoints;
+
 use super::{
     BytesRequestBuilder, DeleteResponse, JsonRequestBuilder, ListRequestBuilder, Video,
     VideoCharacter, VideosResource, encode_path_segment,
@@ -10,66 +12,77 @@ use super::{
 impl VideosResource {
     /// 创建视频。
     pub fn create(&self) -> JsonRequestBuilder<Video> {
+        let endpoint = endpoints::videos::VIDEOS_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.create",
+            endpoint.id,
             Method::POST,
-            "/videos",
+            endpoint.template,
         )
     }
 
     /// 获取视频。
     pub fn retrieve(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
+        let video_id = encode_path_segment(video_id.into());
+        let endpoint = endpoints::videos::VIDEOS_RETRIEVE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.retrieve",
+            endpoint.id,
             Method::GET,
-            format!("/videos/{}", encode_path_segment(video_id.into())),
+            endpoint.render(&[("video_id", &video_id)]),
         )
     }
 
     /// 列出视频。
     pub fn list(&self) -> ListRequestBuilder<Video> {
-        ListRequestBuilder::new(self.client.clone(), "videos.list", "/videos")
+        let endpoint = endpoints::videos::VIDEOS_LIST;
+        ListRequestBuilder::new(self.client.clone(), endpoint.id, endpoint.template)
     }
 
     /// 删除视频。
     pub fn delete(&self, video_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        let video_id = encode_path_segment(video_id.into());
+        let endpoint = endpoints::videos::VIDEOS_DELETE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.delete",
+            endpoint.id,
             Method::DELETE,
-            format!("/videos/{}", encode_path_segment(video_id.into())),
+            endpoint.render(&[("video_id", &video_id)]),
         )
     }
 
     /// 编辑视频。
     pub fn edit(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
+        let video_id = encode_path_segment(video_id.into());
+        let endpoint = endpoints::videos::VIDEOS_EDIT;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.edit",
+            endpoint.id,
             Method::POST,
-            format!("/videos/{}/edit", encode_path_segment(video_id.into())),
+            endpoint.render(&[("video_id", &video_id)]),
         )
     }
 
     /// 扩展视频。
     pub fn extend(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
+        let video_id = encode_path_segment(video_id.into());
+        let endpoint = endpoints::videos::VIDEOS_EXTEND;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.extend",
+            endpoint.id,
             Method::POST,
-            format!("/videos/{}/extend", encode_path_segment(video_id.into())),
+            endpoint.render(&[("video_id", &video_id)]),
         )
     }
 
     /// 创建角色。
     pub fn create_character(&self) -> JsonRequestBuilder<VideoCharacter> {
+        let endpoint = endpoints::videos::VIDEOS_CREATE_CHARACTER;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.create_character",
+            endpoint.id,
             Method::POST,
-            "/videos/characters",
+            endpoint.template,
         )
     }
 
@@ -78,34 +91,37 @@ impl VideosResource {
         &self,
         character_id: impl Into<String>,
     ) -> JsonRequestBuilder<VideoCharacter> {
+        let character_id = encode_path_segment(character_id.into());
+        let endpoint = endpoints::videos::VIDEOS_GET_CHARACTER;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.get_character",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/videos/characters/{}",
-                encode_path_segment(character_id.into())
-            ),
+            endpoint.render(&[("character_id", &character_id)]),
         )
     }
 
     /// 下载视频内容。
     pub fn download_content(&self, video_id: impl Into<String>) -> BytesRequestBuilder {
+        let video_id = encode_path_segment(video_id.into());
+        let endpoint = endpoints::videos::VIDEOS_DOWNLOAD_CONTENT;
         BytesRequestBuilder::new(
             self.client.clone(),
-            "videos.download_content",
+            endpoint.id,
             Method::GET,
-            format!("/videos/{}/content", encode_path_segment(video_id.into())),
+            endpoint.render(&[("video_id", &video_id)]),
         )
     }
 
     /// 混剪视频。
     pub fn remix(&self, video_id: impl Into<String>) -> JsonRequestBuilder<Video> {
+        let video_id = encode_path_segment(video_id.into());
+        let endpoint = endpoints::videos::VIDEOS_REMIX;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "videos.remix",
+            endpoint.id,
             Method::POST,
-            format!("/videos/{}/remix", encode_path_segment(video_id.into())),
+            endpoint.render(&[("video_id", &video_id)]),
         )
     }
 }

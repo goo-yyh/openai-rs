@@ -23,6 +23,7 @@ use crate::generated::endpoints;
 use crate::helpers::{ParsedChatCompletion, parse_json_payload};
 #[cfg(feature = "tool-runner")]
 use crate::helpers::{ToolDefinition, ToolRegistry};
+use crate::json_payload::JsonPayload;
 use crate::response_meta::ApiResponse;
 #[cfg(feature = "tool-runner")]
 use crate::stream::ChatCompletionRuntimeEvent;
@@ -35,10 +36,13 @@ use futures_util::StreamExt;
 
 #[cfg(feature = "tool-runner")]
 use super::ChatCompletionToolCall;
+#[cfg(feature = "tool-runner")]
+use super::CompletionUsage;
 use super::{
     ChatCompletion, ChatCompletionCreateParams, ChatCompletionMessage,
-    ChatCompletionMessagesResource, ChatCompletionsResource, ChatResource, ChatToolDefinition,
-    DeleteResponse, JsonRequestBuilder, ListRequestBuilder, encode_path_segment, value_from,
+    ChatCompletionMessagesResource, ChatCompletionStoreContentPart, ChatCompletionsResource,
+    ChatResource, ChatToolChoice, ChatToolDefinition, DeleteResponse, JsonRequestBuilder,
+    ListRequestBuilder, encode_path_segment, value_from,
 };
 
 /// 表示已存储 chat completion 下的消息对象。
@@ -54,7 +58,7 @@ pub struct ChatCompletionStoreMessage {
     pub content: Option<String>,
     /// content parts。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub content_parts: Vec<Value>,
+    pub content_parts: Vec<ChatCompletionStoreContentPart>,
     /// 工具调用。
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tool_calls: Vec<super::ChatCompletionToolCall>,
@@ -234,8 +238,8 @@ impl ChatCompletionCreateRequestBuilder {
     }
 
     /// 设置工具选择策略。
-    pub fn tool_choice(mut self, tool_choice: Value) -> Self {
-        self.params.tool_choice = Some(tool_choice);
+    pub fn tool_choice(mut self, tool_choice: impl Into<ChatToolChoice>) -> Self {
+        self.params.tool_choice = Some(tool_choice.into());
         self
     }
 
@@ -252,14 +256,19 @@ impl ChatCompletionCreateRequestBuilder {
     }
 
     /// 在请求体根对象中追加字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.extra_body.insert(key.into(), value);
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
+        self.extra_body.insert(key.into(), value.into().into_raw());
         self
     }
 
     /// 在 provider 对应的 `provider_options` 节点下追加字段。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
-        self.provider_options.insert(key.into(), value);
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
+        self.provider_options
+            .insert(key.into(), value.into().into_raw());
         self
     }
 
@@ -406,13 +415,17 @@ impl ChatCompletionStreamRequestBuilder {
     }
 
     /// 添加额外字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
     /// 添加 provider 选项。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -450,7 +463,7 @@ impl AssistantStreamRequestBuilder {
     }
 
     /// 设置整个请求体为一个 `serde_json::Value`。
-    pub fn body_value(mut self, body: Value) -> Self {
+    pub fn body_value(mut self, body: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.body_value(body);
         self
     }
@@ -487,13 +500,17 @@ impl AssistantStreamRequestBuilder {
     }
 
     /// 在 JSON 根对象中追加字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
 
     /// 在 provider 对应的 `provider_options` 下追加字段。
-    pub fn provider_option(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn provider_option(
+        mut self,
+        key: impl Into<String>,
+        value: impl Into<JsonPayload>,
+    ) -> Self {
         self.inner = self.inner.provider_option(key, value);
         self
     }
@@ -573,7 +590,7 @@ impl<T> ChatCompletionParseRequestBuilder<T> {
     }
 
     /// 追加一个额外请求体字段。
-    pub fn extra_body(mut self, key: impl Into<String>, value: Value) -> Self {
+    pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
         self
     }
@@ -870,7 +887,7 @@ impl ChatCompletionRunner {
     }
 
     /// 汇总所有补全响应中的 usage 字段。
-    pub fn total_usage(&self) -> Option<Value> {
+    pub fn total_usage(&self) -> Option<CompletionUsage> {
         let mut completion_tokens = 0u64;
         let mut prompt_tokens = 0u64;
         let mut total_tokens = 0u64;
@@ -879,27 +896,17 @@ impl ChatCompletionRunner {
             let Some(usage) = completion.usage.as_ref() else {
                 continue;
             };
-            completion_tokens += usage
-                .get("completion_tokens")
-                .and_then(Value::as_u64)
-                .unwrap_or_default();
-            prompt_tokens += usage
-                .get("prompt_tokens")
-                .and_then(Value::as_u64)
-                .unwrap_or_default();
-            total_tokens += usage
-                .get("total_tokens")
-                .and_then(Value::as_u64)
-                .unwrap_or_default();
+            completion_tokens += usage.completion_tokens;
+            prompt_tokens += usage.prompt_tokens;
+            total_tokens += usage.total_tokens;
             found = true;
         }
 
-        found.then(|| {
-            serde_json::json!({
-                "completion_tokens": completion_tokens,
-                "prompt_tokens": prompt_tokens,
-                "total_tokens": total_tokens,
-            })
+        found.then(|| CompletionUsage {
+            completion_tokens,
+            prompt_tokens,
+            total_tokens,
+            ..CompletionUsage::default()
         })
     }
 }
@@ -972,7 +979,7 @@ impl ChatCompletionStreamingRunner {
     }
 
     /// 汇总所有补全响应中的 usage 字段。
-    pub fn total_usage(&self) -> Option<Value> {
+    pub fn total_usage(&self) -> Option<CompletionUsage> {
         self.runner.total_usage()
     }
 }

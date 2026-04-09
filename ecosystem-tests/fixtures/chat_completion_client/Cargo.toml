@@ -1,0 +1,9 @@
+[package]
+name = "chat_completion_client"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+openai-rs = { path = "../../../" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

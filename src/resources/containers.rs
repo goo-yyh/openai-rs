@@ -2,6 +2,8 @@
 
 use http::Method;
 
+use crate::generated::endpoints;
+
 use super::{
     BytesRequestBuilder, Container, ContainerFile, ContainerFilesContentResource,
     ContainerFilesResource, ContainersResource, DeleteResponse, JsonRequestBuilder,
@@ -11,36 +13,42 @@ use super::{
 impl ContainersResource {
     /// 创建 container。
     pub fn create(&self) -> JsonRequestBuilder<Container> {
+        let endpoint = endpoints::containers::CONTAINERS_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "containers.create",
+            endpoint.id,
             Method::POST,
-            "/containers",
+            endpoint.template,
         )
     }
 
     /// 获取 container。
     pub fn retrieve(&self, container_id: impl Into<String>) -> JsonRequestBuilder<Container> {
+        let container_id = encode_path_segment(container_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_RETRIEVE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "containers.retrieve",
+            endpoint.id,
             Method::GET,
-            format!("/containers/{}", encode_path_segment(container_id.into())),
+            endpoint.render(&[("container_id", &container_id)]),
         )
     }
 
     /// 列出 containers。
     pub fn list(&self) -> ListRequestBuilder<Container> {
-        ListRequestBuilder::new(self.client.clone(), "containers.list", "/containers")
+        let endpoint = endpoints::containers::CONTAINERS_LIST;
+        ListRequestBuilder::new(self.client.clone(), endpoint.id, endpoint.template)
     }
 
     /// 删除 container。
     pub fn delete(&self, container_id: impl Into<String>) -> JsonRequestBuilder<DeleteResponse> {
+        let container_id = encode_path_segment(container_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_DELETE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "containers.delete",
+            endpoint.id,
             Method::DELETE,
-            format!("/containers/{}", encode_path_segment(container_id.into())),
+            endpoint.render(&[("container_id", &container_id)]),
         )
     }
 
@@ -53,14 +61,13 @@ impl ContainersResource {
 impl ContainerFilesResource {
     /// 创建 container file。
     pub fn create(&self, container_id: impl Into<String>) -> JsonRequestBuilder<ContainerFile> {
+        let container_id = encode_path_segment(container_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_FILES_CREATE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "containers.files.create",
+            endpoint.id,
             Method::POST,
-            format!(
-                "/containers/{}/files",
-                encode_path_segment(container_id.into())
-            ),
+            endpoint.render(&[("container_id", &container_id)]),
         )
     }
 
@@ -70,27 +77,25 @@ impl ContainerFilesResource {
         container_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> JsonRequestBuilder<ContainerFile> {
+        let container_id = encode_path_segment(container_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_FILES_RETRIEVE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "containers.files.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/containers/{}/files/{}",
-                encode_path_segment(container_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("container_id", &container_id), ("file_id", &file_id)]),
         )
     }
 
     /// 列出 container files。
     pub fn list(&self, container_id: impl Into<String>) -> ListRequestBuilder<ContainerFile> {
+        let container_id = encode_path_segment(container_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_FILES_LIST;
         ListRequestBuilder::new(
             self.client.clone(),
-            "containers.files.list",
-            format!(
-                "/containers/{}/files",
-                encode_path_segment(container_id.into())
-            ),
+            endpoint.id,
+            endpoint.render(&[("container_id", &container_id)]),
         )
     }
 
@@ -100,15 +105,14 @@ impl ContainerFilesResource {
         container_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> JsonRequestBuilder<DeleteResponse> {
+        let container_id = encode_path_segment(container_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_FILES_DELETE;
         JsonRequestBuilder::new(
             self.client.clone(),
-            "containers.files.delete",
+            endpoint.id,
             Method::DELETE,
-            format!(
-                "/containers/{}/files/{}",
-                encode_path_segment(container_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("container_id", &container_id), ("file_id", &file_id)]),
         )
     }
 
@@ -125,15 +129,14 @@ impl ContainerFilesContentResource {
         container_id: impl Into<String>,
         file_id: impl Into<String>,
     ) -> BytesRequestBuilder {
+        let container_id = encode_path_segment(container_id.into());
+        let file_id = encode_path_segment(file_id.into());
+        let endpoint = endpoints::containers::CONTAINERS_FILES_CONTENT_RETRIEVE;
         BytesRequestBuilder::new(
             self.client.clone(),
-            "containers.files.content.retrieve",
+            endpoint.id,
             Method::GET,
-            format!(
-                "/containers/{}/files/{}/content",
-                encode_path_segment(container_id.into()),
-                encode_path_segment(file_id.into())
-            ),
+            endpoint.render(&[("container_id", &container_id), ("file_id", &file_id)]),
         )
     }
 }
