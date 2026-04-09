@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -41,7 +41,7 @@ impl ResponseStream {
 
     /// 获取截至目前聚合出的响应快照。
     pub fn snapshot(&self) -> Option<Response> {
-        self.accumulator.response.clone()
+        self.accumulator.snapshot()
     }
 
     /// 消费整个流并返回最终文本快照。
@@ -57,7 +57,7 @@ impl ResponseStream {
         while let Some(event) = futures_util::StreamExt::next(&mut self).await {
             event?;
         }
-        Ok(self.accumulator.response)
+        Ok(self.accumulator.into_response())
     }
 
     /// 返回底层响应元信息。
@@ -365,9 +365,26 @@ fn response_output_text_snapshot(
     content_index: usize,
 ) -> Option<String> {
     let output = response.output.get(output_index)?;
-    let content = output.get("content")?.as_array()?;
-    let item = content.get(content_index)?;
-    item.get("text").and_then(Value::as_str).map(str::to_owned)
+    if let Some(message) = output.as_message() {
+        return message
+            .content
+            .get(content_index)
+            .and_then(|item| item.text())
+            .map(str::to_owned);
+    }
+    if content_index == 0
+        && let Some(text) = output.output_text()
+    {
+        return Some(text.to_owned());
+    }
+    output
+        .as_raw()
+        .and_then(|value| value.get("content"))
+        .and_then(Value::as_array)
+        .and_then(|content| content.get(content_index))
+        .and_then(|item| item.get("text"))
+        .and_then(Value::as_str)
+        .map(str::to_owned)
 }
 
 fn response_function_arguments_snapshot(
@@ -377,19 +394,39 @@ fn response_function_arguments_snapshot(
     response
         .output
         .get(output_index)
-        .and_then(|output| output.get("arguments"))
-        .and_then(Value::as_str)
+        .and_then(|output| {
+            output
+                .as_function_call()
+                .map(|call| call.arguments.as_str())
+                .or_else(|| {
+                    output
+                        .as_raw()
+                        .and_then(|value| value.get("arguments"))
+                        .and_then(Value::as_str)
+                })
+        })
         .map(str::to_owned)
 }
 
 #[derive(Debug, Default, Clone)]
 struct ResponseAccumulator {
-    response: Option<Response>,
+    response: Option<RawResponseSnapshot>,
     output_text: String,
     function_arguments: HashMap<String, String>,
 }
 
 impl ResponseAccumulator {
+    fn snapshot(&self) -> Option<Response> {
+        self.response
+            .as_ref()
+            .and_then(RawResponseSnapshot::clone_public_response)
+    }
+
+    fn into_response(self) -> Option<Response> {
+        self.response
+            .and_then(RawResponseSnapshot::into_public_response)
+    }
+
     fn apply(&mut self, event: &Value) {
         let Some(event_type) = event.get("type").and_then(Value::as_str) else {
             return;
@@ -505,6 +542,58 @@ impl ResponseAccumulator {
     }
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+struct RawResponseSnapshot {
+    pub id: String,
+    pub created_at: Option<u64>,
+    #[serde(default)]
+    pub object: String,
+    pub model: Option<String>,
+    pub status: Option<String>,
+    pub error: Option<Value>,
+    pub incomplete_details: Option<Value>,
+    pub metadata: Option<BTreeMap<String, String>>,
+    #[serde(default)]
+    pub output: Vec<Value>,
+    pub usage: Option<Value>,
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+impl RawResponseSnapshot {
+    fn clone_public_response(&self) -> Option<Response> {
+        serde_json::to_value(self)
+            .ok()
+            .and_then(|value| serde_json::from_value(value).ok())
+    }
+
+    fn into_public_response(self) -> Option<Response> {
+        serde_json::to_value(self)
+            .ok()
+            .and_then(|value| serde_json::from_value(value).ok())
+    }
+
+    fn output_text(&self) -> Option<String> {
+        for item in &self.output {
+            if let Some(text) = item.get("text").and_then(Value::as_str) {
+                return Some(text.to_owned());
+            }
+            if let Some(content) = item.get("content").and_then(Value::as_array) {
+                for content_item in content {
+                    if let Some(text) = content_item.get("text").and_then(Value::as_str) {
+                        return Some(text.to_owned());
+                    }
+                }
+            }
+        }
+
+        self.extra
+            .get("output_text")
+            .and_then(Value::as_str)
+            .map(str::to_owned)
+    }
+}
+
 fn merge_response_output_item(existing: Value, incoming: Value) -> Value {
     let (Some(existing_object), Some(mut incoming_object)) =
         (existing.as_object(), incoming.as_object().cloned())
@@ -594,7 +683,7 @@ fn merge_response_content_part(existing: Value, incoming: Value) -> Value {
 }
 
 fn append_response_content_text(
-    response: &mut Response,
+    response: &mut RawResponseSnapshot,
     event: &Value,
     field_name: &str,
     default_type: &str,
@@ -659,7 +748,7 @@ fn append_response_content_text(
 }
 
 fn set_response_content_text(
-    response: &mut Response,
+    response: &mut RawResponseSnapshot,
     event: &Value,
     field_name: &str,
     default_type: &str,
@@ -708,7 +797,7 @@ fn set_response_content_text(
     }
 }
 
-fn append_function_call_arguments(response: &mut Response, event: &Value, delta: &str) {
+fn append_function_call_arguments(response: &mut RawResponseSnapshot, event: &Value, delta: &str) {
     let output_index = event
         .get("output_index")
         .and_then(Value::as_u64)
@@ -811,9 +900,9 @@ mod tests {
         assert_eq!(accumulator.output_text, "hello");
         assert_eq!(response.output_text().as_deref(), Some("hello"));
         assert_eq!(
-            response.output[1]
-                .get("arguments")
-                .and_then(serde_json::Value::as_str),
+            response.clone_public_response().unwrap().output[1]
+                .as_function_call()
+                .map(|call| call.arguments.as_str()),
             Some("{\"city\":\"Shanghai\"}"),
         );
     }

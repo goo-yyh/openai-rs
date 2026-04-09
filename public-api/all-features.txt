@@ -1100,6 +1100,91 @@ pub fn openai_rs::providers::CustomProfile::kind(&self) -> openai_rs::providers:
 pub fn openai_rs::providers::CustomProfile::prepare_request(&self, _ctx: &mut openai_rs::providers::RequestContext) -> openai_rs::error::Result<()>
 pub fn openai_rs::providers::CustomProfile::validate_request(&self, _endpoint_id: &'static str, _body: core::option::Option<&serde_json::value::Value>, _mode: openai_rs::providers::CompatibilityMode) -> openai_rs::error::Result<()>
 pub mod openai_rs::resources
+pub enum openai_rs::resources::KnownResponseOutputContentPart
+pub openai_rs::resources::KnownResponseOutputContentPart::OutputText(openai_rs::resources::ResponseOutputText)
+pub openai_rs::resources::KnownResponseOutputContentPart::Refusal(openai_rs::resources::ResponseOutputRefusal)
+impl core::clone::Clone for openai_rs::resources::KnownResponseOutputContentPart
+pub fn openai_rs::resources::KnownResponseOutputContentPart::clone(&self) -> openai_rs::resources::KnownResponseOutputContentPart
+impl core::fmt::Debug for openai_rs::resources::KnownResponseOutputContentPart
+pub fn openai_rs::resources::KnownResponseOutputContentPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::KnownResponseOutputContentPart
+pub fn openai_rs::resources::KnownResponseOutputContentPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::KnownResponseOutputContentPart
+pub fn openai_rs::resources::KnownResponseOutputContentPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::KnownResponseOutputContentPart
+impl core::marker::Send for openai_rs::resources::KnownResponseOutputContentPart
+impl core::marker::Sync for openai_rs::resources::KnownResponseOutputContentPart
+impl core::marker::Unpin for openai_rs::resources::KnownResponseOutputContentPart
+impl core::marker::UnsafeUnpin for openai_rs::resources::KnownResponseOutputContentPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::KnownResponseOutputContentPart
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::KnownResponseOutputContentPart
+pub enum openai_rs::resources::KnownResponseOutputItem
+pub openai_rs::resources::KnownResponseOutputItem::FunctionCall(openai_rs::resources::ResponseFunctionToolCall)
+pub openai_rs::resources::KnownResponseOutputItem::Message(openai_rs::resources::ResponseOutputMessage)
+pub openai_rs::resources::KnownResponseOutputItem::OutputText(openai_rs::resources::ResponseOutputText)
+pub openai_rs::resources::KnownResponseOutputItem::Refusal(openai_rs::resources::ResponseOutputRefusal)
+impl core::clone::Clone for openai_rs::resources::KnownResponseOutputItem
+pub fn openai_rs::resources::KnownResponseOutputItem::clone(&self) -> openai_rs::resources::KnownResponseOutputItem
+impl core::fmt::Debug for openai_rs::resources::KnownResponseOutputItem
+pub fn openai_rs::resources::KnownResponseOutputItem::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::KnownResponseOutputItem
+pub fn openai_rs::resources::KnownResponseOutputItem::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::KnownResponseOutputItem
+pub fn openai_rs::resources::KnownResponseOutputItem::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::KnownResponseOutputItem
+impl core::marker::Send for openai_rs::resources::KnownResponseOutputItem
+impl core::marker::Sync for openai_rs::resources::KnownResponseOutputItem
+impl core::marker::Unpin for openai_rs::resources::KnownResponseOutputItem
+impl core::marker::UnsafeUnpin for openai_rs::resources::KnownResponseOutputItem
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::KnownResponseOutputItem
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::KnownResponseOutputItem
+pub enum openai_rs::resources::ResponseOutputContentPart
+pub openai_rs::resources::ResponseOutputContentPart::Known(openai_rs::resources::KnownResponseOutputContentPart)
+pub openai_rs::resources::ResponseOutputContentPart::Raw(serde_json::value::Value)
+impl openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::text(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::clone(&self) -> openai_rs::resources::ResponseOutputContentPart
+impl core::default::Default for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::default() -> Self
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::Send for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::Sync for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputContentPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputContentPart
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputContentPart
+pub enum openai_rs::resources::ResponseOutputItem
+pub openai_rs::resources::ResponseOutputItem::Known(openai_rs::resources::KnownResponseOutputItem)
+pub openai_rs::resources::ResponseOutputItem::Raw(serde_json::value::Value)
+impl openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::as_function_call(&self) -> core::option::Option<&openai_rs::resources::ResponseFunctionToolCall>
+pub fn openai_rs::resources::ResponseOutputItem::as_message(&self) -> core::option::Option<&openai_rs::resources::ResponseOutputMessage>
+pub fn openai_rs::resources::ResponseOutputItem::as_raw(&self) -> core::option::Option<&serde_json::value::Value>
+pub fn openai_rs::resources::ResponseOutputItem::output_text(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::clone(&self) -> openai_rs::resources::ResponseOutputItem
+impl core::default::Default for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::default() -> Self
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputItem
+impl core::marker::Send for openai_rs::resources::ResponseOutputItem
+impl core::marker::Sync for openai_rs::resources::ResponseOutputItem
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputItem
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputItem
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputItem
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputItem
 pub enum openai_rs::resources::VectorStoreAttributeValue
 pub openai_rs::resources::VectorStoreAttributeValue::Bool(bool)
 pub openai_rs::resources::VectorStoreAttributeValue::Number(serde_json::number::Number)
@@ -3091,11 +3176,33 @@ impl core::marker::Unpin for openai_rs::resources::DeleteResponse
 impl core::marker::UnsafeUnpin for openai_rs::resources::DeleteResponse
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::DeleteResponse
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::DeleteResponse
+pub struct openai_rs::resources::EmbeddingData
+pub openai_rs::resources::EmbeddingData::embedding: alloc::vec::Vec<f64>
+pub openai_rs::resources::EmbeddingData::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::EmbeddingData::index: core::option::Option<u32>
+pub openai_rs::resources::EmbeddingData::object: alloc::string::String
+impl core::clone::Clone for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::clone(&self) -> openai_rs::resources::EmbeddingData
+impl core::default::Default for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::default() -> openai_rs::resources::EmbeddingData
+impl core::fmt::Debug for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::EmbeddingData
+impl core::marker::Send for openai_rs::resources::EmbeddingData
+impl core::marker::Sync for openai_rs::resources::EmbeddingData
+impl core::marker::Unpin for openai_rs::resources::EmbeddingData
+impl core::marker::UnsafeUnpin for openai_rs::resources::EmbeddingData
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::EmbeddingData
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::EmbeddingData
 pub struct openai_rs::resources::EmbeddingResponse
-pub openai_rs::resources::EmbeddingResponse::data: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::resources::EmbeddingResponse::data: alloc::vec::Vec<openai_rs::resources::EmbeddingData>
 pub openai_rs::resources::EmbeddingResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::resources::EmbeddingResponse::object: alloc::string::String
-pub openai_rs::resources::EmbeddingResponse::usage: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::EmbeddingResponse::usage: core::option::Option<openai_rs::resources::EmbeddingUsage>
 impl core::clone::Clone for openai_rs::resources::EmbeddingResponse
 pub fn openai_rs::resources::EmbeddingResponse::clone(&self) -> openai_rs::resources::EmbeddingResponse
 impl core::default::Default for openai_rs::resources::EmbeddingResponse
@@ -3113,6 +3220,27 @@ impl core::marker::Unpin for openai_rs::resources::EmbeddingResponse
 impl core::marker::UnsafeUnpin for openai_rs::resources::EmbeddingResponse
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::EmbeddingResponse
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::EmbeddingResponse
+pub struct openai_rs::resources::EmbeddingUsage
+pub openai_rs::resources::EmbeddingUsage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::EmbeddingUsage::prompt_tokens: u64
+pub openai_rs::resources::EmbeddingUsage::total_tokens: u64
+impl core::clone::Clone for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::clone(&self) -> openai_rs::resources::EmbeddingUsage
+impl core::default::Default for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::default() -> openai_rs::resources::EmbeddingUsage
+impl core::fmt::Debug for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::EmbeddingUsage
+impl core::marker::Send for openai_rs::resources::EmbeddingUsage
+impl core::marker::Sync for openai_rs::resources::EmbeddingUsage
+impl core::marker::Unpin for openai_rs::resources::EmbeddingUsage
+impl core::marker::UnsafeUnpin for openai_rs::resources::EmbeddingUsage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::EmbeddingUsage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::EmbeddingUsage
 pub struct openai_rs::resources::EmbeddingsResource
 impl openai_rs::resources::EmbeddingsResource
 pub fn openai_rs::resources::EmbeddingsResource::create(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::EmbeddingResponse>
@@ -4227,13 +4355,17 @@ impl core::marker::UnsafeUnpin for openai_rs::resources::RealtimeSocketRequestBu
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::RealtimeSocketRequestBuilder
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::RealtimeSocketRequestBuilder
 pub struct openai_rs::resources::Response
+pub openai_rs::resources::Response::created_at: core::option::Option<u64>
+pub openai_rs::resources::Response::error: core::option::Option<openai_rs::resources::ResponseError>
 pub openai_rs::resources::Response::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::resources::Response::id: alloc::string::String
+pub openai_rs::resources::Response::incomplete_details: core::option::Option<openai_rs::resources::ResponseIncompleteDetails>
+pub openai_rs::resources::Response::metadata: core::option::Option<alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>>
 pub openai_rs::resources::Response::model: core::option::Option<alloc::string::String>
 pub openai_rs::resources::Response::object: alloc::string::String
-pub openai_rs::resources::Response::output: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::resources::Response::output: alloc::vec::Vec<openai_rs::resources::ResponseOutputItem>
 pub openai_rs::resources::Response::status: core::option::Option<alloc::string::String>
-pub openai_rs::resources::Response::usage: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::Response::usage: core::option::Option<openai_rs::resources::ResponseUsage>
 impl openai_rs::resources::Response
 pub fn openai_rs::resources::Response::output_text(&self) -> core::option::Option<alloc::string::String>
 impl core::clone::Clone for openai_rs::resources::Response
@@ -4306,6 +4438,71 @@ impl core::marker::Unpin for openai_rs::resources::ResponseCreateRequestBuilder
 impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseCreateRequestBuilder
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseCreateRequestBuilder
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseCreateRequestBuilder
+pub struct openai_rs::resources::ResponseError
+pub openai_rs::resources::ResponseError::code: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ResponseError::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseError::message: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::clone(&self) -> openai_rs::resources::ResponseError
+impl core::default::Default for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::default() -> openai_rs::resources::ResponseError
+impl core::fmt::Debug for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseError
+impl core::marker::Send for openai_rs::resources::ResponseError
+impl core::marker::Sync for openai_rs::resources::ResponseError
+impl core::marker::Unpin for openai_rs::resources::ResponseError
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseError
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseError
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseError
+pub struct openai_rs::resources::ResponseFunctionToolCall
+pub openai_rs::resources::ResponseFunctionToolCall::arguments: alloc::string::String
+pub openai_rs::resources::ResponseFunctionToolCall::call_id: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ResponseFunctionToolCall::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseFunctionToolCall::id: alloc::string::String
+pub openai_rs::resources::ResponseFunctionToolCall::name: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ResponseFunctionToolCall::status: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::clone(&self) -> openai_rs::resources::ResponseFunctionToolCall
+impl core::default::Default for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::default() -> openai_rs::resources::ResponseFunctionToolCall
+impl core::fmt::Debug for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::Send for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::Sync for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::Unpin for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseFunctionToolCall
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseFunctionToolCall
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseFunctionToolCall
+pub struct openai_rs::resources::ResponseIncompleteDetails
+pub openai_rs::resources::ResponseIncompleteDetails::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseIncompleteDetails::reason: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::clone(&self) -> openai_rs::resources::ResponseIncompleteDetails
+impl core::default::Default for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::default() -> openai_rs::resources::ResponseIncompleteDetails
+impl core::fmt::Debug for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::Send for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::Sync for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::Unpin for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseIncompleteDetails
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseIncompleteDetails
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseIncompleteDetails
 pub struct openai_rs::resources::ResponseInputItemsResource
 impl openai_rs::resources::ResponseInputItemsResource
 pub fn openai_rs::resources::ResponseInputItemsResource::list(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::ListRequestBuilder<openai_rs::ConversationItem>
@@ -4320,6 +4517,26 @@ impl core::marker::Unpin for openai_rs::resources::ResponseInputItemsResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseInputItemsResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseInputItemsResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseInputItemsResource
+pub struct openai_rs::resources::ResponseInputTokensDetails
+pub openai_rs::resources::ResponseInputTokensDetails::cached_tokens: core::option::Option<u64>
+pub openai_rs::resources::ResponseInputTokensDetails::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+impl core::clone::Clone for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::clone(&self) -> openai_rs::resources::ResponseInputTokensDetails
+impl core::default::Default for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::default() -> openai_rs::resources::ResponseInputTokensDetails
+impl core::fmt::Debug for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::Send for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::Sync for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::Unpin for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseInputTokensDetails
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseInputTokensDetails
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseInputTokensDetails
 pub struct openai_rs::resources::ResponseInputTokensResource
 impl openai_rs::resources::ResponseInputTokensResource
 pub fn openai_rs::resources::ResponseInputTokensResource::count(&self) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::InputTokenCount>
@@ -4334,6 +4551,92 @@ impl core::marker::Unpin for openai_rs::resources::ResponseInputTokensResource
 impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseInputTokensResource
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseInputTokensResource
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseInputTokensResource
+pub struct openai_rs::resources::ResponseOutputMessage
+pub openai_rs::resources::ResponseOutputMessage::content: alloc::vec::Vec<openai_rs::resources::ResponseOutputContentPart>
+pub openai_rs::resources::ResponseOutputMessage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseOutputMessage::id: alloc::string::String
+pub openai_rs::resources::ResponseOutputMessage::phase: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ResponseOutputMessage::role: core::option::Option<alloc::string::String>
+pub openai_rs::resources::ResponseOutputMessage::status: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::clone(&self) -> openai_rs::resources::ResponseOutputMessage
+impl core::default::Default for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::default() -> openai_rs::resources::ResponseOutputMessage
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputMessage
+impl core::marker::Send for openai_rs::resources::ResponseOutputMessage
+impl core::marker::Sync for openai_rs::resources::ResponseOutputMessage
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputMessage
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputMessage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputMessage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputMessage
+pub struct openai_rs::resources::ResponseOutputRefusal
+pub openai_rs::resources::ResponseOutputRefusal::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseOutputRefusal::refusal: alloc::string::String
+impl core::clone::Clone for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::clone(&self) -> openai_rs::resources::ResponseOutputRefusal
+impl core::default::Default for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::default() -> openai_rs::resources::ResponseOutputRefusal
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::Send for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::Sync for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputRefusal
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputRefusal
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputRefusal
+pub struct openai_rs::resources::ResponseOutputText
+pub openai_rs::resources::ResponseOutputText::annotations: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::resources::ResponseOutputText::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseOutputText::logprobs: core::option::Option<serde_json::value::Value>
+pub openai_rs::resources::ResponseOutputText::text: alloc::string::String
+impl core::clone::Clone for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::clone(&self) -> openai_rs::resources::ResponseOutputText
+impl core::default::Default for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::default() -> openai_rs::resources::ResponseOutputText
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputText
+impl core::marker::Send for openai_rs::resources::ResponseOutputText
+impl core::marker::Sync for openai_rs::resources::ResponseOutputText
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputText
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputText
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputText
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputText
+pub struct openai_rs::resources::ResponseOutputTokensDetails
+pub openai_rs::resources::ResponseOutputTokensDetails::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseOutputTokensDetails::reasoning_tokens: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::clone(&self) -> openai_rs::resources::ResponseOutputTokensDetails
+impl core::default::Default for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::default() -> openai_rs::resources::ResponseOutputTokensDetails
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::Send for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::Sync for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputTokensDetails
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputTokensDetails
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputTokensDetails
 pub struct openai_rs::resources::ResponseParseRequestBuilder<T>
 impl<T> openai_rs::resources::ResponseParseRequestBuilder<T> where T: schemars::JsonSchema + serde_core::de::DeserializeOwned
 pub async fn openai_rs::resources::ResponseParseRequestBuilder<T>::send(self) -> openai_rs::error::Result<openai_rs::helpers::ParsedResponse<T>>
@@ -4382,6 +4685,30 @@ impl core::marker::Unpin for openai_rs::resources::ResponseStreamRequestBuilder
 impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseStreamRequestBuilder
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseStreamRequestBuilder
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseStreamRequestBuilder
+pub struct openai_rs::resources::ResponseUsage
+pub openai_rs::resources::ResponseUsage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::resources::ResponseUsage::input_tokens: u64
+pub openai_rs::resources::ResponseUsage::input_tokens_details: core::option::Option<openai_rs::resources::ResponseInputTokensDetails>
+pub openai_rs::resources::ResponseUsage::output_tokens: u64
+pub openai_rs::resources::ResponseUsage::output_tokens_details: core::option::Option<openai_rs::resources::ResponseOutputTokensDetails>
+pub openai_rs::resources::ResponseUsage::total_tokens: u64
+impl core::clone::Clone for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::clone(&self) -> openai_rs::resources::ResponseUsage
+impl core::default::Default for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::default() -> openai_rs::resources::ResponseUsage
+impl core::fmt::Debug for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseUsage
+impl core::marker::Send for openai_rs::resources::ResponseUsage
+impl core::marker::Sync for openai_rs::resources::ResponseUsage
+impl core::marker::Unpin for openai_rs::resources::ResponseUsage
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseUsage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseUsage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseUsage
 pub struct openai_rs::resources::ResponsesResource
 impl openai_rs::resources::ResponsesResource
 pub fn openai_rs::resources::ResponsesResource::cancel(&self, response_id: impl core::convert::Into<alloc::string::String>) -> openai_rs::resources::JsonRequestBuilder<openai_rs::resources::Response>
@@ -6636,6 +6963,53 @@ impl core::marker::Unpin for openai_rs::websocket::RealtimeServerEvent
 impl core::marker::UnsafeUnpin for openai_rs::websocket::RealtimeServerEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::websocket::RealtimeServerEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::websocket::RealtimeServerEvent
+pub enum openai_rs::ResponseOutputContentPart
+pub openai_rs::ResponseOutputContentPart::Known(openai_rs::resources::KnownResponseOutputContentPart)
+pub openai_rs::ResponseOutputContentPart::Raw(serde_json::value::Value)
+impl openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::text(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::clone(&self) -> openai_rs::resources::ResponseOutputContentPart
+impl core::default::Default for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::default() -> Self
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputContentPart
+pub fn openai_rs::resources::ResponseOutputContentPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::Send for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::Sync for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputContentPart
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputContentPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputContentPart
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputContentPart
+pub enum openai_rs::ResponseOutputItem
+pub openai_rs::ResponseOutputItem::Known(openai_rs::resources::KnownResponseOutputItem)
+pub openai_rs::ResponseOutputItem::Raw(serde_json::value::Value)
+impl openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::as_function_call(&self) -> core::option::Option<&openai_rs::resources::ResponseFunctionToolCall>
+pub fn openai_rs::resources::ResponseOutputItem::as_message(&self) -> core::option::Option<&openai_rs::resources::ResponseOutputMessage>
+pub fn openai_rs::resources::ResponseOutputItem::as_raw(&self) -> core::option::Option<&serde_json::value::Value>
+pub fn openai_rs::resources::ResponseOutputItem::output_text(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::clone(&self) -> openai_rs::resources::ResponseOutputItem
+impl core::default::Default for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::default() -> Self
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputItem
+pub fn openai_rs::resources::ResponseOutputItem::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputItem
+impl core::marker::Send for openai_rs::resources::ResponseOutputItem
+impl core::marker::Sync for openai_rs::resources::ResponseOutputItem
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputItem
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputItem
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputItem
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputItem
 pub enum openai_rs::ResponseRuntimeEvent
 pub openai_rs::ResponseRuntimeEvent::Completed(openai_rs::resources::Response)
 pub openai_rs::ResponseRuntimeEvent::ContentPartAdded
@@ -8757,11 +9131,33 @@ impl core::marker::Unpin for openai_rs::resources::DeleteResponse
 impl core::marker::UnsafeUnpin for openai_rs::resources::DeleteResponse
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::DeleteResponse
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::DeleteResponse
+pub struct openai_rs::EmbeddingData
+pub openai_rs::EmbeddingData::embedding: alloc::vec::Vec<f64>
+pub openai_rs::EmbeddingData::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::EmbeddingData::index: core::option::Option<u32>
+pub openai_rs::EmbeddingData::object: alloc::string::String
+impl core::clone::Clone for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::clone(&self) -> openai_rs::resources::EmbeddingData
+impl core::default::Default for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::default() -> openai_rs::resources::EmbeddingData
+impl core::fmt::Debug for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::EmbeddingData
+pub fn openai_rs::resources::EmbeddingData::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::EmbeddingData
+impl core::marker::Send for openai_rs::resources::EmbeddingData
+impl core::marker::Sync for openai_rs::resources::EmbeddingData
+impl core::marker::Unpin for openai_rs::resources::EmbeddingData
+impl core::marker::UnsafeUnpin for openai_rs::resources::EmbeddingData
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::EmbeddingData
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::EmbeddingData
 pub struct openai_rs::EmbeddingResponse
-pub openai_rs::EmbeddingResponse::data: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::EmbeddingResponse::data: alloc::vec::Vec<openai_rs::resources::EmbeddingData>
 pub openai_rs::EmbeddingResponse::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::EmbeddingResponse::object: alloc::string::String
-pub openai_rs::EmbeddingResponse::usage: core::option::Option<serde_json::value::Value>
+pub openai_rs::EmbeddingResponse::usage: core::option::Option<openai_rs::resources::EmbeddingUsage>
 impl core::clone::Clone for openai_rs::resources::EmbeddingResponse
 pub fn openai_rs::resources::EmbeddingResponse::clone(&self) -> openai_rs::resources::EmbeddingResponse
 impl core::default::Default for openai_rs::resources::EmbeddingResponse
@@ -8779,6 +9175,27 @@ impl core::marker::Unpin for openai_rs::resources::EmbeddingResponse
 impl core::marker::UnsafeUnpin for openai_rs::resources::EmbeddingResponse
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::EmbeddingResponse
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::EmbeddingResponse
+pub struct openai_rs::EmbeddingUsage
+pub openai_rs::EmbeddingUsage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::EmbeddingUsage::prompt_tokens: u64
+pub openai_rs::EmbeddingUsage::total_tokens: u64
+impl core::clone::Clone for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::clone(&self) -> openai_rs::resources::EmbeddingUsage
+impl core::default::Default for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::default() -> openai_rs::resources::EmbeddingUsage
+impl core::fmt::Debug for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::EmbeddingUsage
+pub fn openai_rs::resources::EmbeddingUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::EmbeddingUsage
+impl core::marker::Send for openai_rs::resources::EmbeddingUsage
+impl core::marker::Sync for openai_rs::resources::EmbeddingUsage
+impl core::marker::Unpin for openai_rs::resources::EmbeddingUsage
+impl core::marker::UnsafeUnpin for openai_rs::resources::EmbeddingUsage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::EmbeddingUsage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::EmbeddingUsage
 pub struct openai_rs::Eval
 pub openai_rs::Eval::created_at: core::option::Option<u64>
 pub openai_rs::Eval::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
@@ -9731,13 +10148,17 @@ impl core::marker::UnsafeUnpin for openai_rs::config::RequestOptions
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::config::RequestOptions
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::config::RequestOptions
 pub struct openai_rs::Response
+pub openai_rs::Response::created_at: core::option::Option<u64>
+pub openai_rs::Response::error: core::option::Option<openai_rs::resources::ResponseError>
 pub openai_rs::Response::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_rs::Response::id: alloc::string::String
+pub openai_rs::Response::incomplete_details: core::option::Option<openai_rs::resources::ResponseIncompleteDetails>
+pub openai_rs::Response::metadata: core::option::Option<alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>>
 pub openai_rs::Response::model: core::option::Option<alloc::string::String>
 pub openai_rs::Response::object: alloc::string::String
-pub openai_rs::Response::output: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::Response::output: alloc::vec::Vec<openai_rs::resources::ResponseOutputItem>
 pub openai_rs::Response::status: core::option::Option<alloc::string::String>
-pub openai_rs::Response::usage: core::option::Option<serde_json::value::Value>
+pub openai_rs::Response::usage: core::option::Option<openai_rs::resources::ResponseUsage>
 impl openai_rs::resources::Response
 pub fn openai_rs::resources::Response::output_text(&self) -> core::option::Option<alloc::string::String>
 impl core::clone::Clone for openai_rs::resources::Response
@@ -9757,6 +10178,27 @@ impl core::marker::Unpin for openai_rs::resources::Response
 impl core::marker::UnsafeUnpin for openai_rs::resources::Response
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::Response
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::Response
+pub struct openai_rs::ResponseError
+pub openai_rs::ResponseError::code: core::option::Option<alloc::string::String>
+pub openai_rs::ResponseError::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseError::message: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::clone(&self) -> openai_rs::resources::ResponseError
+impl core::default::Default for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::default() -> openai_rs::resources::ResponseError
+impl core::fmt::Debug for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseError
+pub fn openai_rs::resources::ResponseError::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseError
+impl core::marker::Send for openai_rs::resources::ResponseError
+impl core::marker::Sync for openai_rs::resources::ResponseError
+impl core::marker::Unpin for openai_rs::resources::ResponseError
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseError
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseError
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseError
 pub struct openai_rs::ResponseEventStream
 impl openai_rs::ResponseEventStream
 pub async fn openai_rs::ResponseEventStream::final_response(self) -> openai_rs::error::Result<core::option::Option<openai_rs::resources::Response>>
@@ -9800,6 +10242,70 @@ impl core::marker::Unpin for openai_rs::ResponseFunctionCallArgumentsEvent
 impl core::marker::UnsafeUnpin for openai_rs::ResponseFunctionCallArgumentsEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ResponseFunctionCallArgumentsEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::ResponseFunctionCallArgumentsEvent
+pub struct openai_rs::ResponseFunctionToolCall
+pub openai_rs::ResponseFunctionToolCall::arguments: alloc::string::String
+pub openai_rs::ResponseFunctionToolCall::call_id: core::option::Option<alloc::string::String>
+pub openai_rs::ResponseFunctionToolCall::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseFunctionToolCall::id: alloc::string::String
+pub openai_rs::ResponseFunctionToolCall::name: core::option::Option<alloc::string::String>
+pub openai_rs::ResponseFunctionToolCall::status: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::clone(&self) -> openai_rs::resources::ResponseFunctionToolCall
+impl core::default::Default for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::default() -> openai_rs::resources::ResponseFunctionToolCall
+impl core::fmt::Debug for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseFunctionToolCall
+pub fn openai_rs::resources::ResponseFunctionToolCall::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::Send for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::Sync for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::Unpin for openai_rs::resources::ResponseFunctionToolCall
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseFunctionToolCall
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseFunctionToolCall
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseFunctionToolCall
+pub struct openai_rs::ResponseIncompleteDetails
+pub openai_rs::ResponseIncompleteDetails::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseIncompleteDetails::reason: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::clone(&self) -> openai_rs::resources::ResponseIncompleteDetails
+impl core::default::Default for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::default() -> openai_rs::resources::ResponseIncompleteDetails
+impl core::fmt::Debug for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseIncompleteDetails
+pub fn openai_rs::resources::ResponseIncompleteDetails::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::Send for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::Sync for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::Unpin for openai_rs::resources::ResponseIncompleteDetails
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseIncompleteDetails
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseIncompleteDetails
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseIncompleteDetails
+pub struct openai_rs::ResponseInputTokensDetails
+pub openai_rs::ResponseInputTokensDetails::cached_tokens: core::option::Option<u64>
+pub openai_rs::ResponseInputTokensDetails::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+impl core::clone::Clone for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::clone(&self) -> openai_rs::resources::ResponseInputTokensDetails
+impl core::default::Default for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::default() -> openai_rs::resources::ResponseInputTokensDetails
+impl core::fmt::Debug for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseInputTokensDetails
+pub fn openai_rs::resources::ResponseInputTokensDetails::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::Send for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::Sync for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::Unpin for openai_rs::resources::ResponseInputTokensDetails
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseInputTokensDetails
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseInputTokensDetails
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseInputTokensDetails
 pub struct openai_rs::ResponseMeta
 pub openai_rs::ResponseMeta::attempts: usize
 pub openai_rs::ResponseMeta::headers: http::header::map::HeaderMap
@@ -9818,6 +10324,72 @@ impl core::marker::Unpin for openai_rs::ResponseMeta
 impl core::marker::UnsafeUnpin for openai_rs::ResponseMeta
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ResponseMeta
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::ResponseMeta
+pub struct openai_rs::ResponseOutputMessage
+pub openai_rs::ResponseOutputMessage::content: alloc::vec::Vec<openai_rs::resources::ResponseOutputContentPart>
+pub openai_rs::ResponseOutputMessage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseOutputMessage::id: alloc::string::String
+pub openai_rs::ResponseOutputMessage::phase: core::option::Option<alloc::string::String>
+pub openai_rs::ResponseOutputMessage::role: core::option::Option<alloc::string::String>
+pub openai_rs::ResponseOutputMessage::status: core::option::Option<alloc::string::String>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::clone(&self) -> openai_rs::resources::ResponseOutputMessage
+impl core::default::Default for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::default() -> openai_rs::resources::ResponseOutputMessage
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputMessage
+pub fn openai_rs::resources::ResponseOutputMessage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputMessage
+impl core::marker::Send for openai_rs::resources::ResponseOutputMessage
+impl core::marker::Sync for openai_rs::resources::ResponseOutputMessage
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputMessage
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputMessage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputMessage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputMessage
+pub struct openai_rs::ResponseOutputRefusal
+pub openai_rs::ResponseOutputRefusal::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseOutputRefusal::refusal: alloc::string::String
+impl core::clone::Clone for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::clone(&self) -> openai_rs::resources::ResponseOutputRefusal
+impl core::default::Default for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::default() -> openai_rs::resources::ResponseOutputRefusal
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputRefusal
+pub fn openai_rs::resources::ResponseOutputRefusal::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::Send for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::Sync for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputRefusal
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputRefusal
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputRefusal
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputRefusal
+pub struct openai_rs::ResponseOutputText
+pub openai_rs::ResponseOutputText::annotations: alloc::vec::Vec<serde_json::value::Value>
+pub openai_rs::ResponseOutputText::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseOutputText::logprobs: core::option::Option<serde_json::value::Value>
+pub openai_rs::ResponseOutputText::text: alloc::string::String
+impl core::clone::Clone for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::clone(&self) -> openai_rs::resources::ResponseOutputText
+impl core::default::Default for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::default() -> openai_rs::resources::ResponseOutputText
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputText
+pub fn openai_rs::resources::ResponseOutputText::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputText
+impl core::marker::Send for openai_rs::resources::ResponseOutputText
+impl core::marker::Sync for openai_rs::resources::ResponseOutputText
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputText
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputText
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputText
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputText
 pub struct openai_rs::ResponseOutputTextEvent
 pub openai_rs::ResponseOutputTextEvent::content_index: usize
 pub openai_rs::ResponseOutputTextEvent::event_type: alloc::string::String
@@ -9842,6 +10414,26 @@ impl core::marker::Unpin for openai_rs::ResponseOutputTextEvent
 impl core::marker::UnsafeUnpin for openai_rs::ResponseOutputTextEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::ResponseOutputTextEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_rs::ResponseOutputTextEvent
+pub struct openai_rs::ResponseOutputTokensDetails
+pub openai_rs::ResponseOutputTokensDetails::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseOutputTokensDetails::reasoning_tokens: core::option::Option<u64>
+impl core::clone::Clone for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::clone(&self) -> openai_rs::resources::ResponseOutputTokensDetails
+impl core::default::Default for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::default() -> openai_rs::resources::ResponseOutputTokensDetails
+impl core::fmt::Debug for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseOutputTokensDetails
+pub fn openai_rs::resources::ResponseOutputTokensDetails::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::Send for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::Sync for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::Unpin for openai_rs::resources::ResponseOutputTokensDetails
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseOutputTokensDetails
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseOutputTokensDetails
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseOutputTokensDetails
 pub struct openai_rs::ResponseStream
 impl openai_rs::ResponseStream
 pub fn openai_rs::ResponseStream::events(self) -> openai_rs::ResponseEventStream
@@ -9864,6 +10456,30 @@ impl core::marker::Unpin for openai_rs::ResponseStream
 impl core::marker::UnsafeUnpin for openai_rs::ResponseStream
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_rs::ResponseStream
 impl !core::panic::unwind_safe::UnwindSafe for openai_rs::ResponseStream
+pub struct openai_rs::ResponseUsage
+pub openai_rs::ResponseUsage::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_rs::ResponseUsage::input_tokens: u64
+pub openai_rs::ResponseUsage::input_tokens_details: core::option::Option<openai_rs::resources::ResponseInputTokensDetails>
+pub openai_rs::ResponseUsage::output_tokens: u64
+pub openai_rs::ResponseUsage::output_tokens_details: core::option::Option<openai_rs::resources::ResponseOutputTokensDetails>
+pub openai_rs::ResponseUsage::total_tokens: u64
+impl core::clone::Clone for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::clone(&self) -> openai_rs::resources::ResponseUsage
+impl core::default::Default for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::default() -> openai_rs::resources::ResponseUsage
+impl core::fmt::Debug for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_rs::resources::ResponseUsage
+pub fn openai_rs::resources::ResponseUsage::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_rs::resources::ResponseUsage
+impl core::marker::Send for openai_rs::resources::ResponseUsage
+impl core::marker::Sync for openai_rs::resources::ResponseUsage
+impl core::marker::Unpin for openai_rs::resources::ResponseUsage
+impl core::marker::UnsafeUnpin for openai_rs::resources::ResponseUsage
+impl core::panic::unwind_safe::RefUnwindSafe for openai_rs::resources::ResponseUsage
+impl core::panic::unwind_safe::UnwindSafe for openai_rs::resources::ResponseUsage
 pub struct openai_rs::ResponsesSocket
 impl openai_rs::ResponsesSocket
 pub async fn openai_rs::ResponsesSocket::close(&self, options: openai_rs::websocket::SocketCloseOptions) -> openai_rs::error::Result<()>

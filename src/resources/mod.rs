@@ -179,9 +179,39 @@ pub struct EmbeddingResponse {
     pub object: String,
     /// 向量数据。
     #[serde(default)]
-    pub data: Vec<Value>,
+    pub data: Vec<EmbeddingData>,
     /// 使用统计。
-    pub usage: Option<Value>,
+    pub usage: Option<EmbeddingUsage>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示单个 embedding 向量项。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EmbeddingData {
+    /// embedding 向量。
+    #[serde(default)]
+    pub embedding: Vec<f64>,
+    /// 向量索引。
+    pub index: Option<u32>,
+    /// 对象类型。
+    #[serde(default)]
+    pub object: String,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 embeddings 的用量统计。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct EmbeddingUsage {
+    /// prompt token 数。
+    #[serde(default)]
+    pub prompt_tokens: u64,
+    /// 总 token 数。
+    #[serde(default)]
+    pub total_tokens: u64,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -682,6 +712,8 @@ pub struct ChatCompletionCreateParams {
 pub struct Response {
     /// 响应 ID。
     pub id: String,
+    /// 创建时间。
+    pub created_at: Option<u64>,
     /// 对象类型。
     #[serde(default)]
     pub object: String,
@@ -689,11 +721,17 @@ pub struct Response {
     pub model: Option<String>,
     /// 状态。
     pub status: Option<String>,
+    /// 错误信息。
+    pub error: Option<ResponseError>,
+    /// 不完整原因。
+    pub incomplete_details: Option<ResponseIncompleteDetails>,
+    /// 元数据。
+    pub metadata: Option<BTreeMap<String, String>>,
     /// 输出项。
     #[serde(default)]
-    pub output: Vec<Value>,
+    pub output: Vec<ResponseOutputItem>,
     /// 用量统计。
-    pub usage: Option<Value>,
+    pub usage: Option<ResponseUsage>,
     /// 额外字段。
     #[serde(flatten)]
     pub extra: BTreeMap<String, Value>,
@@ -703,15 +741,8 @@ impl Response {
     /// 尝试提取最终文本输出。
     pub fn output_text(&self) -> Option<String> {
         for item in &self.output {
-            if let Some(text) = item.get("text").and_then(Value::as_str) {
+            if let Some(text) = item.output_text() {
                 return Some(text.to_owned());
-            }
-            if let Some(content) = item.get("content").and_then(Value::as_array) {
-                for content_item in content {
-                    if let Some(text) = content_item.get("text").and_then(Value::as_str) {
-                        return Some(text.to_owned());
-                    }
-                }
             }
         }
 
@@ -720,6 +751,254 @@ impl Response {
             .and_then(Value::as_str)
             .map(str::to_owned)
     }
+}
+
+/// 表示 responses 顶层错误。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseError {
+    /// 错误码。
+    pub code: Option<String>,
+    /// 错误消息。
+    pub message: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 responses 不完整原因。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseIncompleteDetails {
+    /// 不完整原因。
+    pub reason: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 responses 用量明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseUsage {
+    /// 输入 token 数。
+    #[serde(default)]
+    pub input_tokens: u64,
+    /// 输入 token 明细。
+    pub input_tokens_details: Option<ResponseInputTokensDetails>,
+    /// 输出 token 数。
+    #[serde(default)]
+    pub output_tokens: u64,
+    /// 输出 token 明细。
+    pub output_tokens_details: Option<ResponseOutputTokensDetails>,
+    /// 总 token 数。
+    #[serde(default)]
+    pub total_tokens: u64,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 responses 输入 token 明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseInputTokensDetails {
+    /// cache 命中 token 数。
+    pub cached_tokens: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 responses 输出 token 明细。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseOutputTokensDetails {
+    /// reasoning token 数。
+    pub reasoning_tokens: Option<u64>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示响应输出项。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ResponseOutputItem {
+    /// 已知输出项。
+    Known(KnownResponseOutputItem),
+    /// 向前兼容保留的原始项。
+    Raw(Value),
+}
+
+impl Default for ResponseOutputItem {
+    fn default() -> Self {
+        Self::Raw(Value::Null)
+    }
+}
+
+impl ResponseOutputItem {
+    /// 返回消息输出项。
+    pub fn as_message(&self) -> Option<&ResponseOutputMessage> {
+        match self {
+            Self::Known(KnownResponseOutputItem::Message(message)) => Some(message),
+            _ => None,
+        }
+    }
+
+    /// 返回函数调用输出项。
+    pub fn as_function_call(&self) -> Option<&ResponseFunctionToolCall> {
+        match self {
+            Self::Known(KnownResponseOutputItem::FunctionCall(call)) => Some(call),
+            _ => None,
+        }
+    }
+
+    /// 返回原始 JSON 项。
+    pub fn as_raw(&self) -> Option<&Value> {
+        match self {
+            Self::Raw(value) => Some(value),
+            _ => None,
+        }
+    }
+
+    /// 提取输出文本。
+    pub fn output_text(&self) -> Option<&str> {
+        match self {
+            Self::Known(KnownResponseOutputItem::OutputText(text)) => Some(text.text.as_str()),
+            Self::Known(KnownResponseOutputItem::Message(message)) => message
+                .content
+                .iter()
+                .find_map(ResponseOutputContentPart::text),
+            Self::Raw(value) => {
+                if let Some(text) = value.get("text").and_then(Value::as_str) {
+                    return Some(text);
+                }
+                value
+                    .get("content")
+                    .and_then(Value::as_array)
+                    .and_then(|content| {
+                        content
+                            .iter()
+                            .find_map(|item| item.get("text").and_then(Value::as_str))
+                    })
+            }
+            _ => None,
+        }
+    }
+}
+
+/// 已知的响应输出项类型。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum KnownResponseOutputItem {
+    /// assistant message。
+    Message(ResponseOutputMessage),
+    /// function call。
+    FunctionCall(ResponseFunctionToolCall),
+    /// 某些兼容 Provider 直接把 `output_text` 作为顶层输出项返回。
+    OutputText(ResponseOutputText),
+    /// 某些兼容 Provider 直接把 `refusal` 作为顶层输出项返回。
+    Refusal(ResponseOutputRefusal),
+}
+
+/// 表示 assistant message 输出。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseOutputMessage {
+    /// message ID。
+    pub id: String,
+    /// 内容片段。
+    #[serde(default)]
+    pub content: Vec<ResponseOutputContentPart>,
+    /// 角色。
+    pub role: Option<String>,
+    /// 状态。
+    pub status: Option<String>,
+    /// assistant phase。
+    pub phase: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示函数工具调用输出项。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseFunctionToolCall {
+    /// 输出项 ID。
+    pub id: String,
+    /// tool call ID。
+    pub call_id: Option<String>,
+    /// 工具名称。
+    pub name: Option<String>,
+    /// 参数 JSON 字符串。
+    #[serde(default)]
+    pub arguments: String,
+    /// 状态。
+    pub status: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示 message 中的内容片段。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ResponseOutputContentPart {
+    /// 已知内容片段。
+    Known(KnownResponseOutputContentPart),
+    /// 向前兼容保留的原始片段。
+    Raw(Value),
+}
+
+impl Default for ResponseOutputContentPart {
+    fn default() -> Self {
+        Self::Raw(Value::Null)
+    }
+}
+
+impl ResponseOutputContentPart {
+    /// 提取文本内容。
+    pub fn text(&self) -> Option<&str> {
+        match self {
+            Self::Known(KnownResponseOutputContentPart::OutputText(text)) => {
+                Some(text.text.as_str())
+            }
+            Self::Raw(value) => value.get("text").and_then(Value::as_str),
+            _ => None,
+        }
+    }
+}
+
+/// 已知的 message 内容片段。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum KnownResponseOutputContentPart {
+    /// 输出文本。
+    OutputText(ResponseOutputText),
+    /// 拒绝回答。
+    Refusal(ResponseOutputRefusal),
+}
+
+/// 表示输出文本片段。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseOutputText {
+    /// 注解。
+    #[serde(default)]
+    pub annotations: Vec<Value>,
+    /// 文本。
+    #[serde(default)]
+    pub text: String,
+    /// token 级 logprobs。
+    pub logprobs: Option<Value>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+/// 表示拒绝回答片段。
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseOutputRefusal {
+    /// 拒绝原因。
+    #[serde(default)]
+    pub refusal: String,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
 }
 
 /// 表示 Responses 创建参数。

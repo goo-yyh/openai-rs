@@ -310,6 +310,12 @@ async fn test_should_snapshot_out_of_order_response_runtime_contract() {
         .await
         .unwrap()
         .unwrap();
+    let event_stream_function_arguments = event_stream_final.output[1]
+        .as_function_call()
+        .map(|call| call.arguments.clone());
+    let plain_stream_function_arguments = plain_stream_final.output[1]
+        .as_function_call()
+        .map(|call| call.arguments.clone());
 
     assert_snapshot!(
         "response_runtime_out_of_order_contract",
@@ -318,8 +324,8 @@ async fn test_should_snapshot_out_of_order_response_runtime_contract() {
             "completed_count": completed_count,
             "event_stream_output_text": event_stream_final.output_text(),
             "plain_stream_output_text": plain_stream_final.output_text(),
-            "event_stream_function_arguments": event_stream_final.output[1]["arguments"],
-            "plain_stream_function_arguments": plain_stream_final.output[1]["arguments"],
+            "event_stream_function_arguments": event_stream_function_arguments,
+            "plain_stream_function_arguments": plain_stream_function_arguments,
         }))
         .unwrap()
     );

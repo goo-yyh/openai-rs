@@ -456,6 +456,12 @@ async fn test_should_emit_response_runtime_events() {
             ResponseRuntimeEvent::Completed(response) => {
                 saw_completed = true;
                 assert_eq!(response.output_text().as_deref(), Some("hello"));
+                assert_eq!(
+                    response.output[0]
+                        .as_function_call()
+                        .map(|call| call.arguments.as_str()),
+                    Some("{\"city\":\"Shanghai\"}")
+                );
             }
             _ => {}
         }

@@ -1,0 +1,38 @@
+{
+  "id": "resp_spec_1",
+  "object": "response",
+  "created_at": 1,
+  "model": "gpt-5.4",
+  "status": "completed",
+  "usage": {
+    "input_tokens": 7,
+    "input_tokens_details": {
+      "cached_tokens": 2
+    },
+    "output_tokens": 4,
+    "output_tokens_details": {
+      "reasoning_tokens": 1
+    },
+    "total_tokens": 11
+  },
+  "output": [
+    {
+      "id": "fc_spec_1",
+      "type": "function_call",
+      "name": "lookup_city",
+      "arguments": "{\"city\":\"Shanghai\"}"
+    },
+    {
+      "id": "msg_spec_1",
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "fixture response"
+        }
+      ]
+    }
+  ]
+}

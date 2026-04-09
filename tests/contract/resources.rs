@@ -9,7 +9,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use openai_rs::ChatCompletionRuntimeEvent;
 use openai_rs::{
     AssistantRuntimeEvent, BetaAssistant, BetaThreadMessage, BetaThreadRun, ChatCompletionMessage,
-    Client, Model, VectorStore,
+    Client, Model, Response, VectorStore,
 };
 
 #[tokio::test]
@@ -77,7 +77,12 @@ async fn test_should_create_response_with_text_input() {
             "status": "completed",
             "output": [
                 {"type": "output_text", "text": "你好"}
-            ]
+            ],
+            "usage": {
+                "input_tokens": 3,
+                "output_tokens": 1,
+                "total_tokens": 4
+            }
         })))
         .mount(&server)
         .await;
@@ -89,7 +94,7 @@ async fn test_should_create_response_with_text_input() {
         .build()
         .unwrap();
 
-    let response = client
+    let response: Response = client
         .responses()
         .create()
         .model("gpt-5.4")
@@ -100,6 +105,7 @@ async fn test_should_create_response_with_text_input() {
 
     assert_eq!(response.id, "resp_1");
     assert_eq!(response.output_text().as_deref(), Some("你好"));
+    assert_eq!(response.usage.unwrap().total_tokens, 4);
 }
 
 #[tokio::test]

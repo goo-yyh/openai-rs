@@ -4,8 +4,8 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 
 use openai_rs::{
     BetaRealtimeSession, ChatKitSession, ChatKitThread, ChatKitThreadItem, Client, Completion,
-    GraderRunResponse, GraderValidateResponse, ModerationCreateResponse, Page, UploadPart,
-    UploadSource, VectorStoreFileChunkingStrategy, VectorStoreFileContent,
+    EmbeddingResponse, GraderRunResponse, GraderValidateResponse, ModerationCreateResponse, Page,
+    Response, UploadPart, UploadSource, VectorStoreFileChunkingStrategy, VectorStoreFileContent,
     VectorStoreSearchResponse,
 };
 
@@ -59,6 +59,49 @@ async fn test_should_deserialize_typed_completion_response() {
     assert_eq!(completion.id, "cmpl_1");
     assert_eq!(completion.choices[0].text, "hello world");
     assert_eq!(completion.usage.unwrap().total_tokens, 3);
+}
+
+#[tokio::test]
+async fn test_should_deserialize_typed_embedding_response() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/embeddings"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "object": "list",
+            "data": [{
+                "object": "embedding",
+                "index": 0,
+                "embedding": [0.1, 0.2, 0.3]
+            }],
+            "usage": {
+                "prompt_tokens": 3,
+                "total_tokens": 3
+            }
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response: EmbeddingResponse = client
+        .embeddings()
+        .create()
+        .body_value(json!({
+            "model": "text-embedding-3-small",
+            "input": "hello"
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.data.len(), 1);
+    assert_eq!(response.data[0].embedding.len(), 3);
+    assert_eq!(response.usage.unwrap().total_tokens, 3);
 }
 
 #[tokio::test]
@@ -414,6 +457,93 @@ async fn test_should_deserialize_beta_realtime_session_response() {
 
     assert_eq!(session.id.as_deref(), Some("sess_1"));
     assert_eq!(session.client_secret.unwrap().value, "ek_beta_1");
+}
+
+#[tokio::test]
+async fn test_should_deserialize_typed_response_output_and_usage() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_typed_1",
+            "object": "response",
+            "created_at": 1,
+            "model": "gpt-5.4",
+            "status": "completed",
+            "metadata": {
+                "fixture": "typed_endpoints"
+            },
+            "usage": {
+                "input_tokens": 10,
+                "input_tokens_details": {
+                    "cached_tokens": 4
+                },
+                "output_tokens": 5,
+                "output_tokens_details": {
+                    "reasoning_tokens": 2
+                },
+                "total_tokens": 15
+            },
+            "output": [
+                {
+                    "id": "fc_1",
+                    "type": "function_call",
+                    "name": "lookup_city",
+                    "arguments": "{\"city\":\"Shanghai\"}"
+                },
+                {
+                    "id": "msg_1",
+                    "type": "message",
+                    "role": "assistant",
+                    "status": "completed",
+                    "content": [{
+                        "type": "output_text",
+                        "text": "hello"
+                    }]
+                }
+            ]
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response: Response = client
+        .responses()
+        .create()
+        .model("gpt-5.4")
+        .input_text("hello")
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.output_text().as_deref(), Some("hello"));
+    assert_eq!(
+        response.output[0]
+            .as_function_call()
+            .map(|call| call.arguments.as_str()),
+        Some("{\"city\":\"Shanghai\"}")
+    );
+    assert_eq!(
+        response.output[1]
+            .as_message()
+            .and_then(|message| message.content[0].text()),
+        Some("hello")
+    );
+    assert_eq!(response.usage.unwrap().total_tokens, 15);
+    assert_eq!(
+        response
+            .metadata
+            .unwrap()
+            .get("fixture")
+            .map(String::as_str),
+        Some("typed_endpoints")
+    );
 }
 
 #[tokio::test]

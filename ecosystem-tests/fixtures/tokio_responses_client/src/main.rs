@@ -23,4 +23,19 @@ async fn main() {
         .unwrap();
 
     assert_eq!(response.output_text().as_deref(), Some("{\"city\":\"Shanghai\"}"));
+
+    let streamed = client
+        .responses()
+        .stream()
+        .model("gpt-5.4")
+        .input_text("hello from response stream fixture")
+        .send()
+        .await
+        .unwrap()
+        .final_response()
+        .await
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(streamed.output_text().as_deref(), Some("stream fixture"));
 }
