@@ -1,5 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![doc = include_str!("../README.md")]
+#![doc = include_str!("../docs/crate-docs.md")]
 #![forbid(unsafe_code)]
 #![warn(rust_2024_compatibility, missing_debug_implementations)]
 
