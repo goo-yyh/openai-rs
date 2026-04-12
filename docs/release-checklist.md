@@ -42,7 +42,18 @@ RELEASE_VERSION=0.1.0 bash ./scripts/check-release.sh
 
 ## 3. Release workflow
 
-仓库提供了手动 `Release Readiness` workflow，建议在发布前至少跑一次，它会执行：
+仓库提供了两种 release workflow 用法：
+
+- 手动触发 `Release Readiness`
+  - 用于发布前预演，输入 `Cargo.toml` 中的目标版本
+- 推送版本 tag 自动发布
+  - 当 push `v0.1.0` 或 `0.1.0` 这类 tag 时，workflow 会先跑完整 release checks，再自动执行 `cargo publish`
+
+自动发布依赖仓库 secret：
+
+- `CARGO_REGISTRY_TOKEN`
+
+手动和自动两种模式都会执行：
 
 - 版本 / changelog 检查
 - `cargo fmt --all -- --check`
@@ -56,6 +67,10 @@ RELEASE_VERSION=0.1.0 bash ./scripts/check-release.sh
 - `cargo clippy --all-targets --all-features -- -D warnings`
 - `cargo publish --dry-run --all-features`
 - docs.rs 风格文档构建检查
+
+tag 触发模式在上面这套检查通过后，还会继续执行：
+
+- `cargo publish --all-features --registry crates-io`
 
 ## 4. public-api 基线
 
@@ -79,10 +94,11 @@ bash ./scripts/update-public-api.sh
 
 1. 更新 `CHANGELOG.md`
 2. 确认 public API 基线是否需要更新
-3. 运行 `Release Readiness` workflow
-4. `cargo publish`
-5. 打 tag / GitHub Release
-6. 检查 docs.rs 构建与 crates.io 页面
+3. 运行一次手动 `Release Readiness` workflow 预演
+4. 配置好仓库 secret `CARGO_REGISTRY_TOKEN`
+5. push 版本 tag，例如 `v0.1.0`
+6. 等待 workflow 自动发布 crate
+7. 检查 docs.rs 构建与 crates.io 页面
 
 ## 版本策略
 
