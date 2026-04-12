@@ -3,7 +3,7 @@ use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{ChatCompletionChunk, ChatCompletionRuntimeEvent, Client, ResponseRuntimeEvent};
+use openai_core::{ChatCompletionChunk, ChatCompletionRuntimeEvent, Client, ResponseRuntimeEvent};
 
 #[cfg(feature = "structured-output")]
 #[tokio::test]
@@ -163,7 +163,7 @@ async fn test_should_fail_parse_when_finish_reason_is_length() {
         .await
         .unwrap_err();
 
-    assert!(matches!(error, openai_rs::Error::LengthFinishReason(_)));
+    assert!(matches!(error, openai_core::Error::LengthFinishReason(_)));
 }
 
 #[cfg(feature = "structured-output")]
@@ -216,7 +216,7 @@ async fn test_should_fail_parse_when_finish_reason_is_content_filter() {
 
     assert!(matches!(
         error,
-        openai_rs::Error::ContentFilterFinishReason(_)
+        openai_core::Error::ContentFilterFinishReason(_)
     ));
 }
 
@@ -228,7 +228,7 @@ fn test_should_parse_markdown_wrapped_json_payload() {
         answer: String,
     }
 
-    let parsed: Answer = openai_rs::parse_json_payload(
+    let parsed: Answer = openai_core::parse_json_payload(
         r#"
 ```json
 {"answer":"ok"}

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use openai_rs::{ApiErrorKind, Client, ProviderKind};
+use openai_core::{ApiErrorKind, Client, ProviderKind};
 use serde::Deserialize;
 use serial_test::serial;
 
@@ -21,7 +21,7 @@ struct LocationAnswer {
 
 fn live_client(api_key: String) -> Client {
     Client::builder()
-        .provider(openai_rs::Provider::zhipu())
+        .provider(openai_core::Provider::zhipu())
         .api_key(api_key)
         .timeout(Duration::from_secs(90))
         .max_retries(4)
@@ -31,7 +31,7 @@ fn live_client(api_key: String) -> Client {
 
 fn live_client_no_retry(api_key: String) -> Client {
     Client::builder()
-        .provider(openai_rs::Provider::zhipu())
+        .provider(openai_core::Provider::zhipu())
         .api_key(api_key)
         .timeout(Duration::from_secs(90))
         .max_retries(0)

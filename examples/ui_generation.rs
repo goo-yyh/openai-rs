@@ -35,10 +35,10 @@ async fn main() -> support::ExampleResult {
         .parse::<GeneratedUi>()
         .model("gpt-5.4")
         .messages(vec![
-            openai_rs::ChatCompletionMessage::system(
+            openai_core::ChatCompletionMessage::system(
                 "You generate JSON UI specs for product teams. Only output JSON.",
             ),
-            openai_rs::ChatCompletionMessage::user(
+            openai_core::ChatCompletionMessage::user(
                 "Design a mobile onboarding screen for a finance app with identity verification.",
             ),
         ])

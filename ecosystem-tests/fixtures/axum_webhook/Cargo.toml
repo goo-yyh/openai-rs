@@ -6,4 +6,4 @@ publish = false
 
 [dependencies]
 http = "1"
-openai-rs = { path = "../../../" }
+openai-core = { path = "../../../" }

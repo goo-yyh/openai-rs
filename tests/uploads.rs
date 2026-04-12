@@ -6,7 +6,7 @@ use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, ToFileInput, UploadSource, to_file};
+use openai_core::{Client, ToFileInput, UploadSource, to_file};
 
 #[tokio::test]
 async fn test_should_build_file_from_reader_when_filename_provided() {
@@ -27,7 +27,7 @@ async fn test_should_require_filename_for_bytes_input() {
         .await
         .unwrap_err();
 
-    assert!(matches!(error, openai_rs::Error::InvalidConfig(_)));
+    assert!(matches!(error, openai_core::Error::InvalidConfig(_)));
 }
 
 #[tokio::test]

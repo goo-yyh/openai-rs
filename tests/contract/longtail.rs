@@ -5,7 +5,7 @@ use serde_json::json;
 use wiremock::matchers::{body_json, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{
+use openai_core::{
     BatchCreateParams, Client, ContainerCreateParams, ContainerExpiresAfter,
     ContainerFileCreateParams, ConversationCreateParams, ConversationItemCreateParams,
     EvalCreateParams, EvalRunCreateParams, FineTuningHyperparameterValue,

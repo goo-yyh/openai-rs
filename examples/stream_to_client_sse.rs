@@ -2,7 +2,7 @@
 mod support;
 
 use futures_util::StreamExt;
-use openai_rs::ResponseRuntimeEvent;
+use openai_core::ResponseRuntimeEvent;
 use support::ExampleResult;
 
 #[tokio::main]

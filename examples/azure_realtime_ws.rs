@@ -5,7 +5,7 @@ mod support;
 #[cfg(feature = "realtime")]
 use futures_util::StreamExt;
 #[cfg(feature = "realtime")]
-use openai_rs::SocketStreamMessage;
+use openai_core::SocketStreamMessage;
 
 #[cfg(feature = "realtime")]
 #[tokio::main]

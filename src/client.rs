@@ -628,7 +628,11 @@ impl ClientBuilder {
             let mut default_headers = reqwest::header::HeaderMap::new();
             default_headers.insert(
                 reqwest::header::USER_AGENT,
-                reqwest::header::HeaderValue::from_static("openai-rs/0.1.0"),
+                reqwest::header::HeaderValue::from_static(concat!(
+                    env!("CARGO_PKG_NAME"),
+                    "/",
+                    env!("CARGO_PKG_VERSION")
+                )),
             );
 
             let mut builder = reqwest::Client::builder().default_headers(default_headers);

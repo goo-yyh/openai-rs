@@ -1,6 +1,6 @@
-use openai_rs::helpers::ToolDefinition;
-use openai_rs::resources::{ChatToolDefinition, ChatToolFunction};
-use openai_rs::Client;
+use openai_core::helpers::ToolDefinition;
+use openai_core::resources::{ChatToolDefinition, ChatToolFunction};
+use openai_core::Client;
 use schemars::JsonSchema;
 use serde::Deserialize;
 use serde_json::{Value, json};

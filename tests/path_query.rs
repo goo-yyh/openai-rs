@@ -3,7 +3,7 @@ use serde_json::json;
 use wiremock::matchers::{body_json, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{
+use openai_core::{
     Batch, Client, Completion, ConversationItem, CursorPage, EvalRun, VectorStoreFile,
 };
 

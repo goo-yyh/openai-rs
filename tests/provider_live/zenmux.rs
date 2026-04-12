@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use futures_util::StreamExt;
-use openai_rs::{ApiErrorKind, Client, Error, Model, ProviderKind, ResponseRuntimeEvent};
+use openai_core::{ApiErrorKind, Client, Error, Model, ProviderKind, ResponseRuntimeEvent};
 use serde::Deserialize;
 use serial_test::serial;
 
@@ -23,7 +23,7 @@ struct LocationAnswer {
 
 fn live_client(api_key: String) -> Client {
     Client::builder()
-        .provider(openai_rs::Provider::zenmux())
+        .provider(openai_core::Provider::zenmux())
         .api_key(api_key)
         .timeout(Duration::from_secs(60))
         .max_retries(4)

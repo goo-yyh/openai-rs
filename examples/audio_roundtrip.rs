@@ -22,8 +22,8 @@ async fn main() -> ExampleResult {
     fs::write(&speech_path, &mp3).await?;
     println!("saved speech to {}", speech_path.display());
 
-    let upload =
-        openai_rs::UploadSource::from_bytes(mp3.clone(), "speech.mp3").with_mime_type("audio/mpeg");
+    let upload = openai_core::UploadSource::from_bytes(mp3.clone(), "speech.mp3")
+        .with_mime_type("audio/mpeg");
 
     let transcription = client
         .audio()

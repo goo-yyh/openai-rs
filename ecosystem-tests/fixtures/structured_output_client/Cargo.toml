@@ -5,7 +5,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-openai-rs = { path = "../../../", default-features = false, features = ["structured-output", "rustls-tls"] }
+openai-core = { path = "../../../", default-features = false, features = ["structured-output", "rustls-tls"] }
 schemars = { version = "1", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

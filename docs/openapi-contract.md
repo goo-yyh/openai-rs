@@ -1,6 +1,6 @@
 # OpenAPI Contract
 
-`openai-rs` keeps a checked-in snapshot of the official documented OpenAPI spec so endpoint drift is caught by tests, not by users.
+`openai-core` keeps a checked-in snapshot of the official documented OpenAPI spec so endpoint drift is caught by tests, not by users.
 
 Snapshot assets:
 

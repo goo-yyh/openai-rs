@@ -1,11 +1,11 @@
-# openai-rs
+# openai-core
 
 [中文版 README](./README.zh.md)
 
-`openai-rs` is an async Rust SDK for the OpenAI-compatible ecosystem.
+`openai-core` is an async Rust SDK for the OpenAI-compatible ecosystem.
 
 > [!IMPORTANT]
-> `openai-rs` is a community-maintained, unofficial library.
+> `openai-core` is a community-maintained, unofficial library.
 >
 > It is a Rust rewrite heavily informed by [openai-node](https://github.com/openai/openai-node): its resource layout, capability coverage, README structure, and example topics were all reviewed against `openai-node`, then adapted into Rust-native builders, types, and async streams. It is not affiliated with OpenAI and does not represent an official OpenAI SDK.
 
@@ -44,21 +44,21 @@ The default feature set is intentionally lighter and focuses on HTTP, SSE, multi
 
 ```toml
 [dependencies]
-openai-rs = "0.1"
+openai-core = "0.1"
 ```
 
 If you also need structured output, tool runners, or WebSocket support:
 
 ```toml
 [dependencies]
-openai-rs = { version = "0.1", features = ["structured-output", "tool-runner", "realtime", "responses-ws"] }
+openai-core = { version = "0.1", features = ["structured-output", "tool-runner", "realtime", "responses-ws"] }
 ```
 
 If you want full control over features:
 
 ```toml
 [dependencies]
-openai-rs = { version = "0.1", default-features = false, features = ["stream", "multipart", "rustls-tls"] }
+openai-core = { version = "0.1", default-features = false, features = ["stream", "multipart", "rustls-tls"] }
 ```
 
 ## Feature Flags
@@ -86,7 +86,7 @@ Notes:
 The `Responses API` is the primary path, matching the role it plays in the `openai-node` README.
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -110,7 +110,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Chat Completions API
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -135,11 +135,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Streaming Responses
 
-Like `openai-node`, `openai-rs` supports Server-Sent Events. The Rust-facing shape uses async streams instead of emitters.
+Like `openai-node`, `openai-core` supports Server-Sent Events. The Rust-facing shape uses async streams instead of emitters.
 
 ```rust,ignore
 use futures_util::StreamExt;
-use openai_rs::{Client, ResponseRuntimeEvent};
+use openai_core::{Client, ResponseRuntimeEvent};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -173,7 +173,7 @@ Related examples:
 
 ## File Uploads
 
-Just like `openai-node`, `openai-rs` exposes a unified upload helper.
+Just like `openai-node`, `openai-core` exposes a unified upload helper.
 
 `to_file()` currently accepts:
 
@@ -186,7 +186,7 @@ Just like `openai-node`, `openai-rs` exposes a unified upload helper.
 
 ```rust,ignore
 use bytes::Bytes;
-use openai_rs::{Client, to_file};
+use openai_core::{Client, to_file};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -216,7 +216,7 @@ Related examples:
 
 ## Audio
 
-`openai-rs` now covers:
+`openai-core` now covers:
 
 - `audio.speech.create`
 - SSE streaming for `audio.speech`
@@ -226,7 +226,7 @@ Related examples:
 - local helper utilities: `play_audio()` and `record_audio()`
 
 ```rust,ignore
-use openai_rs::{AudioPlaybackInput, Client, play_audio};
+use openai_core::{AudioPlaybackInput, Client, play_audio};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -272,7 +272,7 @@ Phase 3 promotes the main long-tail namespaces away from raw `Value` builders:
 For the high-frequency paths, you can now use typed responses plus either dedicated builder methods or typed request structs with `json_body(...)`.
 
 ```rust,ignore
-use openai_rs::{Client, ConversationCreateParams};
+use openai_core::{Client, ConversationCreateParams};
 
 let client = Client::builder()
     .api_key(std::env::var("OPENAI_API_KEY")?)
@@ -293,7 +293,7 @@ println!("{}", conversation.id);
 
 ## Webhook Verification
 
-As in `openai-node`, `openai-rs` provides both:
+As in `openai-node`, `openai-core` provides both:
 
 - signature-only verification via `verify_signature()`
 - verify-and-parse via `unwrap()`
@@ -301,7 +301,7 @@ As in `openai-node`, `openai-rs` provides both:
 ```rust,ignore
 use std::collections::BTreeMap;
 use std::time::Duration;
-use openai_rs::Client;
+use openai_core::Client;
 
 let client = Client::builder()
     .webhook_secret(std::env::var("OPENAI_WEBHOOK_SECRET")?)
@@ -324,10 +324,10 @@ Related example:
 
 ## Error Handling
 
-Failures are exposed through the unified `openai_rs::Error` type. API-level failures are represented as `Error::Api(ApiError)`.
+Failures are exposed through the unified `openai_core::Error` type. API-level failures are represented as `Error::Api(ApiError)`.
 
 ```rust,ignore
-use openai_rs::{ApiErrorKind, Error};
+use openai_core::{ApiErrorKind, Error};
 
 match client
     .chat()
@@ -358,7 +358,7 @@ Related example:
 
 ## Request IDs, Raw Responses, and Response Metadata
 
-`openai-node` emphasizes request ids and raw response access. `openai-rs` exposes the same debugging surface through two methods:
+`openai-node` emphasizes request ids and raw response access. `openai-core` exposes the same debugging surface through two methods:
 
 - `send_with_meta()` returns `ApiResponse<T>` so you can read `meta.request_id`
 - `send_raw()` returns `http::Response<Bytes>`
@@ -404,7 +404,7 @@ Client-wide configuration:
 ```rust,ignore
 use std::time::Duration;
 
-let client = openai_rs::Client::builder()
+let client = openai_core::Client::builder()
     .api_key(std::env::var("OPENAI_API_KEY")?)
     .timeout(Duration::from_secs(20))
     .max_retries(0)
@@ -460,7 +460,7 @@ Related example:
 
 ## Logging
 
-Matching the `openai-node` README topic, `openai-rs` supports:
+Matching the `openai-node` README topic, `openai-core` supports:
 
 - `OPENAI_LOG`
 - `ClientBuilder::log_level(...)`
@@ -476,12 +476,12 @@ Available levels:
 
 ```rust,ignore
 use std::sync::{Arc, Mutex};
-use openai_rs::{LogLevel, LogRecord};
+use openai_core::{LogLevel, LogRecord};
 
 let records: Arc<Mutex<Vec<LogRecord>>> = Arc::new(Mutex::new(Vec::new()));
 let sink = Arc::clone(&records);
 
-let client = openai_rs::Client::builder()
+let client = openai_core::Client::builder()
     .api_key(std::env::var("OPENAI_API_KEY")?)
     .log_level(LogLevel::Info)
     .logger(move |record: &LogRecord| {
@@ -496,7 +496,7 @@ Related example:
 
 ## Realtime and Responses WebSocket
 
-`openai-rs` currently supports:
+`openai-core` currently supports:
 
 - `client.realtime().ws()`
 - `client.responses().ws()`
@@ -508,7 +508,7 @@ Realtime example:
 
 ```rust,ignore
 use futures_util::StreamExt;
-use openai_rs::SocketStreamMessage;
+use openai_core::SocketStreamMessage;
 
 let socket = client
     .realtime()
@@ -549,7 +549,7 @@ More background: [docs/realtime-and-streaming.md](./docs/realtime-and-streaming.
 
 ## Azure OpenAI
 
-`openai-rs` does not expose a separate `AzureOpenAI` class. Instead, the same capability is configured through `ClientBuilder`:
+`openai-core` does not expose a separate `AzureOpenAI` class. Instead, the same capability is configured through `ClientBuilder`:
 
 - `azure_endpoint(...)`
 - `azure_api_version(...)`
@@ -558,7 +558,7 @@ More background: [docs/realtime-and-streaming.md](./docs/realtime-and-streaming.
 - `azure_ad_token_provider(...)`
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 let client = Client::builder()
     .azure_endpoint("https://example-resource.openai.azure.com")
@@ -603,8 +603,8 @@ let parsed = client
     .parse::<Summary>()
     .model("gpt-5.4")
     .messages(vec![
-        openai_rs::ChatCompletionMessage::system("Only output JSON."),
-        openai_rs::ChatCompletionMessage::user("Return title and bullets"),
+        openai_core::ChatCompletionMessage::system("Only output JSON."),
+        openai_core::ChatCompletionMessage::user("Return title and bullets"),
     ])
     .send()
     .await?;
@@ -613,7 +613,7 @@ let parsed = client
 Tool runner:
 
 ```rust,ignore
-use openai_rs::ToolDefinition;
+use openai_core::ToolDefinition;
 use serde_json::json;
 
 let tool = ToolDefinition::new(
@@ -676,7 +676,7 @@ Full index: [docs/examples.md](./docs/examples.md)
 
 The table below maps `openai-node/examples` topics to their Rust equivalents. The Rust side does not mechanically duplicate every Node runtime wrapper, but the underlying capabilities are represented here.
 
-| `openai-node` example | `openai-rs` example(s) |
+| `openai-node` example | `openai-core` example(s) |
 | --- | --- |
 | `demo.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
 | `chat-params-types.ts` | [examples/chat_params_types.rs](./examples/chat_params_types.rs) |
@@ -773,7 +773,7 @@ Additional notes:
 
 The short version:
 
-- `openai-rs` is a community SDK, not an official OpenAI SDK
+- `openai-core` is a community SDK, not an official OpenAI SDK
 - default features are intentionally small; realtime / responses-ws / structured-output stay opt-in
 - use `chat().completions()` for legacy-compatible migrations, and `responses()` when you want the newer API surface
 - live provider tests are manual by design because they consume real credentials and may incur cost
@@ -795,4 +795,4 @@ If your goal is:
 - a community-maintained, unofficial implementation
 - Rust-native builders, types, and async streams instead of TypeScript emitter semantics
 
-then `openai-rs` is already a strong primary SDK candidate.
+then `openai-core` is already a strong primary SDK candidate.

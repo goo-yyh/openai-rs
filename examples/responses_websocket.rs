@@ -5,7 +5,7 @@ mod support;
 #[cfg(feature = "responses-ws")]
 use futures_util::StreamExt;
 #[cfg(feature = "responses-ws")]
-use openai_rs::SocketStreamMessage;
+use openai_core::SocketStreamMessage;
 
 #[cfg(feature = "responses-ws")]
 #[tokio::main]

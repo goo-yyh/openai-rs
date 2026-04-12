@@ -1,6 +1,6 @@
 # FAQ
 
-## `openai-rs` 是官方 SDK 吗？
+## `openai-core` 是官方 SDK 吗？
 
 不是。它是社区维护的 Rust SDK，但目标是尽量贴近 OpenAI 官方接口与生态习惯。
 

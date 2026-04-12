@@ -5,7 +5,7 @@ use tokio::io::AsyncWriteExt;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{ToFileInput, UploadSource, to_file};
+use openai_core::{ToFileInput, UploadSource, to_file};
 
 #[tokio::test]
 async fn test_should_build_file_from_bytes() {
@@ -26,12 +26,12 @@ async fn test_should_fail_when_reader_has_no_filename() {
     .await
     .unwrap_err();
 
-    assert!(matches!(error, openai_rs::Error::InvalidConfig(_)));
+    assert!(matches!(error, openai_core::Error::InvalidConfig(_)));
 }
 
 #[tokio::test]
 async fn test_should_build_file_from_path() {
-    let path = std::env::temp_dir().join(format!("openai-rs-to-file-{}.txt", std::process::id()));
+    let path = std::env::temp_dir().join(format!("openai-core-to-file-{}.txt", std::process::id()));
     std::fs::write(&path, b"from-path").unwrap();
 
     let source = to_file(path.clone(), None::<String>).await.unwrap();

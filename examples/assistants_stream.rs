@@ -2,7 +2,7 @@
 mod support;
 
 use futures_util::StreamExt;
-use openai_rs::AssistantRuntimeEvent;
+use openai_core::AssistantRuntimeEvent;
 use serde_json::{Value, json};
 use support::ExampleResult;
 

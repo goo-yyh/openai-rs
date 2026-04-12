@@ -261,7 +261,7 @@ mod enabled {
             client.inner.options.log_level,
             client.inner.options.logger.clone(),
             LogLevel::Debug,
-            "openai_rs::websocket",
+            "openai_core::websocket",
             "建立 WebSocket 连接",
             BTreeMap::from([
                 ("endpoint_id".into(), endpoint_id.to_string()),
@@ -341,7 +341,7 @@ mod enabled {
                 inner.log_level,
                 inner.logger.clone(),
                 LogLevel::Info,
-                "openai_rs::websocket",
+                "openai_core::websocket",
                 "收到 WebSocket 错误事件",
                 BTreeMap::from([("event_type".into(), raw.event_type.clone())]),
             );
@@ -358,7 +358,7 @@ mod enabled {
                     inner.log_level,
                     inner.logger.clone(),
                     LogLevel::Debug,
-                    "openai_rs::websocket",
+                    "openai_core::websocket",
                     "收到 WebSocket 事件",
                     BTreeMap::from([("event_type".into(), raw.event_type.clone())]),
                 );
@@ -430,7 +430,7 @@ mod enabled {
             inner.log_level,
             inner.logger.clone(),
             LogLevel::Debug,
-            "openai_rs::websocket",
+            "openai_core::websocket",
             "发送 WebSocket 消息",
             BTreeMap::from([("url".into(), inner.url.to_string())]),
         );
@@ -452,7 +452,7 @@ mod enabled {
             inner.log_level,
             inner.logger.clone(),
             LogLevel::Info,
-            "openai_rs::websocket",
+            "openai_core::websocket",
             "关闭 WebSocket 连接",
             BTreeMap::from([
                 ("url".into(), inner.url.to_string()),

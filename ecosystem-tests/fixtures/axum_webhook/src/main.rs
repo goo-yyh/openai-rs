@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use http::HeaderMap;
-use openai_rs::{WebhookEvent, WebhookVerifier};
+use openai_core::{WebhookEvent, WebhookVerifier};
 
 fn webhook(verifier: &WebhookVerifier, headers: &HeaderMap, body: &str) -> WebhookEvent {
     verifier

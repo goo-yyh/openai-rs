@@ -1,6 +1,6 @@
 # public-api 基线维护说明
 
-`openai-rs` 用 `cargo-public-api` 维护一份公开 API 基线，文件位于 `public-api/all-features.txt`。
+`openai-core` 用 `cargo-public-api` 维护一份公开 API 基线，文件位于 `public-api/all-features.txt`。
 
 目标不是阻止重构，而是把任何公开 API 变化都变成显式决策。
 

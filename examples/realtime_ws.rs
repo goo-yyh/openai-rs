@@ -1,7 +1,7 @@
 #[cfg(feature = "realtime")]
 use futures_util::StreamExt;
 #[cfg(feature = "realtime")]
-use openai_rs::{Client, SocketStreamMessage};
+use openai_core::{Client, SocketStreamMessage};
 
 #[cfg(feature = "realtime")]
 #[tokio::main]

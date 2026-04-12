@@ -33,7 +33,7 @@ SDK 会尝试：
 需要开启 `tool-runner` feature。
 
 ```rust,ignore
-use openai_rs::ToolDefinition;
+use openai_core::ToolDefinition;
 use serde_json::json;
 
 let tool = ToolDefinition::new(

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use openai_rs::{ApiErrorKind, Client, ProviderKind};
+use openai_core::{ApiErrorKind, Client, ProviderKind};
 use serde::Deserialize;
 use serial_test::serial;
 

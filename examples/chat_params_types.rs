@@ -1,7 +1,7 @@
 #[path = "support/mod.rs"]
 mod support;
 
-use openai_rs::ChatCompletionMessage;
+use openai_core::ChatCompletionMessage;
 use serde_json::json;
 use support::ExampleResult;
 

@@ -158,7 +158,7 @@ async fn execute_response(
 
         inner.log(
             LogLevel::Debug,
-            "openai_rs::transport",
+            "openai_core::transport",
             "发送请求",
             BTreeMap::from([
                 ("attempt".into(), attempt.to_string()),
@@ -218,7 +218,7 @@ async fn execute_response(
                     let delay = retry_after.unwrap_or_else(|| backoff_duration(attempt));
                     inner.log(
                         LogLevel::Info,
-                        "openai_rs::transport",
+                        "openai_core::transport",
                         "请求失败，准备重试",
                         BTreeMap::from([
                             ("attempt".into(), attempt.to_string()),
@@ -241,7 +241,7 @@ async fn execute_response(
                     let delay = backoff_duration(attempt);
                     inner.log(
                         LogLevel::Info,
-                        "openai_rs::transport",
+                        "openai_core::transport",
                         "请求执行异常，准备重试",
                         BTreeMap::from([
                             ("attempt".into(), attempt.to_string()),

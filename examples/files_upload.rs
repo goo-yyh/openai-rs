@@ -1,4 +1,4 @@
-use openai_rs::{Client, UploadSource};
+use openai_core::{Client, UploadSource};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()?;
 
     let file =
-        UploadSource::from_bytes("hello from openai-rs", "demo.txt").with_mime_type("text/plain");
+        UploadSource::from_bytes("hello from openai-core", "demo.txt").with_mime_type("text/plain");
 
     let uploaded = client
         .files()

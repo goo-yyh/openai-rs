@@ -2,7 +2,7 @@ use serde_json::json;
 use wiremock::matchers::{body_json, header, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{
+use openai_core::{
     BetaRealtimeSession, BetaThreadRun, ChatCompletion, ChatKitSession, ChatKitThread,
     ChatKitThreadItem, Client, Completion, EmbeddingResponse, GraderRunResponse,
     GraderValidateResponse, InputTokenCount, ModerationCreateResponse, Page, Response, UploadPart,

@@ -1,7 +1,7 @@
 #[path = "support/mod.rs"]
 mod support;
 
-use openai_rs::{ApiErrorKind, Error};
+use openai_core::{ApiErrorKind, Error};
 use support::ExampleResult;
 
 #[tokio::main]

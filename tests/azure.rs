@@ -2,7 +2,7 @@ use serde_json::json;
 use wiremock::matchers::{body_json, header, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, Provider};
+use openai_core::{Client, Provider};
 
 #[tokio::test]
 async fn test_should_build_azure_request_from_endpoint_and_model() {
@@ -186,5 +186,5 @@ fn test_should_reject_base_url_and_azure_endpoint_together() {
         .build()
         .unwrap_err();
 
-    assert!(matches!(error, openai_rs::Error::InvalidConfig(_)));
+    assert!(matches!(error, openai_core::Error::InvalidConfig(_)));
 }

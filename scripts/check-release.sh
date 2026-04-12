@@ -25,7 +25,7 @@ if ! grep -Eq "^## (Unreleased|v?${ACTUAL_VERSION})$" "${CHANGELOG}"; then
   exit 1
 fi
 
-if ! grep -q '^documentation = "https://docs.rs/openai-rs"' "${CARGO_TOML}"; then
+if ! grep -q '^documentation = "https://docs.rs/openai-core"' "${CARGO_TOML}"; then
   echo "Cargo.toml is missing the docs.rs documentation field"
   exit 1
 fi

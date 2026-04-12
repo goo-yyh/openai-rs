@@ -5,7 +5,7 @@ use serde_json::json;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, LogLevel, LogRecord};
+use openai_core::{Client, LogLevel, LogRecord};
 
 #[tokio::test]
 async fn test_should_retry_after_ms_then_succeed() {

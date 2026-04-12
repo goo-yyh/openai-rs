@@ -1,7 +1,7 @@
 #[path = "support/mod.rs"]
 mod support;
 
-use openai_rs::{AudioPlaybackInput, play_audio};
+use openai_core::{AudioPlaybackInput, play_audio};
 use support::ExampleResult;
 
 #[tokio::main]

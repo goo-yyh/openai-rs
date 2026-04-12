@@ -1,4 +1,4 @@
-use openai_rs::Client;
+use openai_core::Client;
 use serde_json::json;
 
 #[tokio::main]

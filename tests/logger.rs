@@ -5,7 +5,7 @@ use serial_test::serial;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, LogLevel, LogRecord};
+use openai_core::{Client, LogLevel, LogRecord};
 
 #[derive(Debug)]
 struct EnvGuard {
@@ -85,7 +85,7 @@ async fn test_should_emit_sdk_logs_to_custom_logger() {
     let records = records.lock().unwrap();
     assert!(records.iter().any(|record| {
         record.level == LogLevel::Debug
-            && record.target == "openai_rs::transport"
+            && record.target == "openai_core::transport"
             && record.message == "发送请求"
     }));
 }

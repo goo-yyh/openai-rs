@@ -16,10 +16,10 @@ use tokio_tungstenite::tungstenite::protocol::frame::Utf8Bytes;
 use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
 
 #[cfg(feature = "realtime")]
-use openai_rs::OpenAIRealtimeWebSocket;
+use openai_core::OpenAIRealtimeWebSocket;
 #[cfg(feature = "responses-ws")]
-use openai_rs::OpenAIResponsesWebSocket;
-use openai_rs::{
+use openai_core::OpenAIResponsesWebSocket;
+use openai_core::{
     Client, Error, RealtimeServerEvent, ResponsesServerEvent, SocketCloseOptions,
     SocketStreamMessage, WebSocketErrorKind,
 };

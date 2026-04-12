@@ -18,7 +18,7 @@ PY
 export OPENAI_RS_FIXTURE_BASE_URL="http://127.0.0.1:${PORT}/v1"
 
 echo "==> starting ecosystem smoke server on ${OPENAI_RS_FIXTURE_BASE_URL}"
-python3 "${SMOKE_SERVER}" --port "${PORT}" >/tmp/openai-rs-ecosystem-smoke.log 2>&1 &
+python3 "${SMOKE_SERVER}" --port "${PORT}" >/tmp/openai-core-ecosystem-smoke.log 2>&1 &
 SERVER_PID=$!
 trap 'kill "${SERVER_PID}" >/dev/null 2>&1 || true' EXIT
 sleep 1

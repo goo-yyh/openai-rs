@@ -1,7 +1,7 @@
 #[path = "support/mod.rs"]
 mod support;
 
-use openai_rs::{RecordAudioOptions, record_audio};
+use openai_core::{RecordAudioOptions, record_audio};
 use support::ExampleResult;
 
 #[tokio::main]

@@ -1,6 +1,6 @@
 # 可观测性说明
 
-`openai-rs` 当前使用 `tracing` 暴露关键运行时字段。
+`openai-core` 当前使用 `tracing` 暴露关键运行时字段。
 
 ## HTTP 请求
 

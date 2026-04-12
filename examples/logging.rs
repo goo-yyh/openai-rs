@@ -3,7 +3,7 @@ mod support;
 
 use std::sync::{Arc, Mutex};
 
-use openai_rs::{LogLevel, LogRecord};
+use openai_core::{LogLevel, LogRecord};
 use support::ExampleResult;
 
 #[tokio::main]
@@ -11,7 +11,7 @@ async fn main() -> ExampleResult {
     let collected: Arc<Mutex<Vec<LogRecord>>> = Arc::new(Mutex::new(Vec::new()));
     let sink = Arc::clone(&collected);
 
-    let client = openai_rs::Client::builder()
+    let client = openai_core::Client::builder()
         .api_key(std::env::var("OPENAI_API_KEY")?)
         .log_level(LogLevel::Info)
         .logger(move |record: &LogRecord| {

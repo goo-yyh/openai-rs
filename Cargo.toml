@@ -1,5 +1,5 @@
 [package]
-name = "openai-rs"
+name = "openai-core"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.94.1"
@@ -8,12 +8,12 @@ license = "MIT"
 readme = "README.md"
 repository = "https://github.com/goo-yyh/openai-rs"
 homepage = "https://github.com/goo-yyh/openai-rs"
-documentation = "https://docs.rs/openai-rs"
+documentation = "https://docs.rs/openai-core"
 keywords = ["openai", "sdk", "api", "llm", "async"]
 categories = ["api-bindings", "asynchronous", "web-programming", "network-programming"]
 
 [lib]
-name = "openai_rs"
+name = "openai_core"
 path = "src/lib.rs"
 
 [package.metadata.docs.rs]

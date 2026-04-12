@@ -5,10 +5,10 @@ use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[cfg(feature = "realtime")]
-use openai_rs::RealtimeServerEvent;
+use openai_core::RealtimeServerEvent;
 #[cfg(feature = "responses-ws")]
-use openai_rs::ResponsesServerEvent;
-use openai_rs::{AssistantRuntimeEvent, Client, ResponseRuntimeEvent};
+use openai_core::ResponsesServerEvent;
+use openai_core::{AssistantRuntimeEvent, Client, ResponseRuntimeEvent};
 
 #[tokio::test]
 async fn test_should_snapshot_chat_completion_request_body() {

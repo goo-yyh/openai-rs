@@ -6,9 +6,9 @@ use std::sync::OnceLock;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[cfg(feature = "tool-runner")]
-use openai_rs::ToolDefinition;
-use openai_rs::resources::{ChatToolChoice, ChatToolDefinition, ChatToolFunction};
-use openai_rs::{ApiError, ChatCompletion, ChatCompletionToolCall, Error, ProviderKind, Result};
+use openai_core::ToolDefinition;
+use openai_core::resources::{ChatToolChoice, ChatToolDefinition, ChatToolFunction};
+use openai_core::{ApiError, ChatCompletion, ChatCompletionToolCall, Error, ProviderKind, Result};
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::{Value, json};

@@ -37,10 +37,10 @@ async fn main() -> support::ExampleResult {
         .parse::<QueryOrdersArgs>()
         .model("gpt-5.4")
         .messages(vec![
-            openai_rs::ChatCompletionMessage::system(
+            openai_core::ChatCompletionMessage::system(
                 "When the task is about orders, answer by calling the query_orders tool.",
             ),
-            openai_rs::ChatCompletionMessage::user(
+            openai_core::ChatCompletionMessage::user(
                 "Find delayed orders from last month. Do not answer directly.",
             ),
         ])

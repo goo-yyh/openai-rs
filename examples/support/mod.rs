@@ -3,7 +3,7 @@
 use std::error::Error;
 use std::path::PathBuf;
 
-use openai_rs::{ChatCompletionMessage, Client, UploadSource};
+use openai_core::{ChatCompletionMessage, Client, UploadSource};
 use serde_json::{Value, json};
 
 pub type ExampleResult<T = ()> = Result<T, Box<dyn Error>>;
@@ -195,8 +195,8 @@ pub fn dispatch_book_tool(name: &str, arguments: &str) -> ExampleResult<Value> {
 }
 
 #[cfg(feature = "tool-runner")]
-pub fn weather_tool() -> openai_rs::ToolDefinition {
-    use openai_rs::ToolDefinition;
+pub fn weather_tool() -> openai_core::ToolDefinition {
+    use openai_core::ToolDefinition;
 
     ToolDefinition::new(
         "get_weather",

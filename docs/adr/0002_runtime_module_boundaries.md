@@ -6,7 +6,7 @@ Accepted
 
 ## 背景
 
-Phase 3 之后，`openai-rs` 的大部分 namespace 已经拆出独立文件，但仍有三个维护成本较高的聚合点：
+Phase 3 之后，`openai-core` 的大部分 namespace 已经拆出独立文件，但仍有三个维护成本较高的聚合点：
 
 - `src/resources/mod.rs` 同时承载公开类型、namespace handle、chat builder、responses builder
 - `src/stream/mod.rs` 同时承载 SSE 协议、chat runtime、responses runtime、assistants runtime

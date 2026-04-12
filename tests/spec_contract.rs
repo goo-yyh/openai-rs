@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use serde::de::DeserializeOwned;
 
-use openai_rs::{
+use openai_core::{
     Batch, BetaRealtimeSession, ChatCompletion, ChatKitSession, Completion, EmbeddingResponse,
     GraderRunResponse, ModerationCreateResponse, RealtimeClientSecretCreateResponse, Response,
 };

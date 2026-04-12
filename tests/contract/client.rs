@@ -4,7 +4,7 @@ use serial_test::serial;
 use wiremock::matchers::{body_json, header, header_exists, method, path};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
-use openai_rs::{Client, Completion, Provider};
+use openai_core::{Client, Completion, Provider};
 
 #[derive(Debug)]
 struct EnvGuard {
@@ -297,7 +297,7 @@ async fn test_should_keep_proxy_for_local_base_url_by_default() {
         .unwrap_err();
 
     match error {
-        openai_rs::Error::Api(error) => {
+        openai_core::Error::Api(error) => {
             assert_eq!(error.status, 502);
             assert!(error.message.contains("proxied"));
         }

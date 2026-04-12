@@ -1,6 +1,6 @@
 # Provider 能力矩阵
 
-这张表描述的是 `openai-rs` 当前对各 provider 的 SDK 支持和验证策略，不代表第三方 provider 一定完整实现了所有 OpenAI 能力。
+这张表描述的是 `openai-core` 当前对各 provider 的 SDK 支持和验证策略，不代表第三方 provider 一定完整实现了所有 OpenAI 能力。
 
 | Provider | 接入方式 | Chat / SSE | Responses | Realtime / WebSocket | live workflow | 备注 |
 | --- | --- | --- | --- | --- | --- | --- |

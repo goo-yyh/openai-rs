@@ -6,8 +6,8 @@ use wiremock::matchers::{body_json, header, method, path, query_param};
 use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[cfg(feature = "tool-runner")]
-use openai_rs::ChatCompletionRuntimeEvent;
-use openai_rs::{
+use openai_core::ChatCompletionRuntimeEvent;
+use openai_core::{
     AssistantRuntimeEvent, BetaAssistant, BetaThreadMessage, BetaThreadRun, ChatCompletionMessage,
     Client, Model, Response, VectorStore,
 };
@@ -153,9 +153,9 @@ async fn test_should_serialize_responses_tools_as_flat_objects() {
         .create()
         .model("gpt-5.4")
         .input_text("call tool")
-        .tool(openai_rs::resources::ChatToolDefinition {
+        .tool(openai_core::resources::ChatToolDefinition {
             tool_type: "function".into(),
-            function: openai_rs::resources::ChatToolFunction {
+            function: openai_core::resources::ChatToolFunction {
                 name: "add_numbers".into(),
                 description: Some("Add two integers.".into()),
                 parameters: json!({
@@ -584,7 +584,7 @@ async fn test_should_run_tools_with_streaming_runner() {
         .run_tools()
         .model("gpt-5.4")
         .message_user("上海天气怎么样")
-        .register_tool(openai_rs::ToolDefinition::new(
+        .register_tool(openai_core::ToolDefinition::new(
             "lookup_weather",
             Some("查询天气"),
             json!({
@@ -715,7 +715,7 @@ async fn test_should_collect_streaming_runner_trace() {
         .run_tools()
         .model("gpt-5.4")
         .message_user("上海天气怎么样")
-        .register_tool(openai_rs::ToolDefinition::new(
+        .register_tool(openai_core::ToolDefinition::new(
             "lookup_weather",
             Some("查询天气"),
             json!({

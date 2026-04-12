@@ -1,6 +1,6 @@
 # 流式与 Realtime 说明
 
-`openai-rs` 当前提供三类增量能力：
+`openai-core` 当前提供三类增量能力：
 
 - HTTP SSE：`chat.completions().stream()`、`responses().stream()`
 - Realtime WebSocket：`client.realtime().ws()`
@@ -34,7 +34,7 @@ while let Some(event) = stream.next().await {
 
 ```rust,ignore
 use futures_util::StreamExt;
-use openai_rs::SocketStreamMessage;
+use openai_core::SocketStreamMessage;
 
 let socket = client
     .realtime()

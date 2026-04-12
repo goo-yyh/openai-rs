@@ -1,6 +1,6 @@
 # Runtime Event Contract
 
-本文档约束 `openai-rs` 当前三类 runtime event stream 的行为：
+本文档约束 `openai-core` 当前三类 runtime event stream 的行为：
 
 - `ChatCompletionEventStream`
 - `ResponseEventStream`

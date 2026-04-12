@@ -5,4 +5,4 @@ edition = "2024"
 publish = false
 
 [dependencies]
-openai-rs = { path = "../../", default-features = false, features = ["realtime", "responses-ws", "rustls-tls"] }
+openai-core = { path = "../../", default-features = false, features = ["realtime", "responses-ws", "rustls-tls"] }

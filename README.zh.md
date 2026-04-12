@@ -1,17 +1,17 @@
-# openai-rs（中文版）
+# openai-core（中文版）
 
 [English README](./README.md)
 
-`openai-rs` 是一个面向 OpenAI 兼容生态的异步 Rust SDK。
+`openai-core` 是一个面向 OpenAI 兼容生态的异步 Rust SDK。
 
 > [!IMPORTANT]
-> `openai-rs` 是一个社区维护的、非官方库。
+> `openai-core` 是一个社区维护的、非官方库。
 >
 > 它以 [openai-node](https://github.com/openai/openai-node) 作为主要参考，对其资源命名空间、能力覆盖、README 主题组织和 examples 进行了 Rust 风格重写与实现，但它不隶属于 OpenAI，也不代表 OpenAI 官方立场。
 
 ## 定位
 
-`openai-rs` 的目标是：
+`openai-core` 的目标是：
 
 - 尽可能覆盖 `openai-node` 已具备的主要功能和资源面
 - 提供更符合 Rust 习惯的 builder、类型系统、错误处理和异步流接口
@@ -44,21 +44,21 @@
 
 ```toml
 [dependencies]
-openai-rs = "0.1"
+openai-core = "0.1"
 ```
 
 如果你需要 structured output、tool runner 或 WebSocket：
 
 ```toml
 [dependencies]
-openai-rs = { version = "0.1", features = ["structured-output", "tool-runner", "realtime", "responses-ws"] }
+openai-core = { version = "0.1", features = ["structured-output", "tool-runner", "realtime", "responses-ws"] }
 ```
 
 如果你希望完全按需启用：
 
 ```toml
 [dependencies]
-openai-rs = { version = "0.1", default-features = false, features = ["stream", "multipart", "rustls-tls"] }
+openai-core = { version = "0.1", default-features = false, features = ["stream", "multipart", "rustls-tls"] }
 ```
 
 ## Feature Flags
@@ -86,7 +86,7 @@ openai-rs = { version = "0.1", default-features = false, features = ["stream", "
 `Responses API` 是首选主链路，对应 `openai-node` README 里的 primary API。
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -110,7 +110,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Chat Completions API
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -135,11 +135,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 流式响应
 
-`openai-rs` 对应 `openai-node` 的 SSE 能力，使用 `Stream` 暴露：
+`openai-core` 对应 `openai-node` 的 SSE 能力，使用 `Stream` 暴露：
 
 ```rust,ignore
 use futures_util::StreamExt;
-use openai_rs::{Client, ResponseRuntimeEvent};
+use openai_core::{Client, ResponseRuntimeEvent};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -173,7 +173,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 文件上传
 
-和 `openai-node` 一样，`openai-rs` 也提供统一上传 helper。
+和 `openai-node` 一样，`openai-core` 也提供统一上传 helper。
 
 当前 `to_file()` 支持：
 
@@ -186,7 +186,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ```rust,ignore
 use bytes::Bytes;
-use openai_rs::{Client, to_file};
+use openai_core::{Client, to_file};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -216,7 +216,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Audio
 
-`openai-rs` 现在覆盖了：
+`openai-core` 现在覆盖了：
 
 - `audio.speech.create`
 - `audio.speech` SSE 流
@@ -226,7 +226,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - 本地 helper：`play_audio()`、`record_audio()`
 
 ```rust,ignore
-use openai_rs::{AudioPlaybackInput, Client, play_audio};
+use openai_core::{AudioPlaybackInput, Client, play_audio};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -259,7 +259,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Webhook 验签
 
-和 `openai-node` README 一样，`openai-rs` 同时提供：
+和 `openai-node` README 一样，`openai-core` 同时提供：
 
 - 只验签：`verify_signature()`
 - 验签并解析：`unwrap()`
@@ -267,7 +267,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 ```rust,ignore
 use std::collections::BTreeMap;
 use std::time::Duration;
-use openai_rs::Client;
+use openai_core::Client;
 
 let client = Client::builder()
     .webhook_secret(std::env::var("OPENAI_WEBHOOK_SECRET")?)
@@ -290,10 +290,10 @@ let event: serde_json::Value = client
 
 ## 错误处理
 
-请求失败时会返回统一的 `openai_rs::Error`。其中 API 业务错误会落到 `Error::Api(ApiError)`：
+请求失败时会返回统一的 `openai_core::Error`。其中 API 业务错误会落到 `Error::Api(ApiError)`：
 
 ```rust,ignore
-use openai_rs::{ApiErrorKind, Error};
+use openai_core::{ApiErrorKind, Error};
 
 match client
     .chat()
@@ -324,7 +324,7 @@ match client
 
 ## Request ID、原始响应和响应元信息
 
-`openai-node` README 里强调了 request id 和 raw response 访问方式。`openai-rs` 提供两组对应能力：
+`openai-node` README 里强调了 request id 和 raw response 访问方式。`openai-core` 提供两组对应能力：
 
 - `send_with_meta()`：返回 `ApiResponse<T>`，可直接取 `meta.request_id`
 - `send_raw()`：返回 `http::Response<Bytes>`
@@ -370,7 +370,7 @@ println!("{:?}", response.meta.request_id);
 ```rust,ignore
 use std::time::Duration;
 
-let client = openai_rs::Client::builder()
+let client = openai_core::Client::builder()
     .api_key(std::env::var("OPENAI_API_KEY")?)
     .timeout(Duration::from_secs(20))
     .max_retries(0)
@@ -426,7 +426,7 @@ while let Some(model) = stream.next().await {
 
 ## Logging
 
-对应 `openai-node` README 的 logging 一节，`openai-rs` 支持：
+对应 `openai-node` README 的 logging 一节，`openai-core` 支持：
 
 - `OPENAI_LOG`
 - `ClientBuilder::log_level(...)`
@@ -442,12 +442,12 @@ while let Some(model) = stream.next().await {
 
 ```rust,ignore
 use std::sync::{Arc, Mutex};
-use openai_rs::{LogLevel, LogRecord};
+use openai_core::{LogLevel, LogRecord};
 
 let records: Arc<Mutex<Vec<LogRecord>>> = Arc::new(Mutex::new(Vec::new()));
 let sink = Arc::clone(&records);
 
-let client = openai_rs::Client::builder()
+let client = openai_core::Client::builder()
     .api_key(std::env::var("OPENAI_API_KEY")?)
     .log_level(LogLevel::Info)
     .logger(move |record: &LogRecord| {
@@ -462,7 +462,7 @@ let client = openai_rs::Client::builder()
 
 ## Realtime 与 Responses WebSocket
 
-`openai-rs` 当前支持：
+`openai-core` 当前支持：
 
 - `client.realtime().ws()`
 - `client.responses().ws()`
@@ -474,7 +474,7 @@ Realtime 示例：
 
 ```rust,ignore
 use futures_util::StreamExt;
-use openai_rs::SocketStreamMessage;
+use openai_core::SocketStreamMessage;
 
 let socket = client
     .realtime()
@@ -515,7 +515,7 @@ while let Some(event) = stream.next().await {
 
 ## Azure OpenAI
 
-`openai-rs` 没有单独的 `AzureOpenAI` 类，而是通过 `ClientBuilder` 上的 Azure 配置项提供同等能力：
+`openai-core` 没有单独的 `AzureOpenAI` 类，而是通过 `ClientBuilder` 上的 Azure 配置项提供同等能力：
 
 - `azure_endpoint(...)`
 - `azure_api_version(...)`
@@ -524,7 +524,7 @@ while let Some(event) = stream.next().await {
 - `azure_ad_token_provider(...)`
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 let client = Client::builder()
     .azure_endpoint("https://example-resource.openai.azure.com")
@@ -569,8 +569,8 @@ let parsed = client
     .parse::<Summary>()
     .model("gpt-5.4")
     .messages(vec![
-        openai_rs::ChatCompletionMessage::system("只输出 JSON。"),
-        openai_rs::ChatCompletionMessage::user("返回 title 和 bullets"),
+        openai_core::ChatCompletionMessage::system("只输出 JSON。"),
+        openai_core::ChatCompletionMessage::user("返回 title 和 bullets"),
     ])
     .send()
     .await?;
@@ -579,7 +579,7 @@ let parsed = client
 Tool runner：
 
 ```rust,ignore
-use openai_rs::ToolDefinition;
+use openai_core::ToolDefinition;
 use serde_json::json;
 
 let tool = ToolDefinition::new(
@@ -640,9 +640,9 @@ cargo run --example responses_websocket --features responses-ws
 
 ### `openai-node/examples` 覆盖映射
 
-下面这张表把 `openai-node/examples` 的主题映射到 `openai-rs/examples` 的对应样例。Rust 端不会机械复制 Node 的每个运行时包装，但对应能力都能在这些例子中找到。
+下面这张表把 `openai-node/examples` 的主题映射到 `openai-core/examples` 的对应样例。Rust 端不会机械复制 Node 的每个运行时包装，但对应能力都能在这些例子中找到。
 
-| `openai-node` 示例 | `openai-rs` 对应示例 |
+| `openai-node` 示例 | `openai-core` 对应示例 |
 | --- | --- |
 | `demo.ts`, `types.ts` | [examples/openai_chat.rs](./examples/openai_chat.rs), [examples/openai_responses.rs](./examples/openai_responses.rs) |
 | `chat-params-types.ts` | [examples/chat_params_types.rs](./examples/chat_params_types.rs) |
@@ -739,7 +739,7 @@ bash ./scripts/check-public-api.sh
 
 简版结论：
 
-- `openai-rs` 是社区维护 SDK，不是官方 SDK
+- `openai-core` 是社区维护 SDK，不是官方 SDK
 - 默认 feature 故意保持精简，`realtime`、`responses-ws`、`structured-output` 都按需开启
 - 做旧代码迁移时优先用 `chat().completions()`，希望靠近新接口时优先评估 `responses()`
 - live provider tests 默认手动执行，因为它们依赖真实凭据并可能产生成本
@@ -761,4 +761,4 @@ bash ./scripts/check-public-api.sh
 - 接受它是社区维护、非官方实现
 - 更偏好 Rust builder / type / async stream 的接口风格
 
-那么 `openai-rs` 当前已经适合作为主 SDK 使用。
+那么 `openai-core` 当前已经适合作为主 SDK 使用。

@@ -2,7 +2,7 @@
 mod support;
 
 use futures_util::StreamExt;
-use openai_rs::ChatCompletionRuntimeEvent;
+use openai_core::ChatCompletionRuntimeEvent;
 use support::ExampleResult;
 
 #[tokio::main]

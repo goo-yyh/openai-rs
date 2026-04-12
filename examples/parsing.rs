@@ -26,8 +26,8 @@ async fn main() -> support::ExampleResult {
         .parse::<UI>()
         .model("gpt-5.4")
         .messages(vec![
-            openai_rs::ChatCompletionMessage::system("你是一个 UI 生成器，只输出 JSON。"),
-            openai_rs::ChatCompletionMessage::user("生成一个用户资料编辑表单"),
+            openai_core::ChatCompletionMessage::system("你是一个 UI 生成器，只输出 JSON。"),
+            openai_core::ChatCompletionMessage::user("生成一个用户资料编辑表单"),
         ])
         .send()
         .await?;

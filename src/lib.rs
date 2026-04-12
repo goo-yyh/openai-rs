@@ -3,7 +3,7 @@
 #![forbid(unsafe_code)]
 #![warn(rust_2024_compatibility, missing_debug_implementations)]
 
-//! `openai-rs` 提供了一个围绕 OpenAI 兼容接口构建的异步 Rust SDK。
+//! `openai-core` 提供了一个围绕 OpenAI 兼容接口构建的异步 Rust SDK。
 //! 它支持多 Provider、分页、SSE 流、Multipart 上传、Webhook 校验以及工具调用辅助能力。
 
 pub mod audio_helpers;

@@ -1,6 +1,6 @@
 # Azure OpenAI 接入说明
 
-`openai-rs` 对 Azure OpenAI 提供一等支持，重点处理以下差异：
+`openai-core` 对 Azure OpenAI 提供一等支持，重点处理以下差异：
 
 - `azure_endpoint`
 - `deployment`
@@ -11,7 +11,7 @@
 ## 最小示例
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 
 let client = Client::builder()
     .azure_endpoint("https://example-resource.openai.azure.com")
@@ -26,7 +26,7 @@ let client = Client::builder()
 如果你使用 Azure AD / Entra Token，可以直接切换到 Bearer 模式：
 
 ```rust,ignore
-use openai_rs::Client;
+use openai_core::Client;
 use secrecy::SecretString;
 
 let client = Client::builder()

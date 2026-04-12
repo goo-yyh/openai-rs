@@ -8,7 +8,7 @@ use support::ExampleResult;
 
 #[tokio::main]
 async fn main() -> ExampleResult {
-    let client = openai_rs::Client::builder()
+    let client = openai_core::Client::builder()
         .webhook_secret(std::env::var("OPENAI_WEBHOOK_SECRET")?)
         .build()?;
 

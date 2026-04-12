@@ -1,5 +1,5 @@
-use openai_rs::resources::{ChatToolDefinition, ChatToolFunction};
-use openai_rs::Client;
+use openai_core::resources::{ChatToolDefinition, ChatToolFunction};
+use openai_core::Client;
 use serde_json::json;
 
 #[tokio::main]
