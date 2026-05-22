@@ -9,13 +9,17 @@ use super::common::{
 };
 
 fn live_client(api_key: String) -> Client {
-    Client::builder()
+    let mut builder = Client::builder()
         .provider(Provider::kimi())
         .api_key(api_key)
         .timeout(Duration::from_secs(90))
-        .max_retries(4)
-        .build()
-        .unwrap()
+        .max_retries(4);
+    if let Ok(base_url) = std::env::var("KIMI_BASE_URL")
+        && !base_url.trim().is_empty()
+    {
+        builder = builder.base_url(base_url);
+    }
+    builder.build().unwrap()
 }
 
 fn chat_model() -> String {
