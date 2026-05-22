@@ -15,6 +15,8 @@ All notable changes to this project will be documented in this file. See [conven
 
 ### Added
 
+- Kimi / Moonshot and DeepSeek provider profiles for OpenAI-compatible chat completion consumers.
+- Typed chat multimodal content part helpers for text, image URL, video URL, and file-reference request payloads.
 - `beta.assistants`、`beta.threads`、`beta.threads.messages`、`beta.threads.runs`、`beta.threads.runs.steps` 的强类型返回值
 - `vector_stores`、`vector_stores.files`、`vector_stores.file_batches` 的强类型返回值
 - snapshot tests、public API baseline、release checklist、migration 文档与 codegen ADR

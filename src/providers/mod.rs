@@ -18,6 +18,10 @@ pub enum ProviderKind {
     OpenAI,
     /// Azure OpenAI Provider。
     Azure,
+    /// Kimi / Moonshot 兼容 Provider。
+    Kimi,
+    /// DeepSeek 兼容 Provider。
+    DeepSeek,
     /// 智谱兼容 Provider。
     Zhipu,
     /// MiniMax 兼容 Provider。
@@ -34,6 +38,8 @@ impl ProviderKind {
         match self {
             Self::OpenAI => "openai",
             Self::Azure => "azure",
+            Self::Kimi => "kimi",
+            Self::DeepSeek => "deepseek",
             Self::Zhipu => "zhipu",
             Self::MiniMax => "minimax",
             Self::ZenMux => "zenmux",
@@ -240,6 +246,20 @@ impl Provider {
         }
     }
 
+    /// 创建 Kimi / Moonshot Provider。
+    pub fn kimi() -> Self {
+        Self {
+            inner: Arc::new(KimiProfile),
+        }
+    }
+
+    /// 创建 DeepSeek Provider。
+    pub fn deepseek() -> Self {
+        Self {
+            inner: Arc::new(DeepSeekProfile),
+        }
+    }
+
     /// 创建智谱 Provider。
     pub fn zhipu() -> Self {
         Self {
@@ -385,6 +405,12 @@ impl AzureProfile {
 struct OpenAiProfile;
 
 #[derive(Debug, Clone, Copy)]
+struct KimiProfile;
+
+#[derive(Debug, Clone, Copy)]
+struct DeepSeekProfile;
+
+#[derive(Debug, Clone, Copy)]
 struct ZhipuProfile;
 
 #[derive(Debug, Clone, Copy)]
@@ -462,6 +488,68 @@ impl ProviderProfile for AzureProfile {
                     .replacen("/openai/", &format!("/openai/deployments/{deployment}/"), 1);
         }
 
+        Ok(())
+    }
+
+    fn validate_request(
+        &self,
+        _endpoint_id: &'static str,
+        _body: Option<&Value>,
+        _mode: CompatibilityMode,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl ProviderProfile for KimiProfile {
+    fn kind(&self) -> ProviderKind {
+        ProviderKind::Kimi
+    }
+
+    fn default_base_url(&self) -> &str {
+        "https://api.moonshot.ai/v1"
+    }
+
+    fn auth_scheme(&self) -> AuthScheme {
+        AuthScheme::Bearer
+    }
+
+    fn capabilities(&self) -> &'static CapabilitySet {
+        &CHAT_ONLY_CAPABILITIES
+    }
+
+    fn prepare_request(&self, _ctx: &mut RequestContext) -> Result<()> {
+        Ok(())
+    }
+
+    fn validate_request(
+        &self,
+        _endpoint_id: &'static str,
+        _body: Option<&Value>,
+        _mode: CompatibilityMode,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
+impl ProviderProfile for DeepSeekProfile {
+    fn kind(&self) -> ProviderKind {
+        ProviderKind::DeepSeek
+    }
+
+    fn default_base_url(&self) -> &str {
+        "https://api.deepseek.com"
+    }
+
+    fn auth_scheme(&self) -> AuthScheme {
+        AuthScheme::Bearer
+    }
+
+    fn capabilities(&self) -> &'static CapabilitySet {
+        &CHAT_ONLY_CAPABILITIES
+    }
+
+    fn prepare_request(&self, _ctx: &mut RequestContext) -> Result<()> {
         Ok(())
     }
 
@@ -672,6 +760,18 @@ fn azure_deployment_path_required(path: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_should_use_kimi_default_base_url() {
+        let provider = Provider::kimi();
+        assert_eq!(provider.default_base_url(), "https://api.moonshot.ai/v1");
+    }
+
+    #[test]
+    fn test_should_use_deepseek_default_base_url() {
+        let provider = Provider::deepseek();
+        assert_eq!(provider.default_base_url(), "https://api.deepseek.com");
+    }
 
     #[test]
     fn test_should_use_zhipu_default_base_url() {

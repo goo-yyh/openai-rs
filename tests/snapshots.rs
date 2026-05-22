@@ -8,7 +8,9 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use openai_core::RealtimeServerEvent;
 #[cfg(feature = "responses-ws")]
 use openai_core::ResponsesServerEvent;
-use openai_core::{AssistantRuntimeEvent, Client, ResponseRuntimeEvent};
+use openai_core::{
+    AssistantRuntimeEvent, ChatCompletionMessage, Client, Provider, ResponseRuntimeEvent,
+};
 
 #[tokio::test]
 async fn test_should_snapshot_chat_completion_request_body() {
@@ -58,6 +60,59 @@ async fn test_should_snapshot_chat_completion_request_body() {
         "chat_completion_request_body",
         serde_json::to_string_pretty(&body).unwrap()
     );
+}
+
+#[tokio::test]
+async fn test_should_send_chat_completion_multimodal_content_parts() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/chat/completions"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "chatcmpl_multimodal",
+            "object": "chat.completion",
+            "created": 1,
+            "model": "kimi-k2.6",
+            "choices": [{
+                "index": 0,
+                "finish_reason": "stop",
+                "message": {
+                    "role": "assistant",
+                    "content": "ok"
+                }
+            }]
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .provider(Provider::kimi())
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let message = ChatCompletionMessage::user_content_parts(vec![
+        ChatCompletionMessage::content_text("请描述图片"),
+        ChatCompletionMessage::content_image_url("data:image/png;base64,AA=="),
+    ]);
+
+    let _ = client
+        .chat()
+        .completions()
+        .create()
+        .model("kimi-k2.6")
+        .messages(vec![message])
+        .extra_body("thinking", json!({"type":"enabled"}))
+        .send()
+        .await
+        .unwrap();
+
+    let requests = server.received_requests().await.unwrap();
+    let body: serde_json::Value = requests[0].body_json().unwrap();
+    assert_eq!(body["messages"][0]["content"][0]["type"], "text");
+    assert_eq!(body["messages"][0]["content"][1]["type"], "image_url");
+    assert_eq!(body["thinking"]["type"], "enabled");
 }
 
 #[tokio::test]

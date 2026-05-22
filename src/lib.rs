@@ -65,7 +65,7 @@ pub use resources::{
     ChatCompletionTokenLogprob, ChatCompletionTokenTopLogprob, ChatCompletionToolCall,
     ChatContentDeltaEvent, ChatKitConfiguration, ChatKitRateLimits, ChatKitSession, ChatKitThread,
     ChatKitThreadContent, ChatKitThreadItem, ChatKitThreadStatus, ChatKitWorkflow,
-    ChatLogProbsDeltaEvent, ChatReasoningDetail, ChatRefusalDeltaEvent,
+    ChatLogProbsDeltaEvent, ChatMessageContentPart, ChatReasoningDetail, ChatRefusalDeltaEvent,
     ChatToolArgumentsDeltaEvent, ChatToolChoice, ChatToolChoiceMode, Completion, CompletionChoice,
     CompletionLogProbs, CompletionUsage, CompletionUsageCompletionTokensDetails,
     CompletionUsagePromptTokensDetails, Container, ContainerCreateParams, ContainerExpiresAfter,

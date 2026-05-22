@@ -293,6 +293,10 @@ json_payload_wrapper!(
     ChatReasoningDetail
 );
 json_payload_wrapper!(
+    /// 表示 chat 请求中的多模态 content part。
+    ChatMessageContentPart
+);
+json_payload_wrapper!(
     /// 表示 chat 请求中的 tool_choice 载荷。
     ChatToolChoice
 );
@@ -558,6 +562,68 @@ impl ChatCompletionMessage {
             content: Some(content.into()),
             ..Self::default()
         }
+    }
+
+    /// 创建包含多模态 content parts 的 user 消息。
+    pub fn user_content_parts(parts: Vec<ChatMessageContentPart>) -> Self {
+        Self::with_content_parts("user", parts)
+    }
+
+    /// 创建包含多模态 content parts 的任意角色消息。
+    pub fn with_content_parts(role: impl Into<String>, parts: Vec<ChatMessageContentPart>) -> Self {
+        let mut extra = BTreeMap::new();
+        extra.insert(
+            "content".into(),
+            Value::Array(parts.into_iter().map(Value::from).collect()),
+        );
+        Self {
+            role: role.into(),
+            content: None,
+            extra,
+            ..Self::default()
+        }
+    }
+
+    /// 创建 text content part。
+    pub fn content_text(text: impl Into<String>) -> ChatMessageContentPart {
+        serde_json::json!({
+            "type": "text",
+            "text": text.into(),
+        })
+        .into()
+    }
+
+    /// 创建 image_url content part。
+    pub fn content_image_url(url: impl Into<String>) -> ChatMessageContentPart {
+        serde_json::json!({
+            "type": "image_url",
+            "image_url": {
+                "url": url.into(),
+            },
+        })
+        .into()
+    }
+
+    /// 创建 video_url content part 预留结构。
+    pub fn content_video_url(url: impl Into<String>) -> ChatMessageContentPart {
+        serde_json::json!({
+            "type": "video_url",
+            "video_url": {
+                "url": url.into(),
+            },
+        })
+        .into()
+    }
+
+    /// 创建 file 引用 content part 预留结构。
+    pub fn content_file(file_id: impl Into<String>) -> ChatMessageContentPart {
+        serde_json::json!({
+            "type": "file",
+            "file": {
+                "file_id": file_id.into(),
+            },
+        })
+        .into()
     }
 
     /// 创建 assistant 消息。

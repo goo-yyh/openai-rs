@@ -4,6 +4,12 @@ mod common;
 #[path = "provider_live/openai.rs"]
 mod openai;
 
+#[path = "provider_live/kimi.rs"]
+mod kimi;
+
+#[path = "provider_live/deepseek.rs"]
+mod deepseek;
+
 #[path = "provider_live/zhipu.rs"]
 mod zhipu;
 
