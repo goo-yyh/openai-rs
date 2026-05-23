@@ -937,6 +937,8 @@ impl core::panic::unwind_safe::UnwindSafe for openai_core::providers::Compatibil
 pub enum openai_core::providers::ProviderKind
 pub openai_core::providers::ProviderKind::Azure
 pub openai_core::providers::ProviderKind::Custom
+pub openai_core::providers::ProviderKind::DeepSeek
+pub openai_core::providers::ProviderKind::Kimi
 pub openai_core::providers::ProviderKind::MiniMax
 pub openai_core::providers::ProviderKind::OpenAI
 pub openai_core::providers::ProviderKind::ZenMux
@@ -1048,7 +1050,9 @@ impl openai_core::providers::Provider
 pub fn openai_core::providers::Provider::azure() -> Self
 pub fn openai_core::providers::Provider::azure_with_options(options: openai_core::providers::AzureOptions) -> Self
 pub fn openai_core::providers::Provider::custom<T>(profile: T) -> Self where T: openai_core::providers::ProviderProfile + 'static
+pub fn openai_core::providers::Provider::deepseek() -> Self
 pub fn openai_core::providers::Provider::default_base_url(&self) -> &str
+pub fn openai_core::providers::Provider::kimi() -> Self
 pub fn openai_core::providers::Provider::kind(&self) -> openai_core::providers::ProviderKind
 pub fn openai_core::providers::Provider::minimax() -> Self
 pub fn openai_core::providers::Provider::openai() -> Self
@@ -2882,12 +2886,18 @@ pub openai_core::resources::ChatCompletionMessage::tool_call_id: core::option::O
 pub openai_core::resources::ChatCompletionMessage::tool_calls: alloc::vec::Vec<openai_core::resources::ChatCompletionToolCall>
 impl openai_core::resources::ChatCompletionMessage
 pub fn openai_core::resources::ChatCompletionMessage::assistant(content: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::ChatCompletionMessage::content_file(file_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatCompletionMessage::content_image_url(url: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatCompletionMessage::content_text(text: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatCompletionMessage::content_video_url(url: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
 pub fn openai_core::resources::ChatCompletionMessage::parse_content<T>(&self) -> openai_core::error::Result<core::option::Option<T>> where T: serde_core::de::DeserializeOwned
 pub fn openai_core::resources::ChatCompletionMessage::parse_tool_arguments<T>(&self) -> openai_core::error::Result<core::option::Option<T>> where T: serde_core::de::DeserializeOwned
 pub fn openai_core::resources::ChatCompletionMessage::parse_tool_arguments_by_id<T>(&self, tool_call_id: &str) -> openai_core::error::Result<core::option::Option<T>> where T: serde_core::de::DeserializeOwned
 pub fn openai_core::resources::ChatCompletionMessage::system(content: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ChatCompletionMessage::tool(tool_call_id: impl core::convert::Into<alloc::string::String>, content: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ChatCompletionMessage::user(content: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::ChatCompletionMessage::user_content_parts(parts: alloc::vec::Vec<openai_core::resources::ChatMessageContentPart>) -> Self
+pub fn openai_core::resources::ChatCompletionMessage::with_content_parts(role: impl core::convert::Into<alloc::string::String>, parts: alloc::vec::Vec<openai_core::resources::ChatMessageContentPart>) -> Self
 impl core::clone::Clone for openai_core::resources::ChatCompletionMessage
 pub fn openai_core::resources::ChatCompletionMessage::clone(&self) -> openai_core::resources::ChatCompletionMessage
 impl core::default::Default for openai_core::resources::ChatCompletionMessage
@@ -3469,6 +3479,32 @@ impl core::marker::Unpin for openai_core::resources::ChatLogProbsDeltaEvent
 impl core::marker::UnsafeUnpin for openai_core::resources::ChatLogProbsDeltaEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::ChatLogProbsDeltaEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_core::resources::ChatLogProbsDeltaEvent
+pub struct openai_core::resources::ChatMessageContentPart(_)
+impl openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::as_raw(&self) -> &serde_json::value::Value
+pub fn openai_core::resources::ChatMessageContentPart::into_raw(self) -> serde_json::value::Value
+pub fn openai_core::resources::ChatMessageContentPart::kind(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::clone(&self) -> openai_core::resources::ChatMessageContentPart
+impl core::convert::From<openai_core::resources::ChatMessageContentPart> for serde_json::value::Value
+pub fn serde_json::value::Value::from(value: openai_core::resources::ChatMessageContentPart) -> Self
+impl core::convert::From<serde_json::value::Value> for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::from(value: serde_json::value::Value) -> Self
+impl core::default::Default for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::default() -> Self
+impl core::fmt::Debug for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_core::resources::ChatMessageContentPart
+impl core::marker::Send for openai_core::resources::ChatMessageContentPart
+impl core::marker::Sync for openai_core::resources::ChatMessageContentPart
+impl core::marker::Unpin for openai_core::resources::ChatMessageContentPart
+impl core::marker::UnsafeUnpin for openai_core::resources::ChatMessageContentPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::ChatMessageContentPart
+impl core::panic::unwind_safe::UnwindSafe for openai_core::resources::ChatMessageContentPart
 pub struct openai_core::resources::ChatReasoningDetail(_)
 impl openai_core::resources::ChatReasoningDetail
 pub fn openai_core::resources::ChatReasoningDetail::as_raw(&self) -> &serde_json::value::Value
@@ -8561,6 +8597,8 @@ impl core::panic::unwind_safe::UnwindSafe for openai_core::config::LogLevel
 pub enum openai_core::ProviderKind
 pub openai_core::ProviderKind::Azure
 pub openai_core::ProviderKind::Custom
+pub openai_core::ProviderKind::DeepSeek
+pub openai_core::ProviderKind::Kimi
 pub openai_core::ProviderKind::MiniMax
 pub openai_core::ProviderKind::OpenAI
 pub openai_core::ProviderKind::ZenMux
@@ -10297,12 +10335,18 @@ pub openai_core::ChatCompletionMessage::tool_call_id: core::option::Option<alloc
 pub openai_core::ChatCompletionMessage::tool_calls: alloc::vec::Vec<openai_core::resources::ChatCompletionToolCall>
 impl openai_core::resources::ChatCompletionMessage
 pub fn openai_core::resources::ChatCompletionMessage::assistant(content: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::ChatCompletionMessage::content_file(file_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatCompletionMessage::content_image_url(url: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatCompletionMessage::content_text(text: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatCompletionMessage::content_video_url(url: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ChatMessageContentPart
 pub fn openai_core::resources::ChatCompletionMessage::parse_content<T>(&self) -> openai_core::error::Result<core::option::Option<T>> where T: serde_core::de::DeserializeOwned
 pub fn openai_core::resources::ChatCompletionMessage::parse_tool_arguments<T>(&self) -> openai_core::error::Result<core::option::Option<T>> where T: serde_core::de::DeserializeOwned
 pub fn openai_core::resources::ChatCompletionMessage::parse_tool_arguments_by_id<T>(&self, tool_call_id: &str) -> openai_core::error::Result<core::option::Option<T>> where T: serde_core::de::DeserializeOwned
 pub fn openai_core::resources::ChatCompletionMessage::system(content: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ChatCompletionMessage::tool(tool_call_id: impl core::convert::Into<alloc::string::String>, content: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ChatCompletionMessage::user(content: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::ChatCompletionMessage::user_content_parts(parts: alloc::vec::Vec<openai_core::resources::ChatMessageContentPart>) -> Self
+pub fn openai_core::resources::ChatCompletionMessage::with_content_parts(role: impl core::convert::Into<alloc::string::String>, parts: alloc::vec::Vec<openai_core::resources::ChatMessageContentPart>) -> Self
 impl core::clone::Clone for openai_core::resources::ChatCompletionMessage
 pub fn openai_core::resources::ChatCompletionMessage::clone(&self) -> openai_core::resources::ChatCompletionMessage
 impl core::default::Default for openai_core::resources::ChatCompletionMessage
@@ -10872,6 +10916,32 @@ impl core::marker::Unpin for openai_core::ChatLogProbsSnapshotEvent
 impl core::marker::UnsafeUnpin for openai_core::ChatLogProbsSnapshotEvent
 impl core::panic::unwind_safe::RefUnwindSafe for openai_core::ChatLogProbsSnapshotEvent
 impl core::panic::unwind_safe::UnwindSafe for openai_core::ChatLogProbsSnapshotEvent
+pub struct openai_core::ChatMessageContentPart(_)
+impl openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::as_raw(&self) -> &serde_json::value::Value
+pub fn openai_core::resources::ChatMessageContentPart::into_raw(self) -> serde_json::value::Value
+pub fn openai_core::resources::ChatMessageContentPart::kind(&self) -> core::option::Option<&str>
+impl core::clone::Clone for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::clone(&self) -> openai_core::resources::ChatMessageContentPart
+impl core::convert::From<openai_core::resources::ChatMessageContentPart> for serde_json::value::Value
+pub fn serde_json::value::Value::from(value: openai_core::resources::ChatMessageContentPart) -> Self
+impl core::convert::From<serde_json::value::Value> for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::from(value: serde_json::value::Value) -> Self
+impl core::default::Default for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::default() -> Self
+impl core::fmt::Debug for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::serialize<__S>(&self, __serializer: __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_core::resources::ChatMessageContentPart
+pub fn openai_core::resources::ChatMessageContentPart::deserialize<__D>(__deserializer: __D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_core::resources::ChatMessageContentPart
+impl core::marker::Send for openai_core::resources::ChatMessageContentPart
+impl core::marker::Sync for openai_core::resources::ChatMessageContentPart
+impl core::marker::Unpin for openai_core::resources::ChatMessageContentPart
+impl core::marker::UnsafeUnpin for openai_core::resources::ChatMessageContentPart
+impl core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::ChatMessageContentPart
+impl core::panic::unwind_safe::UnwindSafe for openai_core::resources::ChatMessageContentPart
 pub struct openai_core::ChatReasoningDetail(_)
 impl openai_core::resources::ChatReasoningDetail
 pub fn openai_core::resources::ChatReasoningDetail::as_raw(&self) -> &serde_json::value::Value
@@ -12824,7 +12894,9 @@ impl openai_core::providers::Provider
 pub fn openai_core::providers::Provider::azure() -> Self
 pub fn openai_core::providers::Provider::azure_with_options(options: openai_core::providers::AzureOptions) -> Self
 pub fn openai_core::providers::Provider::custom<T>(profile: T) -> Self where T: openai_core::providers::ProviderProfile + 'static
+pub fn openai_core::providers::Provider::deepseek() -> Self
 pub fn openai_core::providers::Provider::default_base_url(&self) -> &str
+pub fn openai_core::providers::Provider::kimi() -> Self
 pub fn openai_core::providers::Provider::kind(&self) -> openai_core::providers::ProviderKind
 pub fn openai_core::providers::Provider::minimax() -> Self
 pub fn openai_core::providers::Provider::openai() -> Self
