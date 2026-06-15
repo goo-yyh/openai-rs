@@ -21,7 +21,7 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: stable
+          toolchain: 1.96.0
           components: rustfmt, clippy
 
       - uses: Swatinem/rust-cache@v2
@@ -79,51 +79,39 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: default
             args: ""
           - os: ubuntu-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: no-default-features
             args: "--no-default-features"
           - os: ubuntu-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: all-features
             args: "--all-features"
           - os: macos-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: default
             args: ""
           - os: macos-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: no-default-features
             args: "--no-default-features"
           - os: macos-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: all-features
             args: "--all-features"
           - os: windows-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: default
             args: ""
           - os: windows-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: no-default-features
             args: "--no-default-features"
           - os: windows-latest
-            toolchain: stable
-            profile: all-features
-            args: "--all-features"
-          - os: ubuntu-latest
-            toolchain: 1.94.1
-            profile: default
-            args: ""
-          - os: ubuntu-latest
-            toolchain: 1.94.1
-            profile: no-default-features
-            args: "--no-default-features"
-          - os: ubuntu-latest
-            toolchain: 1.94.1
+            toolchain: 1.96.0
             profile: all-features
             args: "--all-features"
     name: Cargo Check (${{ matrix.os }} / ${{ matrix.toolchain }} / ${{ matrix.profile }})
@@ -146,43 +134,31 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: default
             args: ""
           - os: ubuntu-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: no-default-features
             args: "--no-default-features"
           - os: ubuntu-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: all-features
             args: "--all-features"
           - os: macos-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: default
             args: ""
           - os: macos-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: all-features
             args: "--all-features"
           - os: windows-latest
-            toolchain: stable
+            toolchain: 1.96.0
             profile: default
             args: ""
           - os: windows-latest
-            toolchain: stable
-            profile: all-features
-            args: "--all-features"
-          - os: ubuntu-latest
-            toolchain: 1.94.1
-            profile: default
-            args: ""
-          - os: ubuntu-latest
-            toolchain: 1.94.1
-            profile: no-default-features
-            args: "--no-default-features"
-          - os: ubuntu-latest
-            toolchain: 1.94.1
+            toolchain: 1.96.0
             profile: all-features
             args: "--all-features"
     name: Tests (${{ matrix.os }} / ${{ matrix.toolchain }} / ${{ matrix.profile }})

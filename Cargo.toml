@@ -2,7 +2,7 @@
 name = "openai-core"
 version = "0.3.0"
 edition = "2024"
-rust-version = "1.94.1"
+rust-version = "1.96.0"
 description = "Rust SDK for OpenAI-compatible ecosystem"
 license = "MIT"
 readme = "README.md"
