@@ -85,6 +85,7 @@ pub type openai_core::auth::AsyncApiKeyProvider = (dyn core::ops::function::Fn()
 pub mod openai_core::client
 pub struct openai_core::client::Client
 impl openai_core::client::Client
+pub fn openai_core::client::Client::admin(&self) -> openai_core::resources::AdminResource
 pub fn openai_core::client::Client::audio(&self) -> openai_core::resources::AudioResource
 pub fn openai_core::client::Client::base_url(&self) -> &str
 pub fn openai_core::client::Client::batches(&self) -> openai_core::resources::BatchesResource
@@ -124,6 +125,9 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::client::Client
 impl !core::panic::unwind_safe::UnwindSafe for openai_core::client::Client
 pub struct openai_core::client::ClientBuilder
 impl openai_core::client::ClientBuilder
+pub fn openai_core::client::ClientBuilder::admin_api_key<T>(self, admin_api_key: T) -> Self where T: core::convert::Into<alloc::string::String>
+pub fn openai_core::client::ClientBuilder::admin_api_key_async_provider<F, Fut>(self, provider: F) -> Self where F: core::ops::function::Fn() -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = openai_core::error::Result<secrecy::SecretString>> + core::marker::Send + 'static
+pub fn openai_core::client::ClientBuilder::admin_api_key_provider<F>(self, provider: F) -> Self where F: core::ops::function::Fn() -> openai_core::error::Result<secrecy::SecretString> + core::marker::Send + core::marker::Sync + 'static
 pub fn openai_core::client::ClientBuilder::api_key<T>(self, api_key: T) -> Self where T: core::convert::Into<alloc::string::String>
 pub fn openai_core::client::ClientBuilder::api_key_async_provider<F, Fut>(self, provider: F) -> Self where F: core::ops::function::Fn() -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = openai_core::error::Result<secrecy::SecretString>> + core::marker::Send + 'static
 pub fn openai_core::client::ClientBuilder::api_key_provider<F>(self, provider: F) -> Self where F: core::ops::function::Fn() -> openai_core::error::Result<secrecy::SecretString> + core::marker::Send + core::marker::Sync + 'static
@@ -1347,6 +1351,521 @@ impl core::marker::Unpin for openai_core::VectorStoreFileChunkingStrategy
 impl core::marker::UnsafeUnpin for openai_core::VectorStoreFileChunkingStrategy
 impl core::panic::unwind_safe::RefUnwindSafe for openai_core::VectorStoreFileChunkingStrategy
 impl core::panic::unwind_safe::UnwindSafe for openai_core::VectorStoreFileChunkingStrategy
+pub struct openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl openai_core::resources::AdminOrganizationAdminApiKeysResource
+pub fn openai_core::resources::AdminOrganizationAdminApiKeysResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationAdminApiKeysResource::delete(&self, key_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationAdminApiKeysResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationAdminApiKeysResource::retrieve(&self, key_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationAdminApiKeysResource
+pub fn openai_core::resources::AdminOrganizationAdminApiKeysResource::clone(&self) -> openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationAdminApiKeysResource
+pub fn openai_core::resources::AdminOrganizationAdminApiKeysResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationAdminApiKeysResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationAdminApiKeysResource
+pub struct openai_core::resources::AdminOrganizationAuditLogsResource
+impl openai_core::resources::AdminOrganizationAuditLogsResource
+pub fn openai_core::resources::AdminOrganizationAuditLogsResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationAuditLogsResource
+pub fn openai_core::resources::AdminOrganizationAuditLogsResource::clone(&self) -> openai_core::resources::AdminOrganizationAuditLogsResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationAuditLogsResource
+pub fn openai_core::resources::AdminOrganizationAuditLogsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationAuditLogsResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationAuditLogsResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationAuditLogsResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationAuditLogsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationAuditLogsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationAuditLogsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationAuditLogsResource
+pub struct openai_core::resources::AdminOrganizationCertificatesResource
+impl openai_core::resources::AdminOrganizationCertificatesResource
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::activate(&self) -> openai_core::resources::JsonRequestBuilder<openai_core::pagination::Page<serde_json::value::Value>>
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::deactivate(&self) -> openai_core::resources::JsonRequestBuilder<openai_core::pagination::Page<serde_json::value::Value>>
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::delete(&self, certificate_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::retrieve(&self, certificate_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::update(&self, certificate_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationCertificatesResource
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::clone(&self) -> openai_core::resources::AdminOrganizationCertificatesResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationCertificatesResource
+pub fn openai_core::resources::AdminOrganizationCertificatesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationCertificatesResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationCertificatesResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationCertificatesResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationCertificatesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationCertificatesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationCertificatesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationCertificatesResource
+pub struct openai_core::resources::AdminOrganizationDataRetentionResource
+impl openai_core::resources::AdminOrganizationDataRetentionResource
+pub fn openai_core::resources::AdminOrganizationDataRetentionResource::retrieve(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationDataRetentionResource::update(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationDataRetentionResource
+pub fn openai_core::resources::AdminOrganizationDataRetentionResource::clone(&self) -> openai_core::resources::AdminOrganizationDataRetentionResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationDataRetentionResource
+pub fn openai_core::resources::AdminOrganizationDataRetentionResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationDataRetentionResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationDataRetentionResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationDataRetentionResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationDataRetentionResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationDataRetentionResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationDataRetentionResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationDataRetentionResource
+pub struct openai_core::resources::AdminOrganizationGroupRolesResource
+impl openai_core::resources::AdminOrganizationGroupRolesResource
+pub fn openai_core::resources::AdminOrganizationGroupRolesResource::create(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupRolesResource::delete(&self, group_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupRolesResource::list(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupRolesResource::retrieve(&self, group_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationGroupRolesResource
+pub fn openai_core::resources::AdminOrganizationGroupRolesResource::clone(&self) -> openai_core::resources::AdminOrganizationGroupRolesResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationGroupRolesResource
+pub fn openai_core::resources::AdminOrganizationGroupRolesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationGroupRolesResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationGroupRolesResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationGroupRolesResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationGroupRolesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationGroupRolesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationGroupRolesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationGroupRolesResource
+pub struct openai_core::resources::AdminOrganizationGroupUsersResource
+impl openai_core::resources::AdminOrganizationGroupUsersResource
+pub fn openai_core::resources::AdminOrganizationGroupUsersResource::create(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupUsersResource::delete(&self, group_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupUsersResource::list(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupUsersResource::retrieve(&self, group_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationGroupUsersResource
+pub fn openai_core::resources::AdminOrganizationGroupUsersResource::clone(&self) -> openai_core::resources::AdminOrganizationGroupUsersResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationGroupUsersResource
+pub fn openai_core::resources::AdminOrganizationGroupUsersResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationGroupUsersResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationGroupUsersResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationGroupUsersResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationGroupUsersResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationGroupUsersResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationGroupUsersResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationGroupUsersResource
+pub struct openai_core::resources::AdminOrganizationGroupsResource
+impl openai_core::resources::AdminOrganizationGroupsResource
+pub fn openai_core::resources::AdminOrganizationGroupsResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupsResource::delete(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupsResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupsResource::retrieve(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupsResource::roles(&self) -> openai_core::resources::AdminOrganizationGroupRolesResource
+pub fn openai_core::resources::AdminOrganizationGroupsResource::update(&self, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationGroupsResource::users(&self) -> openai_core::resources::AdminOrganizationGroupUsersResource
+impl core::clone::Clone for openai_core::resources::AdminOrganizationGroupsResource
+pub fn openai_core::resources::AdminOrganizationGroupsResource::clone(&self) -> openai_core::resources::AdminOrganizationGroupsResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationGroupsResource
+pub fn openai_core::resources::AdminOrganizationGroupsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationGroupsResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationGroupsResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationGroupsResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationGroupsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationGroupsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationGroupsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationGroupsResource
+pub struct openai_core::resources::AdminOrganizationInvitesResource
+impl openai_core::resources::AdminOrganizationInvitesResource
+pub fn openai_core::resources::AdminOrganizationInvitesResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationInvitesResource::delete(&self, invite_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationInvitesResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationInvitesResource::retrieve(&self, invite_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationInvitesResource
+pub fn openai_core::resources::AdminOrganizationInvitesResource::clone(&self) -> openai_core::resources::AdminOrganizationInvitesResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationInvitesResource
+pub fn openai_core::resources::AdminOrganizationInvitesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationInvitesResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationInvitesResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationInvitesResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationInvitesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationInvitesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationInvitesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationInvitesResource
+pub struct openai_core::resources::AdminOrganizationProjectsResource
+impl openai_core::resources::AdminOrganizationProjectsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::api_keys(&self) -> openai_core::resources::AdminProjectApiKeysResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::archive(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationProjectsResource::certificates(&self) -> openai_core::resources::AdminProjectCertificatesResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationProjectsResource::data_retention(&self) -> openai_core::resources::AdminProjectDataRetentionResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::groups(&self) -> openai_core::resources::AdminProjectGroupsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::hosted_tool_permissions(&self) -> openai_core::resources::AdminProjectHostedToolPermissionsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationProjectsResource::model_permissions(&self) -> openai_core::resources::AdminProjectModelPermissionsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::rate_limits(&self) -> openai_core::resources::AdminProjectRateLimitsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationProjectsResource::roles(&self) -> openai_core::resources::AdminProjectRolesResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::service_accounts(&self) -> openai_core::resources::AdminProjectServiceAccountsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::spend_alerts(&self) -> openai_core::resources::AdminProjectSpendAlertsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationProjectsResource::users(&self) -> openai_core::resources::AdminProjectUsersResource
+impl core::clone::Clone for openai_core::resources::AdminOrganizationProjectsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::clone(&self) -> openai_core::resources::AdminOrganizationProjectsResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationProjectsResource
+pub fn openai_core::resources::AdminOrganizationProjectsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationProjectsResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationProjectsResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationProjectsResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationProjectsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationProjectsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationProjectsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationProjectsResource
+pub struct openai_core::resources::AdminOrganizationResource
+impl openai_core::resources::AdminOrganizationResource
+pub fn openai_core::resources::AdminOrganizationResource::admin_api_keys(&self) -> openai_core::resources::AdminOrganizationAdminApiKeysResource
+pub fn openai_core::resources::AdminOrganizationResource::audit_logs(&self) -> openai_core::resources::AdminOrganizationAuditLogsResource
+pub fn openai_core::resources::AdminOrganizationResource::certificates(&self) -> openai_core::resources::AdminOrganizationCertificatesResource
+pub fn openai_core::resources::AdminOrganizationResource::data_retention(&self) -> openai_core::resources::AdminOrganizationDataRetentionResource
+pub fn openai_core::resources::AdminOrganizationResource::groups(&self) -> openai_core::resources::AdminOrganizationGroupsResource
+pub fn openai_core::resources::AdminOrganizationResource::invites(&self) -> openai_core::resources::AdminOrganizationInvitesResource
+pub fn openai_core::resources::AdminOrganizationResource::projects(&self) -> openai_core::resources::AdminOrganizationProjectsResource
+pub fn openai_core::resources::AdminOrganizationResource::roles(&self) -> openai_core::resources::AdminOrganizationRolesResource
+pub fn openai_core::resources::AdminOrganizationResource::spend_alerts(&self) -> openai_core::resources::AdminOrganizationSpendAlertsResource
+pub fn openai_core::resources::AdminOrganizationResource::usage(&self) -> openai_core::resources::AdminOrganizationUsageResource
+pub fn openai_core::resources::AdminOrganizationResource::users(&self) -> openai_core::resources::AdminOrganizationUsersResource
+impl core::clone::Clone for openai_core::resources::AdminOrganizationResource
+pub fn openai_core::resources::AdminOrganizationResource::clone(&self) -> openai_core::resources::AdminOrganizationResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationResource
+pub fn openai_core::resources::AdminOrganizationResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationResource
+pub struct openai_core::resources::AdminOrganizationRolesResource
+impl openai_core::resources::AdminOrganizationRolesResource
+pub fn openai_core::resources::AdminOrganizationRolesResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationRolesResource::delete(&self, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationRolesResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationRolesResource::retrieve(&self, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationRolesResource::update(&self, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationRolesResource
+pub fn openai_core::resources::AdminOrganizationRolesResource::clone(&self) -> openai_core::resources::AdminOrganizationRolesResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationRolesResource
+pub fn openai_core::resources::AdminOrganizationRolesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationRolesResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationRolesResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationRolesResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationRolesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationRolesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationRolesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationRolesResource
+pub struct openai_core::resources::AdminOrganizationSpendAlertsResource
+impl openai_core::resources::AdminOrganizationSpendAlertsResource
+pub fn openai_core::resources::AdminOrganizationSpendAlertsResource::create(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationSpendAlertsResource::delete(&self, alert_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationSpendAlertsResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationSpendAlertsResource::update(&self, alert_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationSpendAlertsResource
+pub fn openai_core::resources::AdminOrganizationSpendAlertsResource::clone(&self) -> openai_core::resources::AdminOrganizationSpendAlertsResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationSpendAlertsResource
+pub fn openai_core::resources::AdminOrganizationSpendAlertsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationSpendAlertsResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationSpendAlertsResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationSpendAlertsResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationSpendAlertsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationSpendAlertsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationSpendAlertsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationSpendAlertsResource
+pub struct openai_core::resources::AdminOrganizationUsageResource
+impl openai_core::resources::AdminOrganizationUsageResource
+pub fn openai_core::resources::AdminOrganizationUsageResource::audio_speeches(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::audio_transcriptions(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::code_interpreter_sessions(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::completions(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::costs(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::embeddings(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::file_search_calls(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::images(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::moderations(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::vector_stores(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsageResource::web_search_calls(&self) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationUsageResource
+pub fn openai_core::resources::AdminOrganizationUsageResource::clone(&self) -> openai_core::resources::AdminOrganizationUsageResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationUsageResource
+pub fn openai_core::resources::AdminOrganizationUsageResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationUsageResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationUsageResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationUsageResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationUsageResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationUsageResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationUsageResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationUsageResource
+pub struct openai_core::resources::AdminOrganizationUserRolesResource
+impl openai_core::resources::AdminOrganizationUserRolesResource
+pub fn openai_core::resources::AdminOrganizationUserRolesResource::create(&self, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUserRolesResource::delete(&self, user_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUserRolesResource::list(&self, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUserRolesResource::retrieve(&self, user_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationUserRolesResource
+pub fn openai_core::resources::AdminOrganizationUserRolesResource::clone(&self) -> openai_core::resources::AdminOrganizationUserRolesResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationUserRolesResource
+pub fn openai_core::resources::AdminOrganizationUserRolesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationUserRolesResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationUserRolesResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationUserRolesResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationUserRolesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationUserRolesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationUserRolesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationUserRolesResource
+pub struct openai_core::resources::AdminOrganizationUsersResource
+impl openai_core::resources::AdminOrganizationUsersResource
+pub fn openai_core::resources::AdminOrganizationUsersResource::delete(&self, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsersResource::list(&self) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsersResource::retrieve(&self, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminOrganizationUsersResource::roles(&self) -> openai_core::resources::AdminOrganizationUserRolesResource
+pub fn openai_core::resources::AdminOrganizationUsersResource::update(&self, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminOrganizationUsersResource
+pub fn openai_core::resources::AdminOrganizationUsersResource::clone(&self) -> openai_core::resources::AdminOrganizationUsersResource
+impl core::fmt::Debug for openai_core::resources::AdminOrganizationUsersResource
+pub fn openai_core::resources::AdminOrganizationUsersResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminOrganizationUsersResource
+impl core::marker::Send for openai_core::resources::AdminOrganizationUsersResource
+impl core::marker::Sync for openai_core::resources::AdminOrganizationUsersResource
+impl core::marker::Unpin for openai_core::resources::AdminOrganizationUsersResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminOrganizationUsersResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminOrganizationUsersResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminOrganizationUsersResource
+pub struct openai_core::resources::AdminProjectApiKeysResource
+impl openai_core::resources::AdminProjectApiKeysResource
+pub fn openai_core::resources::AdminProjectApiKeysResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, api_key_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectApiKeysResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectApiKeysResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, api_key_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectApiKeysResource
+pub fn openai_core::resources::AdminProjectApiKeysResource::clone(&self) -> openai_core::resources::AdminProjectApiKeysResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectApiKeysResource
+pub fn openai_core::resources::AdminProjectApiKeysResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectApiKeysResource
+impl core::marker::Send for openai_core::resources::AdminProjectApiKeysResource
+impl core::marker::Sync for openai_core::resources::AdminProjectApiKeysResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectApiKeysResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectApiKeysResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectApiKeysResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectApiKeysResource
+pub struct openai_core::resources::AdminProjectCertificatesResource
+impl openai_core::resources::AdminProjectCertificatesResource
+pub fn openai_core::resources::AdminProjectCertificatesResource::activate(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<openai_core::pagination::Page<serde_json::value::Value>>
+pub fn openai_core::resources::AdminProjectCertificatesResource::deactivate(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<openai_core::pagination::Page<serde_json::value::Value>>
+pub fn openai_core::resources::AdminProjectCertificatesResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectCertificatesResource
+pub fn openai_core::resources::AdminProjectCertificatesResource::clone(&self) -> openai_core::resources::AdminProjectCertificatesResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectCertificatesResource
+pub fn openai_core::resources::AdminProjectCertificatesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectCertificatesResource
+impl core::marker::Send for openai_core::resources::AdminProjectCertificatesResource
+impl core::marker::Sync for openai_core::resources::AdminProjectCertificatesResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectCertificatesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectCertificatesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectCertificatesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectCertificatesResource
+pub struct openai_core::resources::AdminProjectDataRetentionResource
+impl openai_core::resources::AdminProjectDataRetentionResource
+pub fn openai_core::resources::AdminProjectDataRetentionResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectDataRetentionResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectDataRetentionResource
+pub fn openai_core::resources::AdminProjectDataRetentionResource::clone(&self) -> openai_core::resources::AdminProjectDataRetentionResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectDataRetentionResource
+pub fn openai_core::resources::AdminProjectDataRetentionResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectDataRetentionResource
+impl core::marker::Send for openai_core::resources::AdminProjectDataRetentionResource
+impl core::marker::Sync for openai_core::resources::AdminProjectDataRetentionResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectDataRetentionResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectDataRetentionResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectDataRetentionResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectDataRetentionResource
+pub struct openai_core::resources::AdminProjectGroupRolesResource
+impl openai_core::resources::AdminProjectGroupRolesResource
+pub fn openai_core::resources::AdminProjectGroupRolesResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupRolesResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, group_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupRolesResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupRolesResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, group_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectGroupRolesResource
+pub fn openai_core::resources::AdminProjectGroupRolesResource::clone(&self) -> openai_core::resources::AdminProjectGroupRolesResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectGroupRolesResource
+pub fn openai_core::resources::AdminProjectGroupRolesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectGroupRolesResource
+impl core::marker::Send for openai_core::resources::AdminProjectGroupRolesResource
+impl core::marker::Sync for openai_core::resources::AdminProjectGroupRolesResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectGroupRolesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectGroupRolesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectGroupRolesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectGroupRolesResource
+pub struct openai_core::resources::AdminProjectGroupsResource
+impl openai_core::resources::AdminProjectGroupsResource
+pub fn openai_core::resources::AdminProjectGroupsResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupsResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupsResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupsResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, group_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectGroupsResource::roles(&self) -> openai_core::resources::AdminProjectGroupRolesResource
+impl core::clone::Clone for openai_core::resources::AdminProjectGroupsResource
+pub fn openai_core::resources::AdminProjectGroupsResource::clone(&self) -> openai_core::resources::AdminProjectGroupsResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectGroupsResource
+pub fn openai_core::resources::AdminProjectGroupsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectGroupsResource
+impl core::marker::Send for openai_core::resources::AdminProjectGroupsResource
+impl core::marker::Sync for openai_core::resources::AdminProjectGroupsResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectGroupsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectGroupsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectGroupsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectGroupsResource
+pub struct openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl openai_core::resources::AdminProjectHostedToolPermissionsResource
+pub fn openai_core::resources::AdminProjectHostedToolPermissionsResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectHostedToolPermissionsResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectHostedToolPermissionsResource
+pub fn openai_core::resources::AdminProjectHostedToolPermissionsResource::clone(&self) -> openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectHostedToolPermissionsResource
+pub fn openai_core::resources::AdminProjectHostedToolPermissionsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl core::marker::Send for openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl core::marker::Sync for openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectHostedToolPermissionsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectHostedToolPermissionsResource
+pub struct openai_core::resources::AdminProjectModelPermissionsResource
+impl openai_core::resources::AdminProjectModelPermissionsResource
+pub fn openai_core::resources::AdminProjectModelPermissionsResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectModelPermissionsResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectModelPermissionsResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectModelPermissionsResource
+pub fn openai_core::resources::AdminProjectModelPermissionsResource::clone(&self) -> openai_core::resources::AdminProjectModelPermissionsResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectModelPermissionsResource
+pub fn openai_core::resources::AdminProjectModelPermissionsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectModelPermissionsResource
+impl core::marker::Send for openai_core::resources::AdminProjectModelPermissionsResource
+impl core::marker::Sync for openai_core::resources::AdminProjectModelPermissionsResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectModelPermissionsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectModelPermissionsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectModelPermissionsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectModelPermissionsResource
+pub struct openai_core::resources::AdminProjectRateLimitsResource
+impl openai_core::resources::AdminProjectRateLimitsResource
+pub fn openai_core::resources::AdminProjectRateLimitsResource::list_rate_limits(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectRateLimitsResource::update_rate_limit(&self, project_id: impl core::convert::Into<alloc::string::String>, rate_limit_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectRateLimitsResource
+pub fn openai_core::resources::AdminProjectRateLimitsResource::clone(&self) -> openai_core::resources::AdminProjectRateLimitsResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectRateLimitsResource
+pub fn openai_core::resources::AdminProjectRateLimitsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectRateLimitsResource
+impl core::marker::Send for openai_core::resources::AdminProjectRateLimitsResource
+impl core::marker::Sync for openai_core::resources::AdminProjectRateLimitsResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectRateLimitsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectRateLimitsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectRateLimitsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectRateLimitsResource
+pub struct openai_core::resources::AdminProjectRolesResource
+impl openai_core::resources::AdminProjectRolesResource
+pub fn openai_core::resources::AdminProjectRolesResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectRolesResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectRolesResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectRolesResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectRolesResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectRolesResource
+pub fn openai_core::resources::AdminProjectRolesResource::clone(&self) -> openai_core::resources::AdminProjectRolesResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectRolesResource
+pub fn openai_core::resources::AdminProjectRolesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectRolesResource
+impl core::marker::Send for openai_core::resources::AdminProjectRolesResource
+impl core::marker::Sync for openai_core::resources::AdminProjectRolesResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectRolesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectRolesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectRolesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectRolesResource
+pub struct openai_core::resources::AdminProjectServiceAccountsResource
+impl openai_core::resources::AdminProjectServiceAccountsResource
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, service_account_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, service_account_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>, service_account_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectServiceAccountsResource
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::clone(&self) -> openai_core::resources::AdminProjectServiceAccountsResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectServiceAccountsResource
+pub fn openai_core::resources::AdminProjectServiceAccountsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectServiceAccountsResource
+impl core::marker::Send for openai_core::resources::AdminProjectServiceAccountsResource
+impl core::marker::Sync for openai_core::resources::AdminProjectServiceAccountsResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectServiceAccountsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectServiceAccountsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectServiceAccountsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectServiceAccountsResource
+pub struct openai_core::resources::AdminProjectSpendAlertsResource
+impl openai_core::resources::AdminProjectSpendAlertsResource
+pub fn openai_core::resources::AdminProjectSpendAlertsResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectSpendAlertsResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, alert_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectSpendAlertsResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectSpendAlertsResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>, alert_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectSpendAlertsResource
+pub fn openai_core::resources::AdminProjectSpendAlertsResource::clone(&self) -> openai_core::resources::AdminProjectSpendAlertsResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectSpendAlertsResource
+pub fn openai_core::resources::AdminProjectSpendAlertsResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectSpendAlertsResource
+impl core::marker::Send for openai_core::resources::AdminProjectSpendAlertsResource
+impl core::marker::Sync for openai_core::resources::AdminProjectSpendAlertsResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectSpendAlertsResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectSpendAlertsResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectSpendAlertsResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectSpendAlertsResource
+pub struct openai_core::resources::AdminProjectUserRolesResource
+impl openai_core::resources::AdminProjectUserRolesResource
+pub fn openai_core::resources::AdminProjectUserRolesResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUserRolesResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUserRolesResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUserRolesResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>, role_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectUserRolesResource
+pub fn openai_core::resources::AdminProjectUserRolesResource::clone(&self) -> openai_core::resources::AdminProjectUserRolesResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectUserRolesResource
+pub fn openai_core::resources::AdminProjectUserRolesResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectUserRolesResource
+impl core::marker::Send for openai_core::resources::AdminProjectUserRolesResource
+impl core::marker::Sync for openai_core::resources::AdminProjectUserRolesResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectUserRolesResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectUserRolesResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectUserRolesResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectUserRolesResource
+pub struct openai_core::resources::AdminProjectUsersResource
+impl openai_core::resources::AdminProjectUsersResource
+pub fn openai_core::resources::AdminProjectUsersResource::create(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUsersResource::delete(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUsersResource::list(&self, project_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::ListRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUsersResource::retrieve(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+pub fn openai_core::resources::AdminProjectUsersResource::roles(&self) -> openai_core::resources::AdminProjectUserRolesResource
+pub fn openai_core::resources::AdminProjectUsersResource::update(&self, project_id: impl core::convert::Into<alloc::string::String>, user_id: impl core::convert::Into<alloc::string::String>) -> openai_core::resources::JsonRequestBuilder<serde_json::value::Value>
+impl core::clone::Clone for openai_core::resources::AdminProjectUsersResource
+pub fn openai_core::resources::AdminProjectUsersResource::clone(&self) -> openai_core::resources::AdminProjectUsersResource
+impl core::fmt::Debug for openai_core::resources::AdminProjectUsersResource
+pub fn openai_core::resources::AdminProjectUsersResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminProjectUsersResource
+impl core::marker::Send for openai_core::resources::AdminProjectUsersResource
+impl core::marker::Sync for openai_core::resources::AdminProjectUsersResource
+impl core::marker::Unpin for openai_core::resources::AdminProjectUsersResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminProjectUsersResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminProjectUsersResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminProjectUsersResource
+pub struct openai_core::resources::AdminResource
+impl openai_core::resources::AdminResource
+pub fn openai_core::resources::AdminResource::organization(&self) -> openai_core::resources::AdminOrganizationResource
+impl core::clone::Clone for openai_core::resources::AdminResource
+pub fn openai_core::resources::AdminResource::clone(&self) -> openai_core::resources::AdminResource
+impl core::fmt::Debug for openai_core::resources::AdminResource
+pub fn openai_core::resources::AdminResource::fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for openai_core::resources::AdminResource
+impl core::marker::Send for openai_core::resources::AdminResource
+impl core::marker::Sync for openai_core::resources::AdminResource
+impl core::marker::Unpin for openai_core::resources::AdminResource
+impl core::marker::UnsafeUnpin for openai_core::resources::AdminResource
+impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::AdminResource
+impl !core::panic::unwind_safe::UnwindSafe for openai_core::resources::AdminResource
 pub struct openai_core::resources::AssistantStreamRequestBuilder
 impl openai_core::resources::AssistantStreamRequestBuilder
 pub fn openai_core::resources::AssistantStreamRequestBuilder::body_value(self, body: impl core::convert::Into<openai_core::JsonPayload>) -> Self
@@ -5365,7 +5884,9 @@ pub fn openai_core::resources::ListRequestBuilder<T>::after(self, cursor: impl c
 pub fn openai_core::resources::ListRequestBuilder<T>::before(self, cursor: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ListRequestBuilder<T>::extra_body(self, key: impl core::convert::Into<alloc::string::String>, value: impl core::convert::Into<openai_core::JsonPayload>) -> Self
 pub fn openai_core::resources::ListRequestBuilder<T>::extra_header(self, key: impl core::convert::Into<alloc::string::String>, value: impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::ListRequestBuilder<T>::extra_query(self, key: impl core::convert::Into<alloc::string::String>, value: impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ListRequestBuilder<T>::limit(self, limit: u32) -> Self
+pub fn openai_core::resources::ListRequestBuilder<T>::remove_query(self, key: impl core::convert::Into<alloc::string::String>) -> Self
 impl<T: core::clone::Clone> core::clone::Clone for openai_core::resources::ListRequestBuilder<T>
 pub fn openai_core::resources::ListRequestBuilder<T>::clone(&self) -> openai_core::resources::ListRequestBuilder<T>
 impl<T: core::fmt::Debug> core::fmt::Debug for openai_core::resources::ListRequestBuilder<T>
@@ -11145,6 +11666,7 @@ impl core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::ChatToo
 impl core::panic::unwind_safe::UnwindSafe for openai_core::resources::ChatToolChoice
 pub struct openai_core::Client
 impl openai_core::client::Client
+pub fn openai_core::client::Client::admin(&self) -> openai_core::resources::AdminResource
 pub fn openai_core::client::Client::audio(&self) -> openai_core::resources::AudioResource
 pub fn openai_core::client::Client::base_url(&self) -> &str
 pub fn openai_core::client::Client::batches(&self) -> openai_core::resources::BatchesResource
@@ -11184,6 +11706,9 @@ impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::client::Client
 impl !core::panic::unwind_safe::UnwindSafe for openai_core::client::Client
 pub struct openai_core::ClientBuilder
 impl openai_core::client::ClientBuilder
+pub fn openai_core::client::ClientBuilder::admin_api_key<T>(self, admin_api_key: T) -> Self where T: core::convert::Into<alloc::string::String>
+pub fn openai_core::client::ClientBuilder::admin_api_key_async_provider<F, Fut>(self, provider: F) -> Self where F: core::ops::function::Fn() -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = openai_core::error::Result<secrecy::SecretString>> + core::marker::Send + 'static
+pub fn openai_core::client::ClientBuilder::admin_api_key_provider<F>(self, provider: F) -> Self where F: core::ops::function::Fn() -> openai_core::error::Result<secrecy::SecretString> + core::marker::Send + core::marker::Sync + 'static
 pub fn openai_core::client::ClientBuilder::api_key<T>(self, api_key: T) -> Self where T: core::convert::Into<alloc::string::String>
 pub fn openai_core::client::ClientBuilder::api_key_async_provider<F, Fut>(self, provider: F) -> Self where F: core::ops::function::Fn() -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = openai_core::error::Result<secrecy::SecretString>> + core::marker::Send + 'static
 pub fn openai_core::client::ClientBuilder::api_key_provider<F>(self, provider: F) -> Self where F: core::ops::function::Fn() -> openai_core::error::Result<secrecy::SecretString> + core::marker::Send + core::marker::Sync + 'static

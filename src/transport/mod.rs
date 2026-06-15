@@ -332,8 +332,9 @@ pub(crate) async fn prepare_request_context(
         inner.options.compatibility_mode,
     )?;
     provider.prepare_request(&mut context)?;
+    let api_key_source = select_api_key_source(inner, endpoint_id)?;
     apply_auth(
-        &inner.api_key_source,
+        api_key_source,
         inner.provider.profile().auth_scheme(),
         &mut context,
     )
@@ -342,7 +343,7 @@ pub(crate) async fn prepare_request_context(
 }
 
 async fn apply_auth(
-    api_key_source: &Option<ApiKeySource>,
+    api_key_source: Option<&ApiKeySource>,
     auth_scheme: AuthScheme,
     context: &mut RequestContext,
 ) -> Result<()> {
@@ -372,6 +373,26 @@ async fn apply_auth(
     }
 
     Ok(())
+}
+
+fn select_api_key_source<'a>(
+    inner: &'a ClientInner,
+    endpoint_id: &'static str,
+) -> Result<Option<&'a ApiKeySource>> {
+    if uses_admin_api_key(endpoint_id) {
+        return inner
+            .admin_api_key_source
+            .as_ref()
+            .map(Some)
+            .ok_or(Error::MissingCredentials);
+    }
+
+    Ok(inner.api_key_source.as_ref())
+}
+
+fn uses_admin_api_key(endpoint_id: &'static str) -> bool {
+    endpoint_id.starts_with("admin.")
+        || endpoint_id.starts_with("fine_tuning.checkpoints.permissions.")
 }
 
 /// 将基础地址与相对路径拼接为完整 URL。

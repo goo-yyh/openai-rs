@@ -15,7 +15,7 @@ use crate::error::{Error, Result};
 use crate::pagination::{CursorPage, ListEnvelope};
 use crate::providers::{AzureOptions, CompatibilityMode, Provider, ProviderKind};
 use crate::resources::{
-    AudioResource, BatchesResource, BetaResource, ChatResource, CompletionsResource,
+    AdminResource, AudioResource, BatchesResource, BetaResource, ChatResource, CompletionsResource,
     ContainersResource, ConversationsResource, EmbeddingsResource, EvalsResource, FilesResource,
     FineTuningResource, GradersResource, ImagesResource, ModelsResource, ModerationsResource,
     RealtimeResource, ResponsesResource, SkillsResource, UploadsResource, VectorStoresResource,
@@ -38,6 +38,7 @@ pub(crate) struct ClientInner {
     pub(crate) http: reqwest::Client,
     pub(crate) options: ClientOptions,
     pub(crate) api_key_source: Option<ApiKeySource>,
+    pub(crate) admin_api_key_source: Option<ApiKeySource>,
     pub(crate) provider: Provider,
 }
 
@@ -61,6 +62,7 @@ pub struct PageRequestSpec {
 pub struct ClientBuilder {
     options: ClientOptions,
     api_key_source: Option<ApiKeySource>,
+    admin_api_key_source: Option<ApiKeySource>,
     azure_options: AzureOptions,
     azure_endpoint: Option<String>,
     azure_configured: bool,
@@ -94,6 +96,7 @@ impl Client {
             self.inner.http.clone(),
             options.provider.clone(),
             self.inner.api_key_source.clone(),
+            self.inner.admin_api_key_source.clone(),
             options,
         )
     }
@@ -102,6 +105,7 @@ impl Client {
         http: reqwest::Client,
         provider: Provider,
         api_key_source: Option<ApiKeySource>,
+        admin_api_key_source: Option<ApiKeySource>,
         mut options: ClientOptions,
     ) -> Self {
         options.provider = provider.clone();
@@ -110,6 +114,7 @@ impl Client {
                 http,
                 options,
                 api_key_source,
+                admin_api_key_source,
                 provider,
             }),
         }
@@ -197,6 +202,11 @@ impl Client {
     /// 返回顶层 completions 资源。
     pub fn completions(&self) -> CompletionsResource {
         CompletionsResource::new(self.clone())
+    }
+
+    /// 返回 admin 命名空间。
+    pub fn admin(&self) -> AdminResource {
+        AdminResource::new(self.clone())
     }
 
     /// 返回 chat 命名空间。
@@ -390,6 +400,9 @@ impl ClientBuilder {
         if let Some(api_key) = read_env("OPENAI_API_KEY") {
             builder.api_key_source = Some(ApiKeySource::from_static(api_key));
         }
+        if let Some(admin_api_key) = read_env("OPENAI_ADMIN_KEY") {
+            builder.admin_api_key_source = Some(ApiKeySource::from_static(admin_api_key));
+        }
 
         builder
     }
@@ -451,6 +464,34 @@ impl ClientBuilder {
         Fut: Future<Output = Result<SecretString>> + Send + 'static,
     {
         self.api_key_source = Some(ApiKeySource::from_async_provider(provider));
+        self
+    }
+
+    /// 设置静态 Admin API Key。
+    pub fn admin_api_key<T>(mut self, admin_api_key: T) -> Self
+    where
+        T: Into<String>,
+    {
+        self.admin_api_key_source = Some(ApiKeySource::from_static(admin_api_key));
+        self
+    }
+
+    /// 设置动态 Admin API Key 回调。
+    pub fn admin_api_key_provider<F>(mut self, provider: F) -> Self
+    where
+        F: Fn() -> Result<SecretString> + Send + Sync + 'static,
+    {
+        self.admin_api_key_source = Some(ApiKeySource::from_provider(provider));
+        self
+    }
+
+    /// 设置异步 Admin API Key 回调。
+    pub fn admin_api_key_async_provider<F, Fut>(mut self, provider: F) -> Self
+    where
+        F: Fn() -> Fut + Send + Sync + 'static,
+        Fut: Future<Output = Result<SecretString>> + Send + 'static,
+    {
+        self.admin_api_key_source = Some(ApiKeySource::from_async_provider(provider));
         self
     }
 
@@ -650,6 +691,7 @@ impl ClientBuilder {
             http,
             options.provider.clone(),
             self.api_key_source,
+            self.admin_api_key_source,
             options,
         ))
     }

@@ -655,6 +655,18 @@ impl<T> ListRequestBuilder<T> {
         self
     }
 
+    /// 添加一个额外查询参数。
+    pub fn extra_query(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.inner = self.inner.extra_query(key, value);
+        self
+    }
+
+    /// 删除一个默认查询参数。
+    pub fn remove_query(mut self, key: impl Into<String>) -> Self {
+        self.inner.spec.options.remove_query(key);
+        self
+    }
+
     /// 追加请求头。
     pub fn extra_header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.inner = self.inner.extra_header(key, value);

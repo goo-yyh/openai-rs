@@ -1,5 +1,6 @@
 //! 资源命名空间、公开类型与请求构建器。
 
+mod admin;
 mod audio;
 mod batches;
 mod beta;
@@ -1518,6 +1519,122 @@ where
     })
 }
 
+handle!(
+    /// Admin 资源命名空间。
+    AdminResource
+);
+handle!(
+    /// Admin Organization 资源命名空间。
+    AdminOrganizationResource
+);
+handle!(
+    /// Admin Organization Audit Logs 资源。
+    AdminOrganizationAuditLogsResource
+);
+handle!(
+    /// Admin Organization Admin API Keys 资源。
+    AdminOrganizationAdminApiKeysResource
+);
+handle!(
+    /// Admin Organization Usage 资源。
+    AdminOrganizationUsageResource
+);
+handle!(
+    /// Admin Organization Invites 资源。
+    AdminOrganizationInvitesResource
+);
+handle!(
+    /// Admin Organization Users 资源。
+    AdminOrganizationUsersResource
+);
+handle!(
+    /// Admin Organization User Roles 资源。
+    AdminOrganizationUserRolesResource
+);
+handle!(
+    /// Admin Organization Groups 资源。
+    AdminOrganizationGroupsResource
+);
+handle!(
+    /// Admin Organization Group Users 资源。
+    AdminOrganizationGroupUsersResource
+);
+handle!(
+    /// Admin Organization Group Roles 资源。
+    AdminOrganizationGroupRolesResource
+);
+handle!(
+    /// Admin Organization Roles 资源。
+    AdminOrganizationRolesResource
+);
+handle!(
+    /// Admin Organization Data Retention 资源。
+    AdminOrganizationDataRetentionResource
+);
+handle!(
+    /// Admin Organization Spend Alerts 资源。
+    AdminOrganizationSpendAlertsResource
+);
+handle!(
+    /// Admin Organization Certificates 资源。
+    AdminOrganizationCertificatesResource
+);
+handle!(
+    /// Admin Organization Projects 资源。
+    AdminOrganizationProjectsResource
+);
+handle!(
+    /// Admin Project Users 资源。
+    AdminProjectUsersResource
+);
+handle!(
+    /// Admin Project User Roles 资源。
+    AdminProjectUserRolesResource
+);
+handle!(
+    /// Admin Project Service Accounts 资源。
+    AdminProjectServiceAccountsResource
+);
+handle!(
+    /// Admin Project API Keys 资源。
+    AdminProjectApiKeysResource
+);
+handle!(
+    /// Admin Project Rate Limits 资源。
+    AdminProjectRateLimitsResource
+);
+handle!(
+    /// Admin Project Model Permissions 资源。
+    AdminProjectModelPermissionsResource
+);
+handle!(
+    /// Admin Project Hosted Tool Permissions 资源。
+    AdminProjectHostedToolPermissionsResource
+);
+handle!(
+    /// Admin Project Groups 资源。
+    AdminProjectGroupsResource
+);
+handle!(
+    /// Admin Project Group Roles 资源。
+    AdminProjectGroupRolesResource
+);
+handle!(
+    /// Admin Project Roles 资源。
+    AdminProjectRolesResource
+);
+handle!(
+    /// Admin Project Data Retention 资源。
+    AdminProjectDataRetentionResource
+);
+handle!(
+    /// Admin Project Spend Alerts 资源。
+    AdminProjectSpendAlertsResource
+);
+handle!(
+    /// Admin Project Certificates 资源。
+    AdminProjectCertificatesResource
+);
 handle!(
     /// 顶层 completions 资源。
     CompletionsResource
