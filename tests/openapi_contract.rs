@@ -192,8 +192,8 @@ fn test_documented_openapi_should_cover_generated_and_manual_endpoints() {
     let contracts: OpenApiContracts = load_json("codegen/openapi/contracts.json");
 
     let generated = manifest
-        .into_iter()
-        .flat_map(|(_, endpoints)| endpoints.into_iter())
+        .into_values()
+        .flat_map(|endpoints| endpoints.into_iter())
         .collect::<BTreeMap<_, _>>();
 
     for (endpoint_id, endpoint) in &generated {

@@ -49,8 +49,8 @@ mod tests {
         let manifest: EndpointManifest =
             serde_json::from_str(include_str!("../../codegen/endpoints.json")).unwrap();
         let expected = manifest
-            .into_iter()
-            .flat_map(|(_, endpoints)| endpoints.into_iter())
+            .into_values()
+            .flat_map(|endpoints| endpoints.into_iter())
             .map(|(id, spec)| (id, (spec.method, spec.template)))
             .collect::<BTreeMap<_, _>>();
         let actual = ALL_ENDPOINTS

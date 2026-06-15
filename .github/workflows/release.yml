@@ -62,7 +62,7 @@ jobs:
 
       - uses: taiki-e/install-action@v2
         with:
-          tool: cargo-public-api
+          tool: cargo-public-api@0.52.0
 
       - name: Install pinned nightly for public API and docs
         run: rustup toolchain install "${PUBLIC_API_TOOLCHAIN}" --profile minimal
