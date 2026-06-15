@@ -24,8 +24,8 @@ trap 'kill "${SERVER_PID}" >/dev/null 2>&1 || true' EXIT
 sleep 1
 
 find "${FIXTURES_DIR}" -mindepth 2 -maxdepth 2 -name Cargo.toml | sort | while read -r manifest; do
-  echo "==> cargo check --offline --manifest-path ${manifest}"
-  cargo check --offline --manifest-path "${manifest}"
-  echo "==> cargo run --offline --manifest-path ${manifest}"
-  cargo run --offline --manifest-path "${manifest}"
+  echo "==> cargo check --manifest-path ${manifest}"
+  cargo check --manifest-path "${manifest}"
+  echo "==> cargo run --manifest-path ${manifest}"
+  cargo run --manifest-path "${manifest}"
 done
