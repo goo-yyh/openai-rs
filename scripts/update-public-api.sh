@@ -4,15 +4,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUTPUT_DIR="${ROOT_DIR}/public-api"
 OUTPUT_FILE="${OUTPUT_DIR}/all-features.txt"
+PUBLIC_API_TOOLCHAIN="${PUBLIC_API_TOOLCHAIN:-nightly-2026-06-08}"
 
 mkdir -p "${OUTPUT_DIR}"
 
-if ! cargo public-api --help >/dev/null 2>&1; then
+if ! cargo +"${PUBLIC_API_TOOLCHAIN}" public-api --help >/dev/null 2>&1; then
   echo "cargo-public-api is required. Install it with: cargo install cargo-public-api"
   exit 1
 fi
 
-cargo public-api \
+cargo +"${PUBLIC_API_TOOLCHAIN}" public-api \
   --manifest-path "${ROOT_DIR}/Cargo.toml" \
   --all-features \
   --simplified \

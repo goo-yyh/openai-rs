@@ -21,6 +21,7 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  PUBLIC_API_TOOLCHAIN: nightly-2026-06-08
 
 jobs:
   release-readiness:
@@ -63,8 +64,8 @@ jobs:
         with:
           tool: cargo-public-api
 
-      - name: Install nightly for docs.rs check
-        run: rustup toolchain install nightly --profile minimal
+      - name: Install pinned nightly for public API and docs
+        run: rustup toolchain install "${PUBLIC_API_TOOLCHAIN}" --profile minimal
 
       - name: Verify release metadata
         env:
@@ -107,7 +108,7 @@ jobs:
       - name: Docs.rs-style docs build
         env:
           RUSTDOCFLAGS: --cfg docsrs
-        run: cargo +nightly doc --all-features --no-deps
+        run: cargo +"${PUBLIC_API_TOOLCHAIN}" doc --all-features --no-deps
 
   publish-crate:
     name: Publish Crate
