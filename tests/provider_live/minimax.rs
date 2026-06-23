@@ -7,8 +7,8 @@ use serial_test::serial;
 use super::common::{
     LiveCase, LiveTier, add_numbers_tool, assert_contains_any, assert_contains_chinese,
     assert_no_markdown_fence, assert_sentence_count_at_most, contains_think_block, env_or_skip,
-    expect_api_error_shape, first_content, force_tool_choice, multiply_numbers_tool, parse_jsonish,
-    parse_tool_arguments, retry_live, sanitize_visible_text,
+    env_var_or, expect_api_error_shape, first_content, force_tool_choice, multiply_numbers_tool,
+    parse_jsonish, parse_tool_arguments, retry_live, sanitize_visible_text,
 };
 #[cfg(feature = "tool-runner")]
 use super::common::{add_numbers_runner_tool, multiply_numbers_runner_tool};
@@ -40,11 +40,11 @@ fn live_client_no_retry(api_key: String) -> Client {
 }
 
 fn chat_model() -> String {
-    std::env::var("MINIMAX_CHAT_MODEL").unwrap_or_else(|_| "MiniMax-M2.7".into())
+    env_var_or("MINIMAX_CHAT_MODEL", "MiniMax-M2.7")
 }
 
 fn responses_model() -> String {
-    std::env::var("MINIMAX_RESPONSES_MODEL").unwrap_or_else(|_| chat_model())
+    env_var_or("MINIMAX_RESPONSES_MODEL", chat_model())
 }
 
 #[tokio::test]

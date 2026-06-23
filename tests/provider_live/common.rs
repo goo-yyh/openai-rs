@@ -44,6 +44,7 @@ impl LiveTier {
     }
 
     fn from_env() -> Self {
+        load_dotenv_local();
         match std::env::var("OPENAI_RS_LIVE_TIER")
             .unwrap_or_else(|_| "slow".into())
             .trim()
@@ -187,6 +188,7 @@ struct CachedModelRecord {
 
 /// 读取环境变量；缺失时让 live test 直接跳过。
 pub fn env_or_skip(name: &str) -> Option<String> {
+    load_dotenv_local();
     match std::env::var(name) {
         Ok(value) if !value.trim().is_empty() => Some(value),
         _ => {
@@ -194,6 +196,15 @@ pub fn env_or_skip(name: &str) -> Option<String> {
             None
         }
     }
+}
+
+/// 读取环境变量；会先加载仓库根目录的 `.env.local`。
+pub fn env_var_or(name: &str, default: impl Into<String>) -> String {
+    load_dotenv_local();
+    std::env::var(name)
+        .ok()
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| default.into())
 }
 
 /// 显式记录一条 skipped live case。
@@ -542,6 +553,18 @@ fn target_dir() -> PathBuf {
     std::env::var_os("CARGO_TARGET_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("target"))
+}
+
+fn load_dotenv_local() {
+    static DOTENV_LOCAL: OnceLock<()> = OnceLock::new();
+    DOTENV_LOCAL.get_or_init(|| {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(".env.local");
+        if path.is_file()
+            && let Err(error) = dotenvy::from_path_override(&path)
+        {
+            eprintln!("failed to load {}: {error}", path.display());
+        }
+    });
 }
 
 fn unix_seconds() -> u64 {

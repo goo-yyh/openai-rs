@@ -1,3 +1,6 @@
 /target
 .chats/
 .vscode/
+.env.local
+.DS_Store
+**/target/
