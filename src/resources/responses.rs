@@ -29,7 +29,7 @@ use crate::websocket::ResponsesSocket;
 
 use super::{
     ChatToolDefinition, ConversationItem, DeleteResponse, InputTokenCount, JsonRequestBuilder,
-    ListRequestBuilder, NoContentRequestBuilder, RealtimeCallsResource,
+    ListRequestBuilder, McpToolDefinition, NoContentRequestBuilder, RealtimeCallsResource,
     RealtimeClientSecretsResource, RealtimeResource, RealtimeSessionPayload, Response,
     ResponseCreateParams, ResponseInputItemPayload, ResponseInputItemsResource,
     ResponseInputPayload, ResponseInputTokensResource, ResponsesResource, encode_path_segment,
@@ -282,6 +282,7 @@ pub struct ResponseCreateRequestBuilder {
     options: RequestOptions,
     extra_body: BTreeMap<String, Value>,
     provider_options: BTreeMap<String, Value>,
+    mcp_tools: Vec<McpToolDefinition>,
 }
 
 /// 表示 Responses 流式构建器。
@@ -356,6 +357,12 @@ impl ResponseStreamRequestBuilder {
         self
     }
 
+    /// 追加 MCP 工具定义。
+    pub fn mcp_tool(mut self, tool: McpToolDefinition) -> Self {
+        self.inner = self.inner.mcp_tool(tool);
+        self
+    }
+
     /// 添加请求体字段。
     pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.inner = self.inner.extra_body(key, value);
@@ -425,6 +432,7 @@ impl ResponseStreamRequestBuilder {
                 || self.inner.params.input.is_some()
                 || self.inner.params.temperature.is_some()
                 || !self.inner.params.tools.is_empty()
+                || !self.inner.mcp_tools.is_empty()
                 || !self.inner.extra_body.is_empty()
                 || !self.inner.provider_options.is_empty()
             {
@@ -584,6 +592,12 @@ impl ResponseCreateRequestBuilder {
         self
     }
 
+    /// 追加 MCP 工具定义。
+    pub fn mcp_tool(mut self, tool: McpToolDefinition) -> Self {
+        self.mcp_tools.push(tool);
+        self
+    }
+
     /// 追加请求体字段。
     pub fn extra_body(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
         self.extra_body.insert(key.into(), value.into().into_raw());
@@ -651,19 +665,20 @@ impl ResponseCreateRequestBuilder {
             provider_key,
             &self.provider_options,
         );
-        if !self.params.tools.is_empty()
+        if (!self.params.tools.is_empty() || !self.mcp_tools.is_empty())
             && let Some(object) = body.as_object_mut()
         {
-            object.insert(
-                "tools".into(),
-                Value::Array(
-                    self.params
-                        .tools
-                        .iter()
-                        .map(ChatToolDefinition::as_response_tool_value)
-                        .collect(),
-                ),
+            let mut tools = Vec::with_capacity(self.params.tools.len() + self.mcp_tools.len());
+            tools.extend(
+                self.params
+                    .tools
+                    .iter()
+                    .map(ChatToolDefinition::as_response_tool_value),
             );
+            for tool in &self.mcp_tools {
+                tools.push(value_from(tool)?);
+            }
+            object.insert("tools".into(), Value::Array(tools));
         }
         let mut spec = RequestSpec::new(
             if stream {

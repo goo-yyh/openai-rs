@@ -46,7 +46,6 @@ fn responses_model() -> String {
 }
 
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_chat_completion_basic() {
     let model = chat_model();
@@ -108,7 +107,6 @@ async fn test_live_openai_chat_completion_basic() {
 }
 
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_chat_completion_stream_basic() {
     let model = chat_model();
@@ -170,7 +168,6 @@ async fn test_live_openai_chat_completion_stream_basic() {
 }
 
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_chat_structured_json_output() {
     let model = chat_model();
@@ -232,7 +229,6 @@ async fn test_live_openai_chat_structured_json_output() {
 }
 
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_chat_tool_calling() {
     let model = chat_model();
@@ -296,7 +292,6 @@ async fn test_live_openai_chat_tool_calling() {
 }
 
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_responses_text() {
     let model = responses_model();
@@ -355,7 +350,6 @@ async fn test_live_openai_responses_text() {
 }
 
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_invalid_model_error_shape() {
     let Some(case) = LiveCase::begin(
@@ -413,7 +407,6 @@ async fn test_live_openai_invalid_model_error_shape() {
 
 #[cfg(feature = "tool-runner")]
 #[tokio::test]
-#[ignore = "requires OPENAI_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_openai_chat_run_tools_runner() {
     let model = chat_model();

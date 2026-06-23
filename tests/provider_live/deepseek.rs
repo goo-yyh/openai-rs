@@ -46,7 +46,6 @@ fn responses_model() -> String {
 }
 
 #[tokio::test]
-#[ignore = "requires DEEPSEEK_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_deepseek_chat_completion_basic() {
     let model = chat_model();
@@ -101,7 +100,6 @@ async fn test_live_deepseek_chat_completion_basic() {
 }
 
 #[tokio::test]
-#[ignore = "requires DEEPSEEK_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_deepseek_chat_completion_stream_basic() {
     let model = chat_model();
@@ -157,7 +155,6 @@ async fn test_live_deepseek_chat_completion_stream_basic() {
 }
 
 #[tokio::test]
-#[ignore = "requires DEEPSEEK_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_deepseek_chat_structured_json_output() {
     let model = chat_model();
@@ -214,7 +211,6 @@ async fn test_live_deepseek_chat_structured_json_output() {
 }
 
 #[tokio::test]
-#[ignore = "requires DEEPSEEK_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_deepseek_chat_tool_calling() {
     let model = chat_model();
@@ -275,7 +271,6 @@ async fn test_live_deepseek_chat_tool_calling() {
 }
 
 #[tokio::test]
-#[ignore = "requires DEEPSEEK_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_deepseek_responses_text_or_provider_error_shape() {
     let model = responses_model();
@@ -347,7 +342,6 @@ async fn test_live_deepseek_responses_text_or_provider_error_shape() {
 }
 
 #[tokio::test]
-#[ignore = "requires DEEPSEEK_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_deepseek_invalid_model_error_shape() {
     let Some(case) = LiveCase::begin(

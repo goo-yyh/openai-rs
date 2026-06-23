@@ -6,11 +6,12 @@ SNAPSHOT_DIR="${ROOT_DIR}/codegen/openapi"
 SNAPSHOT_FILE="${SNAPSHOT_DIR}/openapi.documented.yml"
 SNAPSHOT_JSON_FILE="${SNAPSHOT_DIR}/openapi.documented.json"
 METADATA_FILE="${SNAPSHOT_DIR}/metadata.json"
-DOCUMENTED_SPEC_URL="https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml"
+DOCUMENTED_SPEC_URL="${DOCUMENTED_SPEC_URL:-https://app.stainless.com/api/spec/documented/openai/openapi.documented.yml}"
 OPENAPI_REPO_URL="https://github.com/openai/openai-openapi.git"
 
 mkdir -p "${SNAPSHOT_DIR}"
 curl -L --fail --max-time 120 "${DOCUMENTED_SPEC_URL}" -o "${SNAPSHOT_FILE}"
+perl -0pi -e 's/[ \t]+$//mg' "${SNAPSHOT_FILE}"
 
 REPO_HEAD="$(git ls-remote "${OPENAPI_REPO_URL}" HEAD | awk '{print $1}')"
 SPEC_VERSION="$(ruby -r yaml -e 'puts YAML.load_file(ARGV[0]).dig("info", "version")' "${SNAPSHOT_FILE}")"

@@ -48,10 +48,11 @@ jobs:
       - name: Run live provider tests
         env:
           OPENAI_RS_LIVE_TIER: ${{ github.event_name == 'schedule' && 'smoke' || inputs.tier }}
+          OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_CHAT_MODEL: ${{ vars.OPENAI_CHAT_MODEL }}
           OPENAI_RESPONSES_MODEL: ${{ vars.OPENAI_RESPONSES_MODEL }}
-        run: cargo test --all-features --test provider_live openai -- --ignored --nocapture --test-threads=1
+        run: cargo test --all-features --test provider_live openai -- --nocapture --test-threads=1
 
   kimi:
     if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'kimi') }}
@@ -69,11 +70,12 @@ jobs:
       - name: Run live provider tests
         env:
           OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
           KIMI_BASE_URL: ${{ vars.KIMI_BASE_URL }}
           KIMI_CHAT_MODEL: ${{ vars.KIMI_CHAT_MODEL }}
           KIMI_RESPONSES_MODEL: ${{ vars.KIMI_RESPONSES_MODEL }}
-        run: cargo test --all-features --test provider_live kimi -- --ignored --nocapture --test-threads=1
+        run: cargo test --all-features --test provider_live kimi -- --nocapture --test-threads=1
 
   deepseek:
     if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'deepseek') }}
@@ -91,10 +93,11 @@ jobs:
       - name: Run live provider tests
         env:
           OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           DEEPSEEK_CHAT_MODEL: ${{ vars.DEEPSEEK_CHAT_MODEL }}
           DEEPSEEK_RESPONSES_MODEL: ${{ vars.DEEPSEEK_RESPONSES_MODEL }}
-        run: cargo test --all-features --test provider_live deepseek -- --ignored --nocapture --test-threads=1
+        run: cargo test --all-features --test provider_live deepseek -- --nocapture --test-threads=1
 
   zhipu:
     if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'zhipu') }}
@@ -112,10 +115,11 @@ jobs:
       - name: Run live provider tests
         env:
           OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           ZHIPU_API_KEY: ${{ secrets.ZHIPU_API_KEY }}
           ZHIPU_CHAT_MODEL: ${{ vars.ZHIPU_CHAT_MODEL }}
           ZHIPU_RESPONSES_MODEL: ${{ vars.ZHIPU_RESPONSES_MODEL }}
-        run: cargo test --all-features --test provider_live zhipu -- --ignored --nocapture --test-threads=1
+        run: cargo test --all-features --test provider_live zhipu -- --nocapture --test-threads=1
 
   minimax:
     if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'minimax') }}
@@ -133,10 +137,11 @@ jobs:
       - name: Run live provider tests
         env:
           OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           MINIMAX_CHAT_MODEL: ${{ vars.MINIMAX_CHAT_MODEL }}
           MINIMAX_RESPONSES_MODEL: ${{ vars.MINIMAX_RESPONSES_MODEL }}
-        run: cargo test --all-features --test provider_live minimax -- --ignored --nocapture --test-threads=1
+        run: cargo test --all-features --test provider_live minimax -- --nocapture --test-threads=1
 
   zenmux:
     if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'zenmux') }}
@@ -154,7 +159,8 @@ jobs:
       - name: Run live provider tests
         env:
           OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
+          OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           ZENMUX_API_KEY: ${{ secrets.ZENMUX_API_KEY }}
           ZENMUX_CHAT_MODEL: ${{ vars.ZENMUX_CHAT_MODEL }}
           ZENMUX_RESPONSES_MODEL: ${{ vars.ZENMUX_RESPONSES_MODEL }}
-        run: cargo test --all-features --test provider_live zenmux -- --ignored --nocapture --test-threads=1
+        run: cargo test --all-features --test provider_live zenmux -- --nocapture --test-threads=1

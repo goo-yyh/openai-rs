@@ -96,8 +96,9 @@ For docs, explore ./docs directory and put it to the right place, and update ind
 - Use `rstest` for parameterized tests. Use `proptest` for property-based testing of invariants.
 - Test error cases explicitly. Ensure error types and messages are correct with `assert!(matches!(...))`.
 - Use `mockall` or `wiremock` for mocking external dependencies. Avoid over-mocking; prefer real implementations when fast.
+- Provider live tests must not be marked `#[ignore]` for local runs. Local `cargo test` / `cargo nextest` should enter real API tests and require the relevant API key from the environment or `./openai-rs/.env.local`; normal CI may skip real API calls automatically, while dedicated live CI jobs must opt in with `OPENAI_RS_ALLOW_LIVE_API_CALLS=1`.
 - Aim for high test coverage but focus on critical paths and edge cases over raw coverage percentage.
-- Use `#[ignore]` for slow tests. Run with `cargo test -- --ignored` in CI.
+- Use `#[ignore]` for slow non-provider-live tests. Run with `cargo test -- --ignored` in CI.
 - Write documentation tests in doc comments. These serve as examples and are automatically tested.
 
 ## Logging & Observability

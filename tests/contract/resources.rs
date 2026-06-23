@@ -9,7 +9,7 @@ use wiremock::{Mock, MockServer, ResponseTemplate};
 use openai_core::ChatCompletionRuntimeEvent;
 use openai_core::{
     AssistantRuntimeEvent, BetaAssistant, BetaThreadMessage, BetaThreadRun, ChatCompletionMessage,
-    Client, Model, Response, VectorStore,
+    Client, McpToolDefinition, Model, Response, VectorStore,
 };
 
 #[tokio::test]
@@ -174,6 +174,110 @@ async fn test_should_serialize_responses_tools_as_flat_objects() {
         .unwrap();
 
     assert_eq!(response.id, "resp_tool_1");
+}
+
+#[tokio::test]
+async fn test_should_serialize_responses_mcp_tool_with_tunnel_id() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/responses"))
+        .and(body_json(json!({
+            "model": "gpt-5.4",
+            "input": "search docs",
+            "stream": false,
+            "tools": [{
+                "type": "mcp",
+                "server_label": "corp_docs",
+                "tunnel_id": "tun_123",
+                "allowed_tools": ["search"],
+                "require_approval": "never",
+                "headers": {
+                    "x-workspace": "openai-rs"
+                }
+            }]
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "id": "resp_mcp_1",
+            "object": "response",
+            "model": "gpt-5.4",
+            "status": "completed",
+            "output": []
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+
+    let response = client
+        .responses()
+        .create()
+        .model("gpt-5.4")
+        .input_text("search docs")
+        .mcp_tool(
+            McpToolDefinition::new("corp_docs")
+                .tunnel_id("tun_123")
+                .allowed_tool_names(["search"])
+                .require_approval_mode("never")
+                .header("x-workspace", "openai-rs"),
+        )
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.id, "resp_mcp_1");
+}
+
+#[tokio::test]
+async fn test_should_serialize_realtime_client_secret_mcp_tool_with_tunnel_id() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/realtime/client_secrets"))
+        .and(body_json(json!({
+            "session": {
+                "type": "realtime",
+                "tools": [{
+                    "type": "mcp",
+                    "server_label": "corp_docs",
+                    "tunnel_id": "tun_123"
+                }]
+            }
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "value": "ek_realtime_mcp",
+            "expires_at": 1
+        })))
+        .mount(&server)
+        .await;
+
+    let client = Client::builder()
+        .api_key("sk-test")
+        .base_url(server.uri())
+        .disable_proxy_for_local_base_url(true)
+        .build()
+        .unwrap();
+    let tool = McpToolDefinition::new("corp_docs").tunnel_id("tun_123");
+
+    let secret = client
+        .realtime()
+        .client_secrets()
+        .create()
+        .json_body(&json!({
+            "session": {
+                "type": "realtime",
+                "tools": [tool]
+            }
+        }))
+        .unwrap()
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(secret.secret_value(), Some("ek_realtime_mcp"));
 }
 
 #[cfg(feature = "structured-output")]

@@ -186,15 +186,18 @@ struct CachedModelRecord {
     cached_at_secs: u64,
 }
 
-/// 读取环境变量；缺失时让 live test 直接跳过。
+/// 读取 live test 所需环境变量；CI 中跳过真实 API 调用，本地缺失时直接失败。
 pub fn env_or_skip(name: &str) -> Option<String> {
     load_dotenv_local();
+    if is_ci() && !allow_live_api_calls_in_ci() {
+        eprintln!("skip live test in CI because {name} would trigger a real API call");
+        return None;
+    }
     match std::env::var(name) {
         Ok(value) if !value.trim().is_empty() => Some(value),
-        _ => {
-            eprintln!("skip live test because {name} is missing");
-            None
-        }
+        _ => panic!(
+            "{name} is required for provider live tests. Set it in the environment or .env.local; normal CI skips real API calls automatically."
+        ),
     }
 }
 
@@ -565,6 +568,23 @@ fn load_dotenv_local() {
             eprintln!("failed to load {}: {error}", path.display());
         }
     });
+}
+
+fn is_ci() -> bool {
+    truthy_env("CI")
+}
+
+fn allow_live_api_calls_in_ci() -> bool {
+    truthy_env("OPENAI_RS_ALLOW_LIVE_API_CALLS")
+}
+
+fn truthy_env(name: &str) -> bool {
+    std::env::var(name)
+        .map(|value| {
+            let normalized = value.trim().to_ascii_lowercase();
+            !normalized.is_empty() && !matches!(normalized.as_str(), "0" | "false" | "no")
+        })
+        .unwrap_or(false)
 }
 
 fn unix_seconds() -> u64 {

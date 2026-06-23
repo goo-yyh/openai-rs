@@ -181,7 +181,7 @@ fn test_openapi_snapshot_metadata_should_match_expected_source() {
     assert_eq!(metadata.documented_spec_version, "2.3.0");
     assert_eq!(
         metadata.openai_openapi_repo_head,
-        "e1cb7a86ad53bb818c106ac7875e2a78182bb120"
+        "5162af98d3147432c14680df789e8e12d4891e6b"
     );
 }
 

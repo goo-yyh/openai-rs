@@ -766,8 +766,8 @@ bash ./scripts/check-public-api.sh
 
 Additional notes:
 
-- live smoke tests under `tests/provider_live/` are `#[ignore]` by default
-- when required environment variables are missing, those live tests auto-skip
+- provider live tests under `tests/provider_live/` are not `#[ignore]`; local runs load credentials from the environment or `.env.local`
+- normal CI skips real provider calls automatically; the Live Providers workflow opts in with `OPENAI_RS_ALLOW_LIVE_API_CALLS=1`
 
 ## FAQ
 

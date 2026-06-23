@@ -198,7 +198,6 @@ async fn resolve_responses_model(client: &Client) -> Result<String, Error> {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_models_list() {
     let Some(case) = LiveCase::begin("zenmux", "models_list", LiveTier::Smoke, None::<String>)
@@ -240,7 +239,6 @@ async fn test_live_zenmux_models_list() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_chat_completion_with_discovered_model() {
     let Some(case) = LiveCase::begin(
@@ -311,7 +309,6 @@ async fn test_live_zenmux_chat_completion_with_discovered_model() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_chat_structured_json_output() {
     let Some(case) = LiveCase::begin(
@@ -384,7 +381,6 @@ async fn test_live_zenmux_chat_structured_json_output() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_chat_tool_calling() {
     let Some(case) = LiveCase::begin(
@@ -462,7 +458,6 @@ async fn test_live_zenmux_chat_tool_calling() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_responses_text_output() {
     let Some(case) = LiveCase::begin(
@@ -564,7 +559,6 @@ async fn test_live_zenmux_responses_text_output() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_responses_structured_json_output() {
     let Some(case) = LiveCase::begin(
@@ -672,7 +666,6 @@ async fn test_live_zenmux_responses_structured_json_output() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_responses_stream_text_output() {
     let Some(case) = LiveCase::begin(
@@ -772,7 +765,6 @@ async fn test_live_zenmux_responses_stream_text_output() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_responses_stream_function_call_arguments() {
     let Some(case) = LiveCase::begin(
@@ -881,7 +873,6 @@ async fn test_live_zenmux_responses_stream_function_call_arguments() {
 
 #[cfg(feature = "tool-runner")]
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_chat_run_tools_runner() {
     let Some(case) = LiveCase::begin(
@@ -949,7 +940,6 @@ async fn test_live_zenmux_chat_run_tools_runner() {
 }
 
 #[tokio::test]
-#[ignore = "requires ZENMUX_API_KEY"]
 #[serial(provider_live)]
 async fn test_live_zenmux_invalid_model_error_shape() {
     let Some(case) = LiveCase::begin(

@@ -28,9 +28,9 @@
 - 公开类型、字段、方法、feature 是否被移除
 - README / migration 文档是否需要同步修改
 
-## live tests 默认为什么是 `#[ignore]`？
+## live tests 为什么本地不再默认 `#[ignore]`？
 
-因为它们依赖真实 provider 凭据，而且会产生费用或速率限制风险。仓库内默认只把它们作为手动验证路径。
+因为本地验证应直接覆盖真实 provider 行为。provider live tests 会从环境变量或仓库根目录 `.env.local` 读取凭据；普通 CI 会自动跳过真实 API 调用，手动 Live Providers workflow 会显式设置 `OPENAI_RS_ALLOW_LIVE_API_CALLS=1` 后再执行真实调用。
 
 ## 哪里可以快速找到对应示例？
 

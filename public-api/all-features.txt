@@ -5898,6 +5898,50 @@ impl<T> core::marker::Unpin for openai_core::resources::ListRequestBuilder<T> wh
 impl<T> core::marker::UnsafeUnpin for openai_core::resources::ListRequestBuilder<T>
 impl<T> !core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::ListRequestBuilder<T>
 impl<T> !core::panic::unwind_safe::UnwindSafe for openai_core::resources::ListRequestBuilder<T>
+pub struct openai_core::resources::McpToolDefinition
+pub openai_core::resources::McpToolDefinition::allowed_tools: core::option::Option<openai_core::JsonPayload>
+pub openai_core::resources::McpToolDefinition::authorization: core::option::Option<alloc::string::String>
+pub openai_core::resources::McpToolDefinition::connector_id: core::option::Option<alloc::string::String>
+pub openai_core::resources::McpToolDefinition::defer_loading: core::option::Option<bool>
+pub openai_core::resources::McpToolDefinition::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_core::resources::McpToolDefinition::headers: core::option::Option<alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>>
+pub openai_core::resources::McpToolDefinition::require_approval: core::option::Option<openai_core::JsonPayload>
+pub openai_core::resources::McpToolDefinition::server_description: core::option::Option<alloc::string::String>
+pub openai_core::resources::McpToolDefinition::server_label: alloc::string::String
+pub openai_core::resources::McpToolDefinition::server_url: core::option::Option<alloc::string::String>
+pub openai_core::resources::McpToolDefinition::tool_type: alloc::string::String
+pub openai_core::resources::McpToolDefinition::tunnel_id: core::option::Option<alloc::string::String>
+impl openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::allowed_tool_names<I, S>(self, I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn openai_core::resources::McpToolDefinition::allowed_tools(self, impl core::convert::Into<openai_core::JsonPayload>) -> Self
+pub fn openai_core::resources::McpToolDefinition::authorization(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::connector_id(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::defer_loading(self, bool) -> Self
+pub fn openai_core::resources::McpToolDefinition::extra(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<openai_core::JsonPayload>) -> Self
+pub fn openai_core::resources::McpToolDefinition::header(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::require_approval(self, impl core::convert::Into<openai_core::JsonPayload>) -> Self
+pub fn openai_core::resources::McpToolDefinition::require_approval_mode(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::server_description(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::server_url(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::tunnel_id(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::clone(&self) -> openai_core::resources::McpToolDefinition
+impl core::default::Default for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::default() -> Self
+impl core::fmt::Debug for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_core::resources::McpToolDefinition
+impl core::marker::Send for openai_core::resources::McpToolDefinition
+impl core::marker::Sync for openai_core::resources::McpToolDefinition
+impl core::marker::Unpin for openai_core::resources::McpToolDefinition
+impl core::marker::UnsafeUnpin for openai_core::resources::McpToolDefinition
+impl core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::McpToolDefinition
+impl core::panic::unwind_safe::UnwindSafe for openai_core::resources::McpToolDefinition
 pub struct openai_core::resources::Model
 pub openai_core::resources::Model::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_core::resources::Model::id: alloc::string::String
@@ -6223,6 +6267,7 @@ pub fn openai_core::resources::ResponseCreateRequestBuilder::input(self, impl co
 pub fn openai_core::resources::ResponseCreateRequestBuilder::input_items(self, alloc::vec::Vec<openai_core::resources::ResponseInputItemPayload>) -> Self
 pub fn openai_core::resources::ResponseCreateRequestBuilder::input_text(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ResponseCreateRequestBuilder::max_retries(self, u32) -> Self
+pub fn openai_core::resources::ResponseCreateRequestBuilder::mcp_tool(self, openai_core::resources::McpToolDefinition) -> Self
 pub fn openai_core::resources::ResponseCreateRequestBuilder::model(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ResponseCreateRequestBuilder::provider_option(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<openai_core::JsonPayload>) -> Self
 pub async fn openai_core::resources::ResponseCreateRequestBuilder::send(self) -> openai_core::error::Result<openai_core::resources::Response>
@@ -6760,6 +6805,7 @@ pub fn openai_core::resources::ResponseStreamRequestBuilder::input(self, impl co
 pub fn openai_core::resources::ResponseStreamRequestBuilder::input_items(self, alloc::vec::Vec<openai_core::resources::ResponseInputItemPayload>) -> Self
 pub fn openai_core::resources::ResponseStreamRequestBuilder::input_text(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ResponseStreamRequestBuilder::max_retries(self, u32) -> Self
+pub fn openai_core::resources::ResponseStreamRequestBuilder::mcp_tool(self, openai_core::resources::McpToolDefinition) -> Self
 pub fn openai_core::resources::ResponseStreamRequestBuilder::model(self, impl core::convert::Into<alloc::string::String>) -> Self
 pub fn openai_core::resources::ResponseStreamRequestBuilder::provider_option(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<openai_core::JsonPayload>) -> Self
 pub fn openai_core::resources::ResponseStreamRequestBuilder::response_id(self, impl core::convert::Into<alloc::string::String>) -> Self
@@ -13248,6 +13294,50 @@ impl core::marker::Unpin for openai_core::config::LoggerHandle
 impl core::marker::UnsafeUnpin for openai_core::config::LoggerHandle
 impl !core::panic::unwind_safe::RefUnwindSafe for openai_core::config::LoggerHandle
 impl !core::panic::unwind_safe::UnwindSafe for openai_core::config::LoggerHandle
+pub struct openai_core::McpToolDefinition
+pub openai_core::McpToolDefinition::allowed_tools: core::option::Option<openai_core::JsonPayload>
+pub openai_core::McpToolDefinition::authorization: core::option::Option<alloc::string::String>
+pub openai_core::McpToolDefinition::connector_id: core::option::Option<alloc::string::String>
+pub openai_core::McpToolDefinition::defer_loading: core::option::Option<bool>
+pub openai_core::McpToolDefinition::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
+pub openai_core::McpToolDefinition::headers: core::option::Option<alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>>
+pub openai_core::McpToolDefinition::require_approval: core::option::Option<openai_core::JsonPayload>
+pub openai_core::McpToolDefinition::server_description: core::option::Option<alloc::string::String>
+pub openai_core::McpToolDefinition::server_label: alloc::string::String
+pub openai_core::McpToolDefinition::server_url: core::option::Option<alloc::string::String>
+pub openai_core::McpToolDefinition::tool_type: alloc::string::String
+pub openai_core::McpToolDefinition::tunnel_id: core::option::Option<alloc::string::String>
+impl openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::allowed_tool_names<I, S>(self, I) -> Self where I: core::iter::traits::collect::IntoIterator<Item = S>, S: core::convert::Into<alloc::string::String>
+pub fn openai_core::resources::McpToolDefinition::allowed_tools(self, impl core::convert::Into<openai_core::JsonPayload>) -> Self
+pub fn openai_core::resources::McpToolDefinition::authorization(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::connector_id(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::defer_loading(self, bool) -> Self
+pub fn openai_core::resources::McpToolDefinition::extra(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<openai_core::JsonPayload>) -> Self
+pub fn openai_core::resources::McpToolDefinition::header(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::require_approval(self, impl core::convert::Into<openai_core::JsonPayload>) -> Self
+pub fn openai_core::resources::McpToolDefinition::require_approval_mode(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::server_description(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::server_url(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn openai_core::resources::McpToolDefinition::tunnel_id(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::clone(&self) -> openai_core::resources::McpToolDefinition
+impl core::default::Default for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::default() -> Self
+impl core::fmt::Debug for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl serde_core::ser::Serialize for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for openai_core::resources::McpToolDefinition
+pub fn openai_core::resources::McpToolDefinition::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for openai_core::resources::McpToolDefinition
+impl core::marker::Send for openai_core::resources::McpToolDefinition
+impl core::marker::Sync for openai_core::resources::McpToolDefinition
+impl core::marker::Unpin for openai_core::resources::McpToolDefinition
+impl core::marker::UnsafeUnpin for openai_core::resources::McpToolDefinition
+impl core::panic::unwind_safe::RefUnwindSafe for openai_core::resources::McpToolDefinition
+impl core::panic::unwind_safe::UnwindSafe for openai_core::resources::McpToolDefinition
 pub struct openai_core::Model
 pub openai_core::Model::extra: alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>
 pub openai_core::Model::id: alloc::string::String

@@ -968,6 +968,161 @@ impl ChatToolDefinition {
     }
 }
 
+/// 表示 MCP 工具定义。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct McpToolDefinition {
+    /// 工具类型，固定为 `mcp`。
+    #[serde(rename = "type", default = "default_mcp_tool_type")]
+    pub tool_type: String,
+    /// MCP server 标签，用于工具调用中标识该 server。
+    pub server_label: String,
+    /// 允许调用的工具名列表或过滤对象。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub allowed_tools: Option<JsonPayload>,
+    /// 远程 MCP server 或 service connector 的 OAuth access token。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorization: Option<String>,
+    /// ChatGPT service connector ID。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub connector_id: Option<String>,
+    /// 是否延迟发现工具。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub defer_loading: Option<bool>,
+    /// 发往 MCP server 的可选 HTTP 头。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub headers: Option<BTreeMap<String, String>>,
+    /// 需要审批的工具过滤规则，或 `always` / `never`。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_approval: Option<JsonPayload>,
+    /// MCP server 描述。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server_description: Option<String>,
+    /// MCP server URL。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub server_url: Option<String>,
+    /// Secure MCP Tunnel ID。可替代 `server_url` 或 `connector_id`。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tunnel_id: Option<String>,
+    /// 额外字段。
+    #[serde(flatten)]
+    pub extra: BTreeMap<String, Value>,
+}
+
+impl Default for McpToolDefinition {
+    fn default() -> Self {
+        Self {
+            tool_type: default_mcp_tool_type(),
+            server_label: String::new(),
+            allowed_tools: None,
+            authorization: None,
+            connector_id: None,
+            defer_loading: None,
+            headers: None,
+            require_approval: None,
+            server_description: None,
+            server_url: None,
+            tunnel_id: None,
+            extra: BTreeMap::new(),
+        }
+    }
+}
+
+impl McpToolDefinition {
+    /// 创建 MCP 工具定义。
+    pub fn new(server_label: impl Into<String>) -> Self {
+        Self {
+            server_label: server_label.into(),
+            ..Self::default()
+        }
+    }
+
+    /// 设置允许调用的工具名列表或过滤对象。
+    pub fn allowed_tools(mut self, allowed_tools: impl Into<JsonPayload>) -> Self {
+        self.allowed_tools = Some(allowed_tools.into());
+        self
+    }
+
+    /// 设置允许调用的工具名列表。
+    pub fn allowed_tool_names<I, S>(mut self, names: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        self.allowed_tools = Some(
+            Value::Array(
+                names
+                    .into_iter()
+                    .map(|name| Value::String(name.into()))
+                    .collect(),
+            )
+            .into(),
+        );
+        self
+    }
+
+    /// 设置 OAuth access token。
+    pub fn authorization(mut self, authorization: impl Into<String>) -> Self {
+        self.authorization = Some(authorization.into());
+        self
+    }
+
+    /// 设置 service connector ID。
+    pub fn connector_id(mut self, connector_id: impl Into<String>) -> Self {
+        self.connector_id = Some(connector_id.into());
+        self
+    }
+
+    /// 设置是否延迟发现工具。
+    pub fn defer_loading(mut self, defer_loading: bool) -> Self {
+        self.defer_loading = Some(defer_loading);
+        self
+    }
+
+    /// 设置 HTTP header。
+    pub fn header(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.headers
+            .get_or_insert_with(BTreeMap::new)
+            .insert(key.into(), value.into());
+        self
+    }
+
+    /// 设置需要审批的工具过滤规则，或 `always` / `never`。
+    pub fn require_approval(mut self, require_approval: impl Into<JsonPayload>) -> Self {
+        self.require_approval = Some(require_approval.into());
+        self
+    }
+
+    /// 设置需要审批的模式，常用值为 `always` 或 `never`。
+    pub fn require_approval_mode(mut self, mode: impl Into<String>) -> Self {
+        self.require_approval = Some(Value::String(mode.into()).into());
+        self
+    }
+
+    /// 设置 MCP server 描述。
+    pub fn server_description(mut self, server_description: impl Into<String>) -> Self {
+        self.server_description = Some(server_description.into());
+        self
+    }
+
+    /// 设置 MCP server URL。
+    pub fn server_url(mut self, server_url: impl Into<String>) -> Self {
+        self.server_url = Some(server_url.into());
+        self
+    }
+
+    /// 设置 Secure MCP Tunnel ID。
+    pub fn tunnel_id(mut self, tunnel_id: impl Into<String>) -> Self {
+        self.tunnel_id = Some(tunnel_id.into());
+        self
+    }
+
+    /// 添加额外字段。
+    pub fn extra(mut self, key: impl Into<String>, value: impl Into<JsonPayload>) -> Self {
+        self.extra.insert(key.into(), value.into().into_raw());
+        self
+    }
+}
+
 /// 表示聊天工具函数定义。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatToolFunction {
@@ -1488,6 +1643,10 @@ pub struct ResponseCreateParams {
 
 fn default_function_type() -> String {
     "function".into()
+}
+
+fn default_mcp_tool_type() -> String {
+    "mcp".into()
 }
 
 fn parse_jsonish_payload<T>(payload: &str) -> Result<T>
