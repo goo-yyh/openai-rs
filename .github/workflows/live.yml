@@ -25,16 +25,13 @@ on:
           - smoke
           - extended
           - slow
-  schedule:
-    - cron: "0 2 * * 1"
-
 permissions:
   contents: read
 
 jobs:
   openai:
-    if: ${{ github.event_name == 'schedule' || inputs.provider == 'all' || inputs.provider == 'openai' }}
-    name: Live OpenAI (${{ github.event_name == 'schedule' && 'smoke' || inputs.tier }})
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'openai' }}
+    name: Live OpenAI (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +44,7 @@ jobs:
 
       - name: Run live provider tests
         env:
-          OPENAI_RS_LIVE_TIER: ${{ github.event_name == 'schedule' && 'smoke' || inputs.tier }}
+          OPENAI_RS_LIVE_TIER: ${{ inputs.tier }}
           OPENAI_RS_ALLOW_LIVE_API_CALLS: "1"
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_CHAT_MODEL: ${{ vars.OPENAI_CHAT_MODEL }}
@@ -55,7 +52,7 @@ jobs:
         run: cargo test --all-features --test provider_live openai -- --nocapture --test-threads=1
 
   kimi:
-    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'kimi') }}
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'kimi' }}
     name: Live KIMI (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
@@ -78,7 +75,7 @@ jobs:
         run: cargo test --all-features --test provider_live kimi -- --nocapture --test-threads=1
 
   deepseek:
-    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'deepseek') }}
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'deepseek' }}
     name: Live DeepSeek (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
@@ -100,7 +97,7 @@ jobs:
         run: cargo test --all-features --test provider_live deepseek -- --nocapture --test-threads=1
 
   zhipu:
-    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'zhipu') }}
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'zhipu' }}
     name: Live Zhipu (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
@@ -122,7 +119,7 @@ jobs:
         run: cargo test --all-features --test provider_live zhipu -- --nocapture --test-threads=1
 
   minimax:
-    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'minimax') }}
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'minimax' }}
     name: Live MiniMax (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
@@ -144,7 +141,7 @@ jobs:
         run: cargo test --all-features --test provider_live minimax -- --nocapture --test-threads=1
 
   zenmux:
-    if: ${{ github.event_name != 'schedule' && (inputs.provider == 'all' || inputs.provider == 'zenmux') }}
+    if: ${{ inputs.provider == 'all' || inputs.provider == 'zenmux' }}
     name: Live ZenMux (${{ inputs.tier }})
     runs-on: ubuntu-latest
     steps:
